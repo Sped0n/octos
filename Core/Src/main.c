@@ -1,18 +1,18 @@
 #include "main.h"
+#include "timebase.h"
 #include "uart.h"
 #include <stdio.h>
 
 int main(void) {
   led_init();
   uart_tx_unit();
+  timebase_init();
 
   while (1) {
     led_on();
-    for (int i = 0; i < 90000; i++)
-      ;
+    delay(1);
     led_off();
-    for (int i = 0; i < 90000; i++)
-      ;
+    delay(1);
     printf("hello\n\r");
   }
 }

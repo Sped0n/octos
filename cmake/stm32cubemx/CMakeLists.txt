@@ -27,6 +27,7 @@ target_include_directories(stm32cubemx INTERFACE
     ${ARM_TOOLCHAIN_DIR}/lib
 )
 
+file(GLOB DRIVER_SOURCES CONFIGURE_DEPENDS "../../Drivers/Src/*.c")
 
 target_sources(stm32cubemx INTERFACE
     ../../Core/Src/main.c
@@ -35,8 +36,7 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/sysmem.c
     ../../Core/Src/syscall.c
     ../../startup_stm32f429xx.s
-    ../../Drivers/Src/led.c
-    ../../Drivers/Src/uart.c
+    ${DRIVER_SOURCES}
 )
 
 target_link_directories(stm32cubemx INTERFACE

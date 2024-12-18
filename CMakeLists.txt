@@ -71,7 +71,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 # Flash firmware to target.
 add_custom_target(flash
-  openocd -f interface/jlink.cfg -c "transport select swd"
+  openocd -f interface/stlink.cfg -c "transport select hla_swd"
   -f target/stm32f4x.cfg -c "init" -c "reset halt"
   -c "flash write_image erase ${CMAKE_PROJECT_NAME}.elf" -c "reset run" -c "shutdown"
   DEPENDS ${CMAKE_PROJECT_NAME}
@@ -79,7 +79,7 @@ add_custom_target(flash
 
 # Run OpenOCD as a GDB host.
 add_custom_target(gdbhost
-  openocd -f interface/jlink.cfg -c "transport select swd"
+  openocd -f interface/stlink.cfg -c "transport select hla_swd"
   -f target/stm32f4x.cfg -c "init" -c "reset halt"
   DEPENDS ${CMAKE_PROJECT_NAME}
   COMMENT "Running OpenOCD as a GDB host.")

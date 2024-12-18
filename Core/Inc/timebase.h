@@ -7,6 +7,6 @@
 void timebase_init(void);
 void tick_increment(void);
 uint32_t get_tick(void);
-void delay(uint32_t delay);
+void delay(uint32_t seconds);
 
 #endif

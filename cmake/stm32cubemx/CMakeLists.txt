@@ -19,24 +19,21 @@ execute_process(
 )
 
 target_include_directories(stm32cubemx INTERFACE
-    ../../Core/Inc
     ../../CMSIS/Device/ST/STM32F4xx/Include
     ../../CMSIS/Include
     ../../Drivers/Inc
+    ../../Core/Inc
     ${ARM_TOOLCHAIN_DIR}/include
     ${ARM_TOOLCHAIN_DIR}/lib
 )
 
 file(GLOB DRIVER_SOURCES CONFIGURE_DEPENDS "../../Drivers/Src/*.c")
+file(GLOB CORE_SOURCES CONFIGURE_DEPENDS "../../Core/Src/*.c")
 
 target_sources(stm32cubemx INTERFACE
-    ../../Core/Src/main.c
-    ../../Core/Src/stm32f4xx_it.c
-    ../../Core/Src/system_stm32f4xx.c
-    ../../Core/Src/sysmem.c
-    ../../Core/Src/syscall.c
     ../../startup_stm32f429xx.s
     ${DRIVER_SOURCES}
+    ${CORE_SOURCES}
 )
 
 target_link_directories(stm32cubemx INTERFACE

@@ -167,14 +167,60 @@ void PendSV_Handler(void) {
 /**
  * @brief This function handles System tick timer.
  */
-void SysTick_Handler(void) {
-  /* USER CODE BEGIN SysTick_IRQn 0 */
-  tick_increment();
+__attribute__((naked)) void SysTick_Handler(void) {
+  /* ------ STEP 1 - SAVE THE CURRENT TASK CONTEXT ------ */
+  /* At this point the processor has already pushed PSR, PC, LR, R12, R3, R2,
+   * R1 and R0 onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8,
+   * R9, R10 & R11) to save the context of the current task
+   */
+  /* Disable interrupts */
+  __asm("CPSID   I");
+  /* Push registers R4-R7 */
+  __asm("PUSH    {R4-R7}");
+  /* Push registers R8-R11 */
+  __asm("MOV     R4, R8");
+  __asm("MOV     R5, R9");
+  __asm("MOV     R6, R10");
+  __asm("MOV     R7, R11");
+  __asm("PUSH    {R4-R7}");
+  /* Load R0 with the address of current tcb pointer */
+  __asm("LDR     R0, =current_tcb_pointer");
+  /* Load R1 with the value of current tcb pointer(i.e after this, R1 will
+   * contain the address of current TCB)
+   */
+  __asm("LDR     R1, [R0]");
+  /* Move the SP value to R4 */
+  __asm("MOV     R4, SP");
+  /* Store the value of the stack pointer(copied in R4) to the current tasks
+   * "stack_pointer" element in its TCB. This marks an end to saving the
+   * context of the current task
+   */
+  __asm("STR     R4, [R1]");
 
-  /* USER CODE END SysTick_IRQn 0 */
-  /* USER CODE BEGIN SysTick_IRQn 1 */
-
-  /* USER CODE END SysTick_IRQn 1 */
+  /* ------ STEP 2: LOAD THE NEW TASK CONTEXT FROM ITS STACK TO THE CPU
+   * REGISTERS, THEN UPDATE current_tcb_pointer ------ */
+  /* Load the address of the next task TCB onto the R1. */
+  __asm("LDR     R1, [R1,#4]");
+  /* Load the contents of the next tasks stack pointer to current_tcb_pointer,
+   * equivalent to pointing current_tcb_pointer to the newer tasks TCB. Remember
+   * R1 contains the address of current_tcb_pointer
+   */
+  __asm("STR     R1, [R0]");
+  /* Load the newer tasks TCB to the SP using R4 */
+  __asm("LDR     R4, [R1]");
+  __asm("MOV     SP, R4");
+  /* Pop registers R8-R11 */
+  __asm("POP     {R4-R7}");
+  __asm("MOV     R8, R4");
+  __asm("MOV     R9, R5");
+  __asm("MOV     R10, R6");
+  __asm("MOV     R11, R7");
+  /* Pop registers R4-R7 */
+  __asm("POP     {R4-R7}");
+  /* Enable interrupt */
+  __asm("CPSIE   I");
+  /* Return from exception */
+  __asm("BX      LR");
 }
 
 /******************************************************************************/

@@ -19,8 +19,8 @@ execute_process(
 )
 
 target_include_directories(stm32cubemx INTERFACE
-    ../../CMSIS/Device/ST/STM32F4xx/Include
-    ../../CMSIS/Include
+    ../../Libs/CMSIS/Device/ST/STM32F4xx/Include
+    ../../Libs/CMSIS/Include
     ../../Drivers/Inc
     ../../Core/Inc
     ${ARM_TOOLCHAIN_DIR}/include

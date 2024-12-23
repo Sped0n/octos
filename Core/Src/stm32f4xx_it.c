@@ -20,9 +20,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
 #include "main.h"
-#include "stm32f4xx.h" // IWYU pragma: keep
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32f4xx.h" // IWYU pragma: keep
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

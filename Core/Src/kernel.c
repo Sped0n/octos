@@ -13,7 +13,9 @@ void kernel_launch(uint32_t quanta_in_ms) {
   /* Load quanta */
   SysTick->LOAD = (quanta_in_ms * (BUS_FREQ / 1000)) - 1;
   /* Set systick to low priority */
-  NVIC_SetPriority(SysTick_IRQn, 15);
+  NVIC_SetPriority(SysTick_IRQn, 0);
+  NVIC_SetPriority(PendSV_IRQn, 15);
+  NVIC_SetPriority(SVCall_IRQn, 14);
   /* Enable systick, select internal clock */
   SysTick->CTRL |= SYST_CLCKSRC_INTERNAL | SYST_ENABLE | SYST_TICKINT;
   /* Launch scheduler */

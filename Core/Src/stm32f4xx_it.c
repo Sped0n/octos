@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
 #include "main.h"
+#include "stm32f4xx.h" // IWYU pragma: keep
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -155,19 +156,7 @@ void DebugMon_Handler(void) {
 /**
  * @brief This function handles Pendable request for system service.
  */
-void PendSV_Handler(void) {
-  /* USER CODE BEGIN PendSV_IRQn 0 */
-
-  /* USER CODE END PendSV_IRQn 0 */
-  /* USER CODE BEGIN PendSV_IRQn 1 */
-
-  /* USER CODE END PendSV_IRQn 1 */
-}
-
-/**
- * @brief This function handles System tick timer.
- */
-__attribute__((naked)) void SysTick_Handler(void) {
+__attribute__((naked)) void PendSV_Handler(void) {
   /* ------ STEP 1 - SAVE THE CURRENT TASK CONTEXT ------ */
   /* At this point the processor has already pushed PSR, PC, LR, R12, R3, R2,
    * R1 and R0 onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8,
@@ -206,6 +195,15 @@ __attribute__((naked)) void SysTick_Handler(void) {
   __asm("CPSIE   I");
   /* Return from exception */
   __asm("BX      LR");
+}
+
+/**
+ * @brief This function handles System tick timer.
+ */
+void SysTick_Handler(void) {
+  __disable_irq();
+  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+  __enable_irq();
 }
 
 /******************************************************************************/

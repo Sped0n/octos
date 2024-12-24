@@ -28,6 +28,7 @@ target_include_directories(stm32cubemx INTERFACE
     ../../Drivers/Inc
     ../../Core/Inc
     ../../App/Inc
+    ../../
     ${ARM_TOOLCHAIN_DIR}/include
     ${ARM_TOOLCHAIN_DIR}/lib
 )
@@ -39,6 +40,7 @@ file(GLOB APP_SOURCES CONFIGURE_DEPENDS "../../App/Src/*.c")
 target_sources(stm32cubemx INTERFACE
     ../../startup_stm32f429xx.s
     ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_gpio.c
+    ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usart.c
     ${DRIVER_SOURCES}
     ${CORE_SOURCES}
     ${APP_SOURCES}

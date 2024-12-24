@@ -1,5 +1,5 @@
-#ifndef __LED_H__
-#define __LED_H__
+#ifndef __DRIVER_LED_H__
+#define __DRIVER_LED_H__
 
 #include "stm32f4xx_ll_bus.h"
 #include "stm32f4xx_ll_gpio.h"

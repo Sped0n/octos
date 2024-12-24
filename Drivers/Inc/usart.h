@@ -1,5 +1,5 @@
-#ifndef __USART_H__
-#define __USART_H__
+#ifndef __DRIVER_USART_H__
+#define __DRIVER_USART_H__
 
 #include "stm32f429xx.h"
 #include "stm32f4xx.h" // IWYU pragma: keep

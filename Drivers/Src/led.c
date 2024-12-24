@@ -17,7 +17,7 @@ const uint16_t LED_GPIO_PIN[LEDn] = {LED1_PIN, LED2_PIN, LED3_PIN};
 void BSP_LED_Init(LED_TypeDef Led) {
   LL_GPIO_InitTypeDef gpio_init_struct;
 
-  /* Enable the LED_GPIO Clock */
+  /* Enable the LED GPIO Clock */
   LEDx_GPIO_CLK_ENABLE();
 
   /* Configure the LED GPIO pin */
@@ -36,7 +36,7 @@ void BSP_LED_Init(LED_TypeDef Led) {
 /**
  * @brief  DeInit LEDs.
  * @param  Led: LED to be de-init.
- * @note   THe DeInit function does not disable the GPIO clock
+ * @note   The DeInit function does not disable the GPIO clock.
  */
 void BSP_LED_DeInit(LED_TypeDef Led) {
   /* Turn off LED */

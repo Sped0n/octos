@@ -39,8 +39,6 @@ uint8_t create_task(void (*task0)(void), void (*task1)(void),
 }
 
 void task_yield(void) {
-  /* Clear systick current value register */
-  SysTick->VAL = 0;
-  /* Trigger systick */
-  SCB->ICSR |= SCB_ICSR_PENDSTSET_Msk;
+  /* Trigger PendSV */
+  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }

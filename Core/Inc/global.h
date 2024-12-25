@@ -5,4 +5,6 @@
 #define SYST_TICKINT (1U << 1)
 #define SYST_CLCKSRC_INTERNAL (1U << 2)
 
+#define MAX_TASKS 16
+
 #endif

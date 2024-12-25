@@ -1,12 +1,14 @@
 #include "scheduler.h"
+#include "data.h"
+#include "stm32f4xx.h" // IWYU pragma: keep
+#include "task.h"
+
+extern TCB_t *current_tcb;
+extern List_t ready_list;
 
 void scheduler_launch(void) {
-  /* R0 contains the address of current_tcb_pointer */
-  __asm("LDR     R0, =current_tcb_pointer");
-  /* R2 contains the value of current_tcb_pointer */
-  __asm("LDR     R2, [R0]");
   /* Load the SP reg with the stacked SP value */
-  __asm("LDR     SP, [R2]");
+  __asm("LDR     SP, %0" ::"m"(current_tcb->SP));
   /* Pop registers R4-R11(user saved context) */
   __asm("POP     {R4-R11}");
 
@@ -22,5 +24,14 @@ void scheduler_launch(void) {
   __asm("ADD     SP,SP,#4");
   /* Enable interrupt */
   __asm("CPSIE   I");
+  /* Return from exception */
   __asm("BX      LR");
+}
+
+void scheduler_rr(void) {
+  if (ready_list.Current->Next == &(ready_list.End))
+    ready_list.Current = ready_list.Current->Next->Next;
+  else
+    ready_list.Current = ready_list.Current->Next;
+  current_tcb = ready_list.Current->Owner;
 }

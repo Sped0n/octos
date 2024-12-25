@@ -22,6 +22,7 @@
 #include "main.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "scheduler.h"
 #include "stm32f4xx.h" // IWYU pragma: keep
 /* USER CODE END Includes */
 
@@ -167,7 +168,7 @@ __attribute__((naked)) void PendSV_Handler(void) {
   /* Push registers R4-R11 */
   __asm("PUSH    {R4-R11}");
   /* Load R0 with the address of current tcb pointer */
-  __asm("LDR     R0, =current_tcb_pointer");
+  __asm("LDR     R0, =current_tcb");
   /* Load R1 with the value of current tcb pointer(i.e after this, R1 will
    * contain the address of current TCB)
    */
@@ -180,13 +181,10 @@ __attribute__((naked)) void PendSV_Handler(void) {
 
   /* ------ STEP 2: LOAD THE NEW TASK CONTEXT FROM ITS STACK TO THE CPU
    * REGISTERS, THEN UPDATE current_tcb_pointer ------ */
-  /* Load the address of the next task TCB onto the R1. */
-  __asm("LDR     R1, [R1,#4]");
-  /* Load the contents of the next tasks stack pointer to current_tcb_pointer,
-   * equivalent to pointing current_tcb_pointer to the newer tasks TCB. Remember
-   * R1 contains the address of current_tcb_pointer
-   */
-  __asm("STR     R1, [R0]");
+  __asm("PUSH    {R0,LR}");
+  __asm("BL      scheduler_rr");
+  __asm("POP     {R0,LR}");
+  __asm("LDR     R1, [R0]");
   /* Load the newer tasks TCB to the SP */
   __asm("LDR     SP, [R1]");
   /* Pop registers R4-R11 */

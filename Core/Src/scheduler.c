@@ -29,9 +29,12 @@ void scheduler_launch(void) {
 }
 
 void scheduler_rr(void) {
-  if (ready_list.Current->Next == &(ready_list.End))
-    ready_list.Current = ready_list.Current->Next->Next;
-  else
-    ready_list.Current = ready_list.Current->Next;
-  current_tcb = ready_list.Current->Owner;
+  if (current_tcb->state == RUNNING) {
+    list_insert(&ready_list, &(current_tcb->StateListItem));
+    current_tcb->state = READY;
+  }
+
+  current_tcb = ready_list.End.Next->Owner;
+  list_remove(&(current_tcb->StateListItem));
+  current_tcb->state = RUNNING;
 }

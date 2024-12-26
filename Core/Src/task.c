@@ -46,7 +46,8 @@ uint8_t create_task(void (*task0)(void), void (*task1)(void),
   list_insert(&ready_list, &(tcbs[2].StateListItem));
 
   current_tcb = &tcbs[0];
-  ready_list.Current = &(tcbs[0].StateListItem);
+  current_tcb->state = RUNNING;
+  list_remove(&(current_tcb->StateListItem));
 
   __enable_irq();
 

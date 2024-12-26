@@ -37,7 +37,6 @@ void sema_release(Sema_t *sema) {
 
   if (sema->BlockedList.Length > 0) {
     TCB_t *temp = sema->BlockedList.End.Next->Owner;
-    list_remove(sema->BlockedList.End.Next);
     list_insert(&ready_list, &(temp->StateListItem));
     temp->state = READY;
   }
@@ -63,7 +62,6 @@ void mutex_acquire(Mutex_t *mutex) {
     return;
   } else {
     // Need to block
-    list_remove(&(current_tcb->StateListItem));
     list_insert(&(mutex->BlockedList), &(current_tcb->StateListItem));
     current_tcb->state = BLOCKED;
 

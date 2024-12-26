@@ -2,6 +2,7 @@
 #define __TASK_H__
 
 #include "list.h"
+#include "page.h"
 #include <stdint.h>
 
 typedef enum thread_state {
@@ -12,15 +13,15 @@ typedef enum thread_state {
 
 typedef struct TCB {
   uint32_t *SP;
-  ListItem_t StateListItem;
   uint8_t id;
-  char *name;
   thread_state_t state;
+  ListItem_t StateListItem;
+  page_t page;
 } TCB_t;
 
-uint8_t create_task(void (*task0)(void), void (*task1)(void),
-                    void (*task2)(void));
+typedef void (*task_func_t)(void *arg);
+
+uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy);
 void task_yield(void);
-void print_task_status(void);
 
 #endif

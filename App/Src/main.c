@@ -1,6 +1,7 @@
 #include "main.h"
 #include "kernel.h"
 #include "led.h"
+#include "page.h"
 #include "stm32f429xx.h"
 #include "sync.h"
 #include "task.h"
@@ -12,6 +13,7 @@ volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0;
 Mutex_t mutex_test;
 
 void task0(void) {
+  BSP_LED_Toggle(LED1);
   while (1) {
     if (tp0 % 1000 == 0 && tp0 > 0) {
       BSP_LED_Toggle(LED1);
@@ -24,6 +26,8 @@ void task0(void) {
 // main.c
 
 void task1(void) {
+
+  BSP_LED_Toggle(LED2);
   while (1) {
     if (tp1 % 1000 == 0 && tp1 > 0) {
       BSP_LED_Toggle(LED2);
@@ -37,6 +41,8 @@ void task1(void) {
 }
 
 void task2(void) {
+
+  BSP_LED_Toggle(LED3);
   while (1) {
     if (tp2 % 1000 == 0 && tp2 > 0) {
       BSP_LED_Toggle(LED3);
@@ -44,9 +50,6 @@ void task2(void) {
       mutex_acquire(&mutex_test);
       printf("---------hello from task2---------\n\r");
       mutex_release(&mutex_test);
-
-    } else if (tp2 % 1000001 == 0) {
-      print_task_status();
     }
     tp2++;
   }
@@ -86,12 +89,9 @@ int main(void) {
   // Initialize variables
   tp0 = tp1 = tp2 = 0;
 
-  // Create tasks
-  if (!create_task(&task0, &task1, &task2)) {
-    // Handle task creation error
-    while (1)
-      ;
-  }
+  task_create((task_func_t)&task0, NULL, PAGE_POLICY_POOL);
+  task_create((task_func_t)&task1, NULL, PAGE_POLICY_POOL);
+  task_create((task_func_t)&task2, NULL, PAGE_POLICY_DYNAMIC);
 
   // Launch kernel with 1ms time quantum
   kernel_launch(1);

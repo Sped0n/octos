@@ -1,12 +1,13 @@
 #include "scheduler.h"
-#include "data.h"
-#include "stm32f4xx.h" // IWYU pragma: keep
+#include "list.h"
 #include "task.h"
+
+#include "stm32f4xx.h" // IWYU pragma: keep
 
 extern TCB_t *current_tcb;
 extern List_t ready_list;
 
-void scheduler_launch(void) {
+__attribute__((naked)) void scheduler_launch(void) {
   /* Load the SP reg with the stacked SP value */
   __asm("LDR     SP, %0" ::"m"(current_tcb->SP));
   /* Pop registers R4-R11(user saved context) */
@@ -26,6 +27,12 @@ void scheduler_launch(void) {
   __asm("CPSIE   I");
   /* Return from exception */
   __asm("BX      LR");
+}
+
+void scheduler_trigger(void) {
+  __disable_irq();
+  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+  __enable_irq();
 }
 
 void scheduler_rr(void) {

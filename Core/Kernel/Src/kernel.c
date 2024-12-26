@@ -1,9 +1,10 @@
 #include "kernel.h"
 #include "global.h"
 #include "scheduler.h"
+#include <stdint.h>
+
 #include "stm32f4xx.h" // IWYU pragma: keep
 #include "system_stm32f4xx.h"
-#include <stdint.h>
 
 void kernel_launch(uint32_t quanta_in_ms) {
   /* Reset systick */

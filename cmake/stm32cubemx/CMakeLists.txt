@@ -26,7 +26,8 @@ target_include_directories(stm32cubemx INTERFACE
     ../../Libs/STM32F4xx_HAL_Driver/Inc
     ../../Libs/STM32F4xx_HAL_Driver/Inc/Legacy
     ../../Drivers/Inc
-    ../../Core/Inc
+    ../../Core/Kernel/Inc
+    ../../Core/Data/Inc
     ../../App/Inc
     ../../
     ${ARM_TOOLCHAIN_DIR}/include
@@ -34,15 +35,17 @@ target_include_directories(stm32cubemx INTERFACE
 )
 
 file(GLOB DRIVER_SOURCES CONFIGURE_DEPENDS "../../Drivers/Src/*.c")
-file(GLOB CORE_SOURCES CONFIGURE_DEPENDS "../../Core/Src/*.c")
+file(GLOB KERNEL_SOURCES CONFIGURE_DEPENDS "../../Core/Kernel/Src/*.c")
+file(GLOB DATA_SOURCES CONFIGURE_DEPENDS "../../Core/Data/Src/*.c")
 file(GLOB APP_SOURCES CONFIGURE_DEPENDS "../../App/Src/*.c")
 
 target_sources(stm32cubemx INTERFACE
-    ../../startup_stm32f429xx.s
+    ../../App/startup_stm32f429xx.s
     ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_gpio.c
     ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usart.c
     ${DRIVER_SOURCES}
-    ${CORE_SOURCES}
+    ${KERNEL_SOURCES}
+    ${DATA_SOURCES}
     ${APP_SOURCES}
 )
 

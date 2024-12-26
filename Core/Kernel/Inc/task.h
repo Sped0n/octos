@@ -1,7 +1,7 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
-#include "data.h"
+#include "list.h"
 #include <stdint.h>
 
 typedef enum thread_state {

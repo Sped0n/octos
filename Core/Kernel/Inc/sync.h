@@ -1,7 +1,7 @@
 #ifndef __SYNC_H__
 #define __SYNC_H__
 
-#include "data.h"
+#include "list.h"
 #include "task.h"
 #include <stdint.h>
 

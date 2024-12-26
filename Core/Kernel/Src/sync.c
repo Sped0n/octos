@@ -1,8 +1,9 @@
 #include "sync.h"
-#include "data.h"
-#include "stm32f4xx.h" // IWYU pragma: keep
+#include "list.h"
 #include "task.h"
 #include <stddef.h>
+
+#include "stm32f4xx.h" // IWYU pragma: keep
 
 extern TCB_t *current_tcb;
 extern List_t ready_list;

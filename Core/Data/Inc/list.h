@@ -1,5 +1,5 @@
-#ifndef __DATA_H__
-#define __DATA_H__
+#ifndef __LIST_H__
+#define __LIST_H__
 
 #include <stdint.h>
 typedef struct ListItem {

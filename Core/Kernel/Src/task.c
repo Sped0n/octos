@@ -1,9 +1,11 @@
 #include "task.h"
-#include "data.h"
-#include "stm32f4xx.h" // IWYU pragma: keep
+#include "list.h"
+#include "scheduler.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include "stm32f4xx.h" // IWYU pragma: keep
 
 #define NUM_OF_THREADS 3
 #define STACKSIZE 2048
@@ -61,7 +63,4 @@ void print_task_status(void) {
   }
 }
 
-void task_yield(void) {
-  /* Trigger PendSV */
-  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
-}
+void task_yield(void) { scheduler_trigger(); }

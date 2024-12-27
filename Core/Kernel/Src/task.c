@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
+#include "cmsis_gcc.h"
 #include "list.h"
+#include "page.h"
 #include "scheduler.h"
 #include "task.h"
 
@@ -13,6 +13,7 @@
 
 TCB_t *current_tcb;
 List_t ready_list;
+List_t terminated_list;
 
 static uint8_t next_id = 0;
 
@@ -32,33 +33,27 @@ static void task_stack_init(TCB_t *tcb, task_func_t func, void *arg) {
   tcb->SP = stack_top;
 }
 
-uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy) {
+uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy,
+                    uint16_t page_size) {
 
   __disable_irq();
 
-  TCB_t *tcb = malloc(sizeof(TCB_t));
-  if (!tcb) {
+  page_t page;
+  page_alloc(&page, page_policy, page_size);
+  if (!page.raw) {
     __enable_irq();
     return 1;
   }
 
-  // Allocate stack
-  page_alloc(&(tcb->page), page_policy, STACK_SIZE);
-  if (!tcb->page.raw) {
-    free(tcb);
-    __enable_irq();
-    return 1;
-  }
-
+  TCB_t *tcb = (TCB_t *)page.raw;
+  tcb->page = page;
   tcb->id = next_id++;
-
   task_stack_init(tcb, func, arg);
   list_item_init(&(tcb->StateListItem));
   tcb->StateListItem.Owner = tcb;
 
-  if (!ready_list.Current) {
+  if (!ready_list.Current)
     list_init(&ready_list);
-  }
 
   if (tcb->id == 0) {
     tcb->state = RUNNING;
@@ -71,5 +66,26 @@ uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy) {
   __enable_irq();
   return 0;
 }
+
+void task_delete(TCB_t *tcb) {
+  if (!tcb || tcb->state == TERMINATED)
+    return;
+
+  __disable_irq();
+
+  if (!terminated_list.Current)
+    list_init(&terminated_list);
+
+  if (tcb->state != RUNNING) {
+    list_remove(&(tcb->StateListItem));
+  }
+  list_insert(&terminated_list, &(tcb->StateListItem));
+  tcb->state = TERMINATED;
+
+  scheduler_trigger();
+  __enable_irq();
+}
+
+void task_terminate(void) { task_delete(current_tcb); }
 
 void task_yield(void) { scheduler_trigger(); }

@@ -1,11 +1,13 @@
 #include "scheduler.h"
 #include "list.h"
+#include "page.h"
 #include "task.h"
 
 #include "stm32f4xx.h" // IWYU pragma: keep
 
 extern TCB_t *current_tcb;
 extern List_t ready_list;
+extern List_t terminated_list;
 
 __attribute__((naked)) void scheduler_launch(void) {
   /* Load the SP reg with the stacked SP value */
@@ -39,6 +41,12 @@ void scheduler_rr(void) {
   if (current_tcb->state == RUNNING) {
     list_insert(&ready_list, &(current_tcb->StateListItem));
     current_tcb->state = READY;
+  }
+
+  if (terminated_list.Current && terminated_list.Length > 0) {
+    page_t *page = &(((TCB_t *)terminated_list.End.Next->Owner)->page);
+    list_remove(terminated_list.End.Next);
+    page_free(page);
   }
 
   current_tcb = ready_list.End.Next->Owner;

@@ -15,11 +15,15 @@ Mutex_t mutex_test;
 void task0(void) {
   BSP_LED_Toggle(LED1);
   while (1) {
-    if (tp0 % 1000 == 0 && tp0 > 0) {
+    if (tp0 % 30 == 0 && tp0 > 0) {
       BSP_LED_Toggle(LED1);
     }
     tp0++;
-    task_yield(); // Add explicit yield to ensure other tasks get CPU time
+    if (tp0 == 201) {
+      BSP_LED_Off(LED1);
+      task_terminate();
+    }
+    task_yield();
   }
 }
 
@@ -29,12 +33,19 @@ void task1(void) {
 
   BSP_LED_Toggle(LED2);
   while (1) {
-    if (tp1 % 1000 == 0 && tp1 > 0) {
+    if (tp1 % 100000 == 0 && tp1 > 0) {
       BSP_LED_Toggle(LED2);
 
       mutex_acquire(&mutex_test);
       printf("########hello from task1###########\n\r");
       mutex_release(&mutex_test);
+      if (tp1 == 100000 || tp1 == 500000) {
+
+        mutex_acquire(&mutex_test);
+        printf("create return %d\n\r",
+               task_create((task_func_t)&task0, NULL, PAGE_POLICY_POOL, 256));
+        mutex_release(&mutex_test);
+      }
     }
     tp1++;
   }
@@ -44,7 +55,7 @@ void task2(void) {
 
   BSP_LED_Toggle(LED3);
   while (1) {
-    if (tp2 % 1000 == 0 && tp2 > 0) {
+    if (tp2 % 10000 == 0 && tp2 > 0) {
       BSP_LED_Toggle(LED3);
 
       mutex_acquire(&mutex_test);
@@ -89,9 +100,8 @@ int main(void) {
   // Initialize variables
   tp0 = tp1 = tp2 = 0;
 
-  task_create((task_func_t)&task0, NULL, PAGE_POLICY_POOL);
-  task_create((task_func_t)&task1, NULL, PAGE_POLICY_POOL);
-  task_create((task_func_t)&task2, NULL, PAGE_POLICY_DYNAMIC);
+  task_create((task_func_t)&task1, NULL, PAGE_POLICY_POOL, 256);
+  task_create((task_func_t)&task2, NULL, PAGE_POLICY_DYNAMIC, 256);
 
   // Launch kernel with 1ms time quantum
   kernel_launch(1);

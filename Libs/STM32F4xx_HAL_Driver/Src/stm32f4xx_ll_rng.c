@@ -21,17 +21,17 @@
 #include "stm32f4xx_ll_rng.h"
 #include "stm32f4xx_ll_bus.h"
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 #include "stm32_assert.h"
 #else
-#define assert_param(expr) ((void)0U)
+#define assert_param(expr) ((void) 0U)
 #endif /* USE_FULL_ASSERT */
 
 /** @addtogroup STM32F4xx_LL_Driver
   * @{
   */
 
-#if defined (RNG)
+#if defined(RNG)
 
 /** @addtogroup RNG_LL
   * @{
@@ -59,34 +59,30 @@
   *          - SUCCESS: RNG registers are de-initialized
   *          - ERROR: not applicable
   */
-ErrorStatus LL_RNG_DeInit(const RNG_TypeDef *RNGx)
-{
-  ErrorStatus status = SUCCESS;
+ErrorStatus LL_RNG_DeInit(const RNG_TypeDef *RNGx) {
+    ErrorStatus status = SUCCESS;
 
-  /* Check the parameters */
-  assert_param(IS_RNG_ALL_INSTANCE(RNGx));
-  if (RNGx == RNG)
-  {
+    /* Check the parameters */
+    assert_param(IS_RNG_ALL_INSTANCE(RNGx));
+    if (RNGx == RNG) {
 #if !defined(RCC_AHB2_SUPPORT)
-    /* Enable RNG reset state */
-    LL_AHB1_GRP1_ForceReset(LL_AHB1_GRP1_PERIPH_RNG);
+        /* Enable RNG reset state */
+        LL_AHB1_GRP1_ForceReset(LL_AHB1_GRP1_PERIPH_RNG);
 
-    /* Release RNG from reset state */
-    LL_AHB1_GRP1_ReleaseReset(LL_AHB1_GRP1_PERIPH_RNG);
+        /* Release RNG from reset state */
+        LL_AHB1_GRP1_ReleaseReset(LL_AHB1_GRP1_PERIPH_RNG);
 #else
-    /* Enable RNG reset state */
-    LL_AHB2_GRP1_ForceReset(LL_AHB2_GRP1_PERIPH_RNG);
+        /* Enable RNG reset state */
+        LL_AHB2_GRP1_ForceReset(LL_AHB2_GRP1_PERIPH_RNG);
 
-    /* Release RNG from reset state */
-    LL_AHB2_GRP1_ReleaseReset(LL_AHB2_GRP1_PERIPH_RNG);
+        /* Release RNG from reset state */
+        LL_AHB2_GRP1_ReleaseReset(LL_AHB2_GRP1_PERIPH_RNG);
 #endif /* !RCC_AHB2_SUPPORT */
-  }
-  else
-  {
-    status = ERROR;
-  }
+    } else {
+        status = ERROR;
+    }
 
-  return status;
+    return status;
 }
 
 /**
@@ -108,4 +104,3 @@ ErrorStatus LL_RNG_DeInit(const RNG_TypeDef *RNGx)
   */
 
 #endif /* USE_FULL_LL_DRIVER */
-

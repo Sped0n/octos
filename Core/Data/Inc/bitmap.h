@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 typedef struct {
-  uint32_t *data;
-  size_t size;
+    uint32_t *data;
+    size_t size;
 } bitmap_t;
 
 void bitmap_init(bitmap_t *bm, uint32_t *data, size_t size);

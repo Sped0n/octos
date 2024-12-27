@@ -2,21 +2,21 @@
 #define __DRIVER_USART_H__
 
 #include "stm32f429xx.h"
-#include "stm32f4xx.h" // IWYU pragma: keep
+#include "stm32f4xx.h"// IWYU pragma: keep
 #include <stdint.h>
 
 typedef struct {
-  GPIO_TypeDef *Port;
-  uint32_t Pin;
-  uint32_t Alternate;
+    GPIO_TypeDef *Port;
+    uint32_t Pin;
+    uint32_t Alternate;
 } EXT_GPIO_TypeDef;
 
 // Structure to hold USART configuration
 typedef struct {
-  USART_TypeDef *USARTx;
-  EXT_GPIO_TypeDef *TX;
-  EXT_GPIO_TypeDef *RX;
-  uint32_t BaudRate;
+    USART_TypeDef *USARTx;
+    EXT_GPIO_TypeDef *TX;
+    EXT_GPIO_TypeDef *RX;
+    uint32_t BaudRate;
 } USART_Config_t;
 
 void BSP_USART_Init(USART_Config_t *config);

@@ -35,9 +35,9 @@ extern "C" {
   * @{
   */
 
-#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) || \
-    defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F413xx) || \
-    defined(STM32F423xx)
+#if defined(STM32F427xx) || defined(STM32F437xx) || defined(STM32F429xx) || defined(STM32F439xx) ||     \
+        defined(STM32F446xx) || defined(STM32F469xx) || defined(STM32F479xx) || defined(STM32F413xx) || \
+        defined(STM32F423xx)
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -45,15 +45,15 @@ extern "C" {
   * @{
   */
 #if defined(STM32F413xx) || defined(STM32F423xx)
-#define SAI_CLKSOURCE_PLLI2S             0x00000000U
-#define SAI_CLKSOURCE_EXT                0x00100000U
-#define SAI_CLKSOURCE_PLLR               0x00200000U
-#define SAI_CLKSOURCE_HS                 0x00300000U
+#define SAI_CLKSOURCE_PLLI2S 0x00000000U
+#define SAI_CLKSOURCE_EXT 0x00100000U
+#define SAI_CLKSOURCE_PLLR 0x00200000U
+#define SAI_CLKSOURCE_HS 0x00300000U
 #else
-#define SAI_CLKSOURCE_PLLSAI             0x00000000U
-#define SAI_CLKSOURCE_PLLI2S             0x00100000U
-#define SAI_CLKSOURCE_EXT                0x00200000U
-#define SAI_CLKSOURCE_NA                 0x00400000U /*!< No applicable for STM32F446xx */
+#define SAI_CLKSOURCE_PLLSAI 0x00000000U
+#define SAI_CLKSOURCE_PLLI2S 0x00100000U
+#define SAI_CLKSOURCE_EXT 0x00200000U
+#define SAI_CLKSOURCE_NA 0x00400000U /*!< No applicable for STM32F446xx */
 #endif
 
 
@@ -85,14 +85,14 @@ uint32_t SAI_GetInputClock(const SAI_HandleTypeDef *hsai);
 /* Private constants ---------------------------------------------------------*/
 /* Private macros ------------------------------------------------------------*/
 #if defined(STM32F413xx) || defined(STM32F423xx)
-#define IS_SAI_CLK_SOURCE(SOURCE) (((SOURCE) == SAI_CLKSOURCE_PLLI2S) ||\
-                                   ((SOURCE) == SAI_CLKSOURCE_EXT)||\
-                                   ((SOURCE) == SAI_CLKSOURCE_PLLR)||\
+#define IS_SAI_CLK_SOURCE(SOURCE) (((SOURCE) == SAI_CLKSOURCE_PLLI2S) || \
+                                   ((SOURCE) == SAI_CLKSOURCE_EXT) ||    \
+                                   ((SOURCE) == SAI_CLKSOURCE_PLLR) ||   \
                                    ((SOURCE) == SAI_CLKSOURCE_HS))
 #else
-#define IS_SAI_CLK_SOURCE(SOURCE) (((SOURCE) == SAI_CLKSOURCE_PLLSAI) ||\
-                                   ((SOURCE) == SAI_CLKSOURCE_EXT)||\
-                                   ((SOURCE) == SAI_CLKSOURCE_PLLI2S)||\
+#define IS_SAI_CLK_SOURCE(SOURCE) (((SOURCE) == SAI_CLKSOURCE_PLLSAI) || \
+                                   ((SOURCE) == SAI_CLKSOURCE_EXT) ||    \
+                                   ((SOURCE) == SAI_CLKSOURCE_PLLI2S) || \
                                    ((SOURCE) == SAI_CLKSOURCE_NA))
 #endif
 /* Private functions ---------------------------------------------------------*/
@@ -111,4 +111,3 @@ uint32_t SAI_GetInputClock(const SAI_HandleTypeDef *hsai);
 #endif
 
 #endif /* __STM32F4xx_HAL_SAI_EX_H */
-

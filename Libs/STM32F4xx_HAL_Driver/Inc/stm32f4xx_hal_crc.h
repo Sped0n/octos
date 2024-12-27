@@ -43,13 +43,12 @@ extern "C" {
 /**
   * @brief  CRC HAL State Structure definition
   */
-typedef enum
-{
-  HAL_CRC_STATE_RESET     = 0x00U,  /*!< CRC not yet initialized or disabled */
-  HAL_CRC_STATE_READY     = 0x01U,  /*!< CRC initialized and ready for use   */
-  HAL_CRC_STATE_BUSY      = 0x02U,  /*!< CRC internal process is ongoing     */
-  HAL_CRC_STATE_TIMEOUT   = 0x03U,  /*!< CRC timeout state                   */
-  HAL_CRC_STATE_ERROR     = 0x04U   /*!< CRC error state                     */
+typedef enum {
+    HAL_CRC_STATE_RESET = 0x00U,   /*!< CRC not yet initialized or disabled */
+    HAL_CRC_STATE_READY = 0x01U,   /*!< CRC initialized and ready for use   */
+    HAL_CRC_STATE_BUSY = 0x02U,    /*!< CRC internal process is ongoing     */
+    HAL_CRC_STATE_TIMEOUT = 0x03U, /*!< CRC timeout state                   */
+    HAL_CRC_STATE_ERROR = 0x04U    /*!< CRC error state                     */
 } HAL_CRC_StateTypeDef;
 
 
@@ -58,11 +57,11 @@ typedef enum
   */
 typedef struct
 {
-  CRC_TypeDef                 *Instance;   /*!< Register base address        */
+    CRC_TypeDef *Instance; /*!< Register base address        */
 
-  HAL_LockTypeDef             Lock;        /*!< CRC Locking object           */
+    HAL_LockTypeDef Lock; /*!< CRC Locking object           */
 
-  __IO HAL_CRC_StateTypeDef   State;       /*!< CRC communication state      */
+    __IO HAL_CRC_StateTypeDef State; /*!< CRC communication state      */
 
 } CRC_HandleTypeDef;
 /**

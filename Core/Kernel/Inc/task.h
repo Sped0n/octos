@@ -6,18 +6,18 @@
 #include <stdint.h>
 
 typedef enum thread_state {
-  READY,
-  RUNNING,
-  BLOCKED,
-  TERMINATED
+    READY,
+    RUNNING,
+    BLOCKED,
+    TERMINATED
 } thread_state_t;
 
 typedef struct TCB {
-  uint32_t *SP;
-  uint8_t id;
-  thread_state_t state;
-  ListItem_t StateListItem;
-  page_t page;
+    uint32_t *SP;
+    uint8_t id;
+    thread_state_t state;
+    ListItem_t StateListItem;
+    page_t page;
 } TCB_t;
 
 typedef void (*task_func_t)(void *arg);

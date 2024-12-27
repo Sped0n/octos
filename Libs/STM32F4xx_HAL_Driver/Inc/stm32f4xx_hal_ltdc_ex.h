@@ -27,7 +27,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal_def.h"
 
-#if defined (LTDC) && defined (DSI)
+#if defined(LTDC) && defined(DSI)
 
 #include "stm32f4xx_hal_dsi.h"
 

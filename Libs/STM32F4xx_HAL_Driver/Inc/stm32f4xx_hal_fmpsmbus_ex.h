@@ -45,8 +45,8 @@ extern "C" {
 /** @defgroup FMPSMBUSEx_FastModePlus FMPSMBUS Extended Fast Mode Plus
   * @{
   */
-#define FMPSMBUS_FASTMODEPLUS_SCL            SYSCFG_CFGR_FMPI2C1_SCL  /*!< Enable Fast Mode Plus on FMPI2C1 SCL pins       */
-#define FMPSMBUS_FASTMODEPLUS_SDA            SYSCFG_CFGR_FMPI2C1_SDA  /*!< Enable Fast Mode Plus on FMPI2C1 SDA pins       */
+#define FMPSMBUS_FASTMODEPLUS_SCL SYSCFG_CFGR_FMPI2C1_SCL /*!< Enable Fast Mode Plus on FMPI2C1 SCL pins       */
+#define FMPSMBUS_FASTMODEPLUS_SDA SYSCFG_CFGR_FMPI2C1_SDA /*!< Enable Fast Mode Plus on FMPI2C1 SDA pins       */
 /**
   * @}
   */
@@ -104,7 +104,7 @@ void HAL_FMPSMBUSEx_DisableFastModePlus(uint32_t ConfigFastModePlus);
   * @{
   */
 #define IS_FMPSMBUS_FASTMODEPLUS(__CONFIG__) ((((__CONFIG__) & (FMPSMBUS_FASTMODEPLUS_SCL)) == \
-                                               FMPSMBUS_FASTMODEPLUS_SCL) || \
+                                               FMPSMBUS_FASTMODEPLUS_SCL) ||                   \
                                               (((__CONFIG__) & (FMPSMBUS_FASTMODEPLUS_SDA)) == \
                                                FMPSMBUS_FASTMODEPLUS_SDA))
 /**

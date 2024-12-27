@@ -6,13 +6,13 @@
 #include <stdint.h>
 
 typedef struct Sema {
-  int32_t Count;
-  List_t BlockedList;
+    int32_t Count;
+    List_t BlockedList;
 } Sema_t;
 
 typedef struct Mutex {
-  TCB_t *Owner;
-  List_t BlockedList;
+    TCB_t *Owner;
+    List_t BlockedList;
 } Mutex_t;
 
 void sema_init(Sema_t *sem, int32_t initial_count);

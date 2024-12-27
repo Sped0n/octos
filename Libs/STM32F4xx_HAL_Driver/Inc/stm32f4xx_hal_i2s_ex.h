@@ -42,7 +42,7 @@ extern "C" {
   * @{
   */
 
-#define I2SxEXT(__INSTANCE__) ((__INSTANCE__) == (SPI2)? (SPI_TypeDef *)(I2S2ext_BASE): (SPI_TypeDef *)(I2S3ext_BASE))
+#define I2SxEXT(__INSTANCE__) ((__INSTANCE__) == (SPI2) ? (SPI_TypeDef *) (I2S2ext_BASE) : (SPI_TypeDef *) (I2S3ext_BASE))
 
 /** @brief  Enable or disable the specified I2SExt peripheral.
   * @param  __HANDLE__ specifies the I2S Handle.
@@ -73,8 +73,7 @@ extern "C" {
   *            @arg I2S_IT_ERR: Error interrupt enable
   * @retval The new state of __IT__ (TRUE or FALSE).
   */
-#define __HAL_I2SEXT_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__) (((I2SxEXT((__HANDLE__)->Instance)->CR2\
-                                                                 & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)
+#define __HAL_I2SEXT_GET_IT_SOURCE(__HANDLE__, __INTERRUPT__) (((I2SxEXT((__HANDLE__)->Instance)->CR2 & (__INTERRUPT__)) == (__INTERRUPT__)) ? SET : RESET)
 
 /** @brief  Checks whether the specified I2SExt flag is set or not.
   * @param  __HANDLE__ specifies the I2S Handle.
@@ -95,31 +94,34 @@ extern "C" {
   * @param  __HANDLE__ specifies the I2S Handle.
   * @retval None
   */
-#define __HAL_I2SEXT_CLEAR_OVRFLAG(__HANDLE__) do{                                                 \
-                                                   __IO uint32_t tmpreg_ovr = 0x00U;                \
-                                                   tmpreg_ovr = I2SxEXT((__HANDLE__)->Instance)->DR;\
-                                                   tmpreg_ovr = I2SxEXT((__HANDLE__)->Instance)->SR;\
-                                                   UNUSED(tmpreg_ovr);                              \
-                                                  }while(0U)
+#define __HAL_I2SEXT_CLEAR_OVRFLAG(__HANDLE__)            \
+    do {                                                  \
+        __IO uint32_t tmpreg_ovr = 0x00U;                 \
+        tmpreg_ovr = I2SxEXT((__HANDLE__)->Instance)->DR; \
+        tmpreg_ovr = I2SxEXT((__HANDLE__)->Instance)->SR; \
+        UNUSED(tmpreg_ovr);                               \
+    } while (0U)
 /** @brief Clears the I2SExt UDR pending flag.
   * @param  __HANDLE__ specifies the I2S Handle.
   * @retval None
   */
-#define __HAL_I2SEXT_CLEAR_UDRFLAG(__HANDLE__) do{                                                 \
-                                                   __IO uint32_t tmpreg_udr = 0x00U;                \
-                                                   tmpreg_udr = I2SxEXT((__HANDLE__)->Instance)->SR;\
-                                                   UNUSED(tmpreg_udr);                              \
-                                                  }while(0U)
+#define __HAL_I2SEXT_CLEAR_UDRFLAG(__HANDLE__)            \
+    do {                                                  \
+        __IO uint32_t tmpreg_udr = 0x00U;                 \
+        tmpreg_udr = I2SxEXT((__HANDLE__)->Instance)->SR; \
+        UNUSED(tmpreg_udr);                               \
+    } while (0U)
 /** @brief Flush the I2S and I2SExt DR Registers.
   * @param  __HANDLE__ specifies the I2S Handle.
   * @retval None
   */
-#define __HAL_I2SEXT_FLUSH_RX_DR(__HANDLE__) do{                                                    \
-                                                   __IO uint32_t tmpreg_dr = 0x00U;                 \
-                                                   tmpreg_dr = I2SxEXT((__HANDLE__)->Instance)->DR; \
-                                                   tmpreg_dr = ((__HANDLE__)->Instance->DR);        \
-                                                   UNUSED(tmpreg_dr);                               \
-                                                  }while(0U)
+#define __HAL_I2SEXT_FLUSH_RX_DR(__HANDLE__)             \
+    do {                                                 \
+        __IO uint32_t tmpreg_dr = 0x00U;                 \
+        tmpreg_dr = I2SxEXT((__HANDLE__)->Instance)->DR; \
+        tmpreg_dr = ((__HANDLE__)->Instance->DR);        \
+        UNUSED(tmpreg_dr);                               \
+    } while (0U)
 /**
   * @}
   */
@@ -180,4 +182,3 @@ void HAL_I2SEx_TxRxCpltCallback(I2S_HandleTypeDef *hi2s);
 
 
 #endif /* STM32F4xx_HAL_I2S_EX_H */
-

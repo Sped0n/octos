@@ -164,7 +164,7 @@
 #include "stm32f4xx_hal.h"
 
 #ifdef HAL_DMA2D_MODULE_ENABLED
-#if defined (DMA2D)
+#if defined(DMA2D)
 
 /** @addtogroup STM32F4xx_HAL_Driver
   * @{
@@ -184,8 +184,8 @@
 /** @defgroup DMA2D_TimeOut DMA2D Time Out
   * @{
   */
-#define DMA2D_TIMEOUT_ABORT           (1000U)  /*!<  1s  */
-#define DMA2D_TIMEOUT_SUSPEND         (1000U)  /*!<  1s  */
+#define DMA2D_TIMEOUT_ABORT (1000U)   /*!<  1s  */
+#define DMA2D_TIMEOUT_SUSPEND (1000U) /*!<  1s  */
 /**
   * @}
   */
@@ -235,64 +235,59 @@ static void DMA2D_SetConfig(DMA2D_HandleTypeDef *hdma2d, uint32_t pdata, uint32_
   *                 the configuration information for the DMA2D.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_Init(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Check the DMA2D peripheral state */
-  if (hdma2d == NULL)
-  {
-    return HAL_ERROR;
-  }
-
-  /* Check the parameters */
-  assert_param(IS_DMA2D_ALL_INSTANCE(hdma2d->Instance));
-  assert_param(IS_DMA2D_MODE(hdma2d->Init.Mode));
-  assert_param(IS_DMA2D_CMODE(hdma2d->Init.ColorMode));
-  assert_param(IS_DMA2D_OFFSET(hdma2d->Init.OutputOffset));
-
-#if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
-  if (hdma2d->State == HAL_DMA2D_STATE_RESET)
-  {
-    /* Reset Callback pointers in HAL_DMA2D_STATE_RESET only */
-    hdma2d->LineEventCallback       = HAL_DMA2D_LineEventCallback;
-    hdma2d->CLUTLoadingCpltCallback = HAL_DMA2D_CLUTLoadingCpltCallback;
-    if (hdma2d->MspInitCallback == NULL)
-    {
-      hdma2d->MspInitCallback = HAL_DMA2D_MspInit;
+HAL_StatusTypeDef HAL_DMA2D_Init(DMA2D_HandleTypeDef *hdma2d) {
+    /* Check the DMA2D peripheral state */
+    if (hdma2d == NULL) {
+        return HAL_ERROR;
     }
 
-    /* Init the low level hardware */
-    hdma2d->MspInitCallback(hdma2d);
-  }
+    /* Check the parameters */
+    assert_param(IS_DMA2D_ALL_INSTANCE(hdma2d->Instance));
+    assert_param(IS_DMA2D_MODE(hdma2d->Init.Mode));
+    assert_param(IS_DMA2D_CMODE(hdma2d->Init.ColorMode));
+    assert_param(IS_DMA2D_OFFSET(hdma2d->Init.OutputOffset));
+
+#if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
+    if (hdma2d->State == HAL_DMA2D_STATE_RESET) {
+        /* Reset Callback pointers in HAL_DMA2D_STATE_RESET only */
+        hdma2d->LineEventCallback = HAL_DMA2D_LineEventCallback;
+        hdma2d->CLUTLoadingCpltCallback = HAL_DMA2D_CLUTLoadingCpltCallback;
+        if (hdma2d->MspInitCallback == NULL) {
+            hdma2d->MspInitCallback = HAL_DMA2D_MspInit;
+        }
+
+        /* Init the low level hardware */
+        hdma2d->MspInitCallback(hdma2d);
+    }
 #else
-  if (hdma2d->State == HAL_DMA2D_STATE_RESET)
-  {
-    /* Allocate lock resource and initialize it */
-    hdma2d->Lock = HAL_UNLOCKED;
-    /* Init the low level hardware */
-    HAL_DMA2D_MspInit(hdma2d);
-  }
+    if (hdma2d->State == HAL_DMA2D_STATE_RESET) {
+        /* Allocate lock resource and initialize it */
+        hdma2d->Lock = HAL_UNLOCKED;
+        /* Init the low level hardware */
+        HAL_DMA2D_MspInit(hdma2d);
+    }
 #endif /* (USE_HAL_DMA2D_REGISTER_CALLBACKS) */
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* DMA2D CR register configuration -------------------------------------------*/
-  MODIFY_REG(hdma2d->Instance->CR, DMA2D_CR_MODE, hdma2d->Init.Mode);
+    /* DMA2D CR register configuration -------------------------------------------*/
+    MODIFY_REG(hdma2d->Instance->CR, DMA2D_CR_MODE, hdma2d->Init.Mode);
 
-  /* DMA2D OPFCCR register configuration ---------------------------------------*/
-  MODIFY_REG(hdma2d->Instance->OPFCCR, DMA2D_OPFCCR_CM, hdma2d->Init.ColorMode);
+    /* DMA2D OPFCCR register configuration ---------------------------------------*/
+    MODIFY_REG(hdma2d->Instance->OPFCCR, DMA2D_OPFCCR_CM, hdma2d->Init.ColorMode);
 
-  /* DMA2D OOR register configuration ------------------------------------------*/
-  MODIFY_REG(hdma2d->Instance->OOR, DMA2D_OOR_LO, hdma2d->Init.OutputOffset);
+    /* DMA2D OOR register configuration ------------------------------------------*/
+    MODIFY_REG(hdma2d->Instance->OOR, DMA2D_OOR_LO, hdma2d->Init.OutputOffset);
 
 
-  /* Update error code */
-  hdma2d->ErrorCode = HAL_DMA2D_ERROR_NONE;
+    /* Update error code */
+    hdma2d->ErrorCode = HAL_DMA2D_ERROR_NONE;
 
-  /* Initialize the DMA2D state*/
-  hdma2d->State  = HAL_DMA2D_STATE_READY;
+    /* Initialize the DMA2D state*/
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -303,88 +298,74 @@ HAL_StatusTypeDef HAL_DMA2D_Init(DMA2D_HandleTypeDef *hdma2d)
   * @retval None
   */
 
-HAL_StatusTypeDef HAL_DMA2D_DeInit(DMA2D_HandleTypeDef *hdma2d)
-{
+HAL_StatusTypeDef HAL_DMA2D_DeInit(DMA2D_HandleTypeDef *hdma2d) {
 
-  /* Check the DMA2D peripheral state */
-  if (hdma2d == NULL)
-  {
-    return HAL_ERROR;
-  }
-
-  /* Before aborting any DMA2D transfer or CLUT loading, check
-     first whether or not DMA2D clock is enabled */
-  if (__HAL_RCC_DMA2D_IS_CLK_ENABLED())
-  {
-    /* Abort DMA2D transfer if any */
-    if ((hdma2d->Instance->CR & DMA2D_CR_START) == DMA2D_CR_START)
-    {
-      if (HAL_DMA2D_Abort(hdma2d) != HAL_OK)
-      {
-        /* Issue when aborting DMA2D transfer */
+    /* Check the DMA2D peripheral state */
+    if (hdma2d == NULL) {
         return HAL_ERROR;
-      }
     }
-    else
-    {
-      /* Abort background CLUT loading if any */
-      if ((hdma2d->Instance->BGPFCCR & DMA2D_BGPFCCR_START) == DMA2D_BGPFCCR_START)
-      {
-        if (HAL_DMA2D_CLUTLoading_Abort(hdma2d, 0U) != HAL_OK)
-        {
-          /* Issue when aborting background CLUT loading */
-          return HAL_ERROR;
-        }
-      }
-      else
-      {
-        /* Abort foreground CLUT loading if any */
-        if ((hdma2d->Instance->FGPFCCR & DMA2D_FGPFCCR_START) == DMA2D_FGPFCCR_START)
-        {
-          if (HAL_DMA2D_CLUTLoading_Abort(hdma2d, 1U) != HAL_OK)
-          {
-            /* Issue when aborting foreground CLUT loading */
-            return HAL_ERROR;
-          }
-        }
-      }
-    }
-  }
 
-  /* Reset DMA2D control registers*/
-  hdma2d->Instance->CR       =    0U;
-  hdma2d->Instance->IFCR     = 0x3FU;
-  hdma2d->Instance->FGOR     =    0U;
-  hdma2d->Instance->BGOR     =    0U;
-  hdma2d->Instance->FGPFCCR  =    0U;
-  hdma2d->Instance->BGPFCCR  =    0U;
-  hdma2d->Instance->OPFCCR   =    0U;
+    /* Before aborting any DMA2D transfer or CLUT loading, check
+     first whether or not DMA2D clock is enabled */
+    if (__HAL_RCC_DMA2D_IS_CLK_ENABLED()) {
+        /* Abort DMA2D transfer if any */
+        if ((hdma2d->Instance->CR & DMA2D_CR_START) == DMA2D_CR_START) {
+            if (HAL_DMA2D_Abort(hdma2d) != HAL_OK) {
+                /* Issue when aborting DMA2D transfer */
+                return HAL_ERROR;
+            }
+        } else {
+            /* Abort background CLUT loading if any */
+            if ((hdma2d->Instance->BGPFCCR & DMA2D_BGPFCCR_START) == DMA2D_BGPFCCR_START) {
+                if (HAL_DMA2D_CLUTLoading_Abort(hdma2d, 0U) != HAL_OK) {
+                    /* Issue when aborting background CLUT loading */
+                    return HAL_ERROR;
+                }
+            } else {
+                /* Abort foreground CLUT loading if any */
+                if ((hdma2d->Instance->FGPFCCR & DMA2D_FGPFCCR_START) == DMA2D_FGPFCCR_START) {
+                    if (HAL_DMA2D_CLUTLoading_Abort(hdma2d, 1U) != HAL_OK) {
+                        /* Issue when aborting foreground CLUT loading */
+                        return HAL_ERROR;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Reset DMA2D control registers*/
+    hdma2d->Instance->CR = 0U;
+    hdma2d->Instance->IFCR = 0x3FU;
+    hdma2d->Instance->FGOR = 0U;
+    hdma2d->Instance->BGOR = 0U;
+    hdma2d->Instance->FGPFCCR = 0U;
+    hdma2d->Instance->BGPFCCR = 0U;
+    hdma2d->Instance->OPFCCR = 0U;
 
 #if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
 
-  if (hdma2d->MspDeInitCallback == NULL)
-  {
-    hdma2d->MspDeInitCallback = HAL_DMA2D_MspDeInit;
-  }
+    if (hdma2d->MspDeInitCallback == NULL) {
+        hdma2d->MspDeInitCallback = HAL_DMA2D_MspDeInit;
+    }
 
-  /* DeInit the low level hardware */
-  hdma2d->MspDeInitCallback(hdma2d);
+    /* DeInit the low level hardware */
+    hdma2d->MspDeInitCallback(hdma2d);
 
 #else
-  /* Carry on with de-initialization of low level hardware */
-  HAL_DMA2D_MspDeInit(hdma2d);
+    /* Carry on with de-initialization of low level hardware */
+    HAL_DMA2D_MspDeInit(hdma2d);
 #endif /* (USE_HAL_DMA2D_REGISTER_CALLBACKS) */
 
-  /* Update error code */
-  hdma2d->ErrorCode = HAL_DMA2D_ERROR_NONE;
+    /* Update error code */
+    hdma2d->ErrorCode = HAL_DMA2D_ERROR_NONE;
 
-  /* Initialize the DMA2D state*/
-  hdma2d->State  = HAL_DMA2D_STATE_RESET;
+    /* Initialize the DMA2D state*/
+    hdma2d->State = HAL_DMA2D_STATE_RESET;
 
-  /* Release Lock */
-  __HAL_UNLOCK(hdma2d);
+    /* Release Lock */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -393,12 +374,11 @@ HAL_StatusTypeDef HAL_DMA2D_DeInit(DMA2D_HandleTypeDef *hdma2d)
   *                 the configuration information for the DMA2D.
   * @retval None
   */
-__weak void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdma2d);
+__weak void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d) {
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(hdma2d);
 
-  /* NOTE : This function should not be modified; when the callback is needed,
+    /* NOTE : This function should not be modified; when the callback is needed,
             the HAL_DMA2D_MspInit can be implemented in the user file.
    */
 }
@@ -409,12 +389,11 @@ __weak void HAL_DMA2D_MspInit(DMA2D_HandleTypeDef *hdma2d)
   *                 the configuration information for the DMA2D.
   * @retval None
   */
-__weak void HAL_DMA2D_MspDeInit(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdma2d);
+__weak void HAL_DMA2D_MspDeInit(DMA2D_HandleTypeDef *hdma2d) {
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(hdma2d);
 
-  /* NOTE : This function should not be modified; when the callback is needed,
+    /* NOTE : This function should not be modified; when the callback is needed,
             the HAL_DMA2D_MspDeInit can be implemented in the user file.
    */
 }
@@ -437,86 +416,77 @@ __weak void HAL_DMA2D_MspDeInit(DMA2D_HandleTypeDef *hdma2d)
   * @retval status
   */
 HAL_StatusTypeDef HAL_DMA2D_RegisterCallback(DMA2D_HandleTypeDef *hdma2d, HAL_DMA2D_CallbackIDTypeDef CallbackID,
-                                             pDMA2D_CallbackTypeDef pCallback)
-{
-  HAL_StatusTypeDef status = HAL_OK;
+                                             pDMA2D_CallbackTypeDef pCallback) {
+    HAL_StatusTypeDef status = HAL_OK;
 
-  if (pCallback == NULL)
-  {
-    /* Update the error code */
-    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
-    return HAL_ERROR;
-  }
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    if (pCallback == NULL) {
+        /* Update the error code */
+        hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
+        return HAL_ERROR;
+    }
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  if (HAL_DMA2D_STATE_READY == hdma2d->State)
-  {
-    switch (CallbackID)
-    {
-      case HAL_DMA2D_TRANSFERCOMPLETE_CB_ID :
-        hdma2d->XferCpltCallback = pCallback;
-        break;
+    if (HAL_DMA2D_STATE_READY == hdma2d->State) {
+        switch (CallbackID) {
+            case HAL_DMA2D_TRANSFERCOMPLETE_CB_ID:
+                hdma2d->XferCpltCallback = pCallback;
+                break;
 
-      case HAL_DMA2D_TRANSFERERROR_CB_ID :
-        hdma2d->XferErrorCallback = pCallback;
-        break;
+            case HAL_DMA2D_TRANSFERERROR_CB_ID:
+                hdma2d->XferErrorCallback = pCallback;
+                break;
 
-      case HAL_DMA2D_LINEEVENT_CB_ID :
-        hdma2d->LineEventCallback = pCallback;
-        break;
+            case HAL_DMA2D_LINEEVENT_CB_ID:
+                hdma2d->LineEventCallback = pCallback;
+                break;
 
-      case HAL_DMA2D_CLUTLOADINGCPLT_CB_ID :
-        hdma2d->CLUTLoadingCpltCallback = pCallback;
-        break;
+            case HAL_DMA2D_CLUTLOADINGCPLT_CB_ID:
+                hdma2d->CLUTLoadingCpltCallback = pCallback;
+                break;
 
-      case HAL_DMA2D_MSPINIT_CB_ID :
-        hdma2d->MspInitCallback = pCallback;
-        break;
+            case HAL_DMA2D_MSPINIT_CB_ID:
+                hdma2d->MspInitCallback = pCallback;
+                break;
 
-      case HAL_DMA2D_MSPDEINIT_CB_ID :
-        hdma2d->MspDeInitCallback = pCallback;
-        break;
+            case HAL_DMA2D_MSPDEINIT_CB_ID:
+                hdma2d->MspDeInitCallback = pCallback;
+                break;
 
-      default :
+            default:
+                /* Update the error code */
+                hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
+                /* update return status */
+                status = HAL_ERROR;
+                break;
+        }
+    } else if (HAL_DMA2D_STATE_RESET == hdma2d->State) {
+        switch (CallbackID) {
+            case HAL_DMA2D_MSPINIT_CB_ID:
+                hdma2d->MspInitCallback = pCallback;
+                break;
+
+            case HAL_DMA2D_MSPDEINIT_CB_ID:
+                hdma2d->MspDeInitCallback = pCallback;
+                break;
+
+            default:
+                /* Update the error code */
+                hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
+                /* update return status */
+                status = HAL_ERROR;
+                break;
+        }
+    } else {
         /* Update the error code */
         hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
         /* update return status */
-        status =  HAL_ERROR;
-        break;
+        status = HAL_ERROR;
     }
-  }
-  else if (HAL_DMA2D_STATE_RESET == hdma2d->State)
-  {
-    switch (CallbackID)
-    {
-      case HAL_DMA2D_MSPINIT_CB_ID :
-        hdma2d->MspInitCallback = pCallback;
-        break;
 
-      case HAL_DMA2D_MSPDEINIT_CB_ID :
-        hdma2d->MspDeInitCallback = pCallback;
-        break;
-
-      default :
-        /* Update the error code */
-        hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
-        /* update return status */
-        status =  HAL_ERROR;
-        break;
-    }
-  }
-  else
-  {
-    /* Update the error code */
-    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
-    /* update return status */
-    status =  HAL_ERROR;
-  }
-
-  /* Release Lock */
-  __HAL_UNLOCK(hdma2d);
-  return status;
+    /* Release Lock */
+    __HAL_UNLOCK(hdma2d);
+    return status;
 }
 
 /**
@@ -534,80 +504,72 @@ HAL_StatusTypeDef HAL_DMA2D_RegisterCallback(DMA2D_HandleTypeDef *hdma2d, HAL_DM
   * @note No weak predefined callbacks are defined for HAL_DMA2D_TRANSFERCOMPLETE_CB_ID or HAL_DMA2D_TRANSFERERROR_CB_ID
   * @retval status
   */
-HAL_StatusTypeDef HAL_DMA2D_UnRegisterCallback(DMA2D_HandleTypeDef *hdma2d, HAL_DMA2D_CallbackIDTypeDef CallbackID)
-{
-  HAL_StatusTypeDef status = HAL_OK;
+HAL_StatusTypeDef HAL_DMA2D_UnRegisterCallback(DMA2D_HandleTypeDef *hdma2d, HAL_DMA2D_CallbackIDTypeDef CallbackID) {
+    HAL_StatusTypeDef status = HAL_OK;
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  if (HAL_DMA2D_STATE_READY == hdma2d->State)
-  {
-    switch (CallbackID)
-    {
-      case HAL_DMA2D_TRANSFERCOMPLETE_CB_ID :
-        hdma2d->XferCpltCallback = NULL;
-        break;
+    if (HAL_DMA2D_STATE_READY == hdma2d->State) {
+        switch (CallbackID) {
+            case HAL_DMA2D_TRANSFERCOMPLETE_CB_ID:
+                hdma2d->XferCpltCallback = NULL;
+                break;
 
-      case HAL_DMA2D_TRANSFERERROR_CB_ID :
-        hdma2d->XferErrorCallback = NULL;
-        break;
+            case HAL_DMA2D_TRANSFERERROR_CB_ID:
+                hdma2d->XferErrorCallback = NULL;
+                break;
 
-      case HAL_DMA2D_LINEEVENT_CB_ID :
-        hdma2d->LineEventCallback = HAL_DMA2D_LineEventCallback;
-        break;
+            case HAL_DMA2D_LINEEVENT_CB_ID:
+                hdma2d->LineEventCallback = HAL_DMA2D_LineEventCallback;
+                break;
 
-      case HAL_DMA2D_CLUTLOADINGCPLT_CB_ID :
-        hdma2d->CLUTLoadingCpltCallback = HAL_DMA2D_CLUTLoadingCpltCallback;
-        break;
+            case HAL_DMA2D_CLUTLOADINGCPLT_CB_ID:
+                hdma2d->CLUTLoadingCpltCallback = HAL_DMA2D_CLUTLoadingCpltCallback;
+                break;
 
-      case HAL_DMA2D_MSPINIT_CB_ID :
-        hdma2d->MspInitCallback = HAL_DMA2D_MspInit; /* Legacy weak (overridden) Msp Init */
-        break;
+            case HAL_DMA2D_MSPINIT_CB_ID:
+                hdma2d->MspInitCallback = HAL_DMA2D_MspInit; /* Legacy weak (overridden) Msp Init */
+                break;
 
-      case HAL_DMA2D_MSPDEINIT_CB_ID :
-        hdma2d->MspDeInitCallback = HAL_DMA2D_MspDeInit; /* Legacy weak (overridden) Msp DeInit */
-        break;
+            case HAL_DMA2D_MSPDEINIT_CB_ID:
+                hdma2d->MspDeInitCallback = HAL_DMA2D_MspDeInit; /* Legacy weak (overridden) Msp DeInit */
+                break;
 
-      default :
+            default:
+                /* Update the error code */
+                hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
+                /* update return status */
+                status = HAL_ERROR;
+                break;
+        }
+    } else if (HAL_DMA2D_STATE_RESET == hdma2d->State) {
+        switch (CallbackID) {
+            case HAL_DMA2D_MSPINIT_CB_ID:
+                hdma2d->MspInitCallback = HAL_DMA2D_MspInit; /* Legacy weak (overridden) Msp Init */
+                break;
+
+            case HAL_DMA2D_MSPDEINIT_CB_ID:
+                hdma2d->MspDeInitCallback = HAL_DMA2D_MspDeInit; /* Legacy weak (overridden) Msp DeInit */
+                break;
+
+            default:
+                /* Update the error code */
+                hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
+                /* update return status */
+                status = HAL_ERROR;
+                break;
+        }
+    } else {
         /* Update the error code */
         hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
         /* update return status */
-        status =  HAL_ERROR;
-        break;
+        status = HAL_ERROR;
     }
-  }
-  else if (HAL_DMA2D_STATE_RESET == hdma2d->State)
-  {
-    switch (CallbackID)
-    {
-      case HAL_DMA2D_MSPINIT_CB_ID :
-        hdma2d->MspInitCallback = HAL_DMA2D_MspInit;   /* Legacy weak (overridden) Msp Init */
-        break;
 
-      case HAL_DMA2D_MSPDEINIT_CB_ID :
-        hdma2d->MspDeInitCallback = HAL_DMA2D_MspDeInit;  /* Legacy weak (overridden) Msp DeInit */
-        break;
-
-      default :
-        /* Update the error code */
-        hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
-        /* update return status */
-        status =  HAL_ERROR;
-        break;
-    }
-  }
-  else
-  {
-    /* Update the error code */
-    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_INVALID_CALLBACK;
-    /* update return status */
-    status =  HAL_ERROR;
-  }
-
-  /* Release Lock */
-  __HAL_UNLOCK(hdma2d);
-  return status;
+    /* Release Lock */
+    __HAL_UNLOCK(hdma2d);
+    return status;
 }
 #endif /* USE_HAL_DMA2D_REGISTER_CALLBACKS */
 
@@ -666,25 +628,24 @@ HAL_StatusTypeDef HAL_DMA2D_UnRegisterCallback(DMA2D_HandleTypeDef *hdma2d, HAL_
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_DMA2D_Start(DMA2D_HandleTypeDef *hdma2d, uint32_t pdata, uint32_t DstAddress, uint32_t Width,
-                                  uint32_t Height)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LINE(Height));
-  assert_param(IS_DMA2D_PIXEL(Width));
+                                  uint32_t Height) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LINE(Height));
+    assert_param(IS_DMA2D_PIXEL(Width));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the source, destination address and the data size */
-  DMA2D_SetConfig(hdma2d, pdata, DstAddress, Width, Height);
+    /* Configure the source, destination address and the data size */
+    DMA2D_SetConfig(hdma2d, pdata, DstAddress, Width, Height);
 
-  /* Enable the Peripheral */
-  __HAL_DMA2D_ENABLE(hdma2d);
+    /* Enable the Peripheral */
+    __HAL_DMA2D_ENABLE(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -702,28 +663,27 @@ HAL_StatusTypeDef HAL_DMA2D_Start(DMA2D_HandleTypeDef *hdma2d, uint32_t pdata, u
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_DMA2D_Start_IT(DMA2D_HandleTypeDef *hdma2d, uint32_t pdata, uint32_t DstAddress, uint32_t Width,
-                                     uint32_t Height)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LINE(Height));
-  assert_param(IS_DMA2D_PIXEL(Width));
+                                     uint32_t Height) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LINE(Height));
+    assert_param(IS_DMA2D_PIXEL(Width));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the source, destination address and the data size */
-  DMA2D_SetConfig(hdma2d, pdata, DstAddress, Width, Height);
+    /* Configure the source, destination address and the data size */
+    DMA2D_SetConfig(hdma2d, pdata, DstAddress, Width, Height);
 
-  /* Enable the transfer complete, transfer error and configuration error interrupts */
-  __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_TC | DMA2D_IT_TE | DMA2D_IT_CE);
+    /* Enable the transfer complete, transfer error and configuration error interrupts */
+    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_TC | DMA2D_IT_TE | DMA2D_IT_CE);
 
-  /* Enable the Peripheral */
-  __HAL_DMA2D_ENABLE(hdma2d);
+    /* Enable the Peripheral */
+    __HAL_DMA2D_ENABLE(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -738,29 +698,28 @@ HAL_StatusTypeDef HAL_DMA2D_Start_IT(DMA2D_HandleTypeDef *hdma2d, uint32_t pdata
   * @param  Height      The height of data to be transferred from source to destination (expressed in number of lines).
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_BlendingStart(DMA2D_HandleTypeDef *hdma2d, uint32_t SrcAddress1, uint32_t  SrcAddress2,
-                                          uint32_t DstAddress, uint32_t Width,  uint32_t Height)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LINE(Height));
-  assert_param(IS_DMA2D_PIXEL(Width));
+HAL_StatusTypeDef HAL_DMA2D_BlendingStart(DMA2D_HandleTypeDef *hdma2d, uint32_t SrcAddress1, uint32_t SrcAddress2,
+                                          uint32_t DstAddress, uint32_t Width, uint32_t Height) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LINE(Height));
+    assert_param(IS_DMA2D_PIXEL(Width));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure DMA2D Stream source2 address */
-  WRITE_REG(hdma2d->Instance->BGMAR, SrcAddress2);
+    /* Configure DMA2D Stream source2 address */
+    WRITE_REG(hdma2d->Instance->BGMAR, SrcAddress2);
 
-  /* Configure the source, destination address and the data size */
-  DMA2D_SetConfig(hdma2d, SrcAddress1, DstAddress, Width, Height);
+    /* Configure the source, destination address and the data size */
+    DMA2D_SetConfig(hdma2d, SrcAddress1, DstAddress, Width, Height);
 
-  /* Enable the Peripheral */
-  __HAL_DMA2D_ENABLE(hdma2d);
+    /* Enable the Peripheral */
+    __HAL_DMA2D_ENABLE(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -775,32 +734,31 @@ HAL_StatusTypeDef HAL_DMA2D_BlendingStart(DMA2D_HandleTypeDef *hdma2d, uint32_t 
   * @param  Height      The height of data to be transferred from source to destination (expressed in number of lines).
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_BlendingStart_IT(DMA2D_HandleTypeDef *hdma2d, uint32_t SrcAddress1, uint32_t  SrcAddress2,
-                                             uint32_t DstAddress, uint32_t Width,  uint32_t Height)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LINE(Height));
-  assert_param(IS_DMA2D_PIXEL(Width));
+HAL_StatusTypeDef HAL_DMA2D_BlendingStart_IT(DMA2D_HandleTypeDef *hdma2d, uint32_t SrcAddress1, uint32_t SrcAddress2,
+                                             uint32_t DstAddress, uint32_t Width, uint32_t Height) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LINE(Height));
+    assert_param(IS_DMA2D_PIXEL(Width));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure DMA2D Stream source2 address */
-  WRITE_REG(hdma2d->Instance->BGMAR, SrcAddress2);
+    /* Configure DMA2D Stream source2 address */
+    WRITE_REG(hdma2d->Instance->BGMAR, SrcAddress2);
 
-  /* Configure the source, destination address and the data size */
-  DMA2D_SetConfig(hdma2d, SrcAddress1, DstAddress, Width, Height);
+    /* Configure the source, destination address and the data size */
+    DMA2D_SetConfig(hdma2d, SrcAddress1, DstAddress, Width, Height);
 
-  /* Enable the transfer complete, transfer error and configuration error interrupts */
-  __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_TC | DMA2D_IT_TE | DMA2D_IT_CE);
+    /* Enable the transfer complete, transfer error and configuration error interrupts */
+    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_TC | DMA2D_IT_TE | DMA2D_IT_CE);
 
-  /* Enable the Peripheral */
-  __HAL_DMA2D_ENABLE(hdma2d);
+    /* Enable the Peripheral */
+    __HAL_DMA2D_ENABLE(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -809,47 +767,44 @@ HAL_StatusTypeDef HAL_DMA2D_BlendingStart_IT(DMA2D_HandleTypeDef *hdma2d, uint32
   *                  the configuration information for the DMA2D.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_Abort(DMA2D_HandleTypeDef *hdma2d)
-{
-  uint32_t tickstart;
+HAL_StatusTypeDef HAL_DMA2D_Abort(DMA2D_HandleTypeDef *hdma2d) {
+    uint32_t tickstart;
 
-  /* Abort the DMA2D transfer */
-  /* START bit is reset to make sure not to set it again, in the event the HW clears it
+    /* Abort the DMA2D transfer */
+    /* START bit is reset to make sure not to set it again, in the event the HW clears it
      between the register read and the register write by the CPU (writing 0 has no
      effect on START bitvalue) */
-  MODIFY_REG(hdma2d->Instance->CR, DMA2D_CR_ABORT | DMA2D_CR_START, DMA2D_CR_ABORT);
+    MODIFY_REG(hdma2d->Instance->CR, DMA2D_CR_ABORT | DMA2D_CR_START, DMA2D_CR_ABORT);
 
-  /* Get tick */
-  tickstart = HAL_GetTick();
+    /* Get tick */
+    tickstart = HAL_GetTick();
 
-  /* Check if the DMA2D is effectively disabled */
-  while ((hdma2d->Instance->CR & DMA2D_CR_START) != 0U)
-  {
-    if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_ABORT)
-    {
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
+    /* Check if the DMA2D is effectively disabled */
+    while ((hdma2d->Instance->CR & DMA2D_CR_START) != 0U) {
+        if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_ABORT) {
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
 
-      /* Change the DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
+            /* Change the DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
 
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
 
-      return HAL_TIMEOUT;
+            return HAL_TIMEOUT;
+        }
     }
-  }
 
-  /* Disable the Transfer Complete, Transfer Error and Configuration Error interrupts */
-  __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TC | DMA2D_IT_TE | DMA2D_IT_CE);
+    /* Disable the Transfer Complete, Transfer Error and Configuration Error interrupts */
+    __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TC | DMA2D_IT_TE | DMA2D_IT_CE);
 
-  /* Change the DMA2D state*/
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    /* Change the DMA2D state*/
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  /* Process Unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Process Unlocked */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -858,47 +813,41 @@ HAL_StatusTypeDef HAL_DMA2D_Abort(DMA2D_HandleTypeDef *hdma2d)
   *                 the configuration information for the DMA2D.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_Suspend(DMA2D_HandleTypeDef *hdma2d)
-{
-  uint32_t tickstart;
+HAL_StatusTypeDef HAL_DMA2D_Suspend(DMA2D_HandleTypeDef *hdma2d) {
+    uint32_t tickstart;
 
-  /* Suspend the DMA2D transfer */
-  /* START bit is reset to make sure not to set it again, in the event the HW clears it
+    /* Suspend the DMA2D transfer */
+    /* START bit is reset to make sure not to set it again, in the event the HW clears it
      between the register read and the register write by the CPU (writing 0 has no
      effect on START bitvalue). */
-  MODIFY_REG(hdma2d->Instance->CR, DMA2D_CR_SUSP | DMA2D_CR_START, DMA2D_CR_SUSP);
+    MODIFY_REG(hdma2d->Instance->CR, DMA2D_CR_SUSP | DMA2D_CR_START, DMA2D_CR_SUSP);
 
-  /* Get tick */
-  tickstart = HAL_GetTick();
+    /* Get tick */
+    tickstart = HAL_GetTick();
 
-  /* Check if the DMA2D is effectively suspended */
-  while ((hdma2d->Instance->CR & (DMA2D_CR_SUSP | DMA2D_CR_START)) == DMA2D_CR_START)
-  {
-    if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_SUSPEND)
-    {
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
+    /* Check if the DMA2D is effectively suspended */
+    while ((hdma2d->Instance->CR & (DMA2D_CR_SUSP | DMA2D_CR_START)) == DMA2D_CR_START) {
+        if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_SUSPEND) {
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
 
-      /* Change the DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
+            /* Change the DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
 
-      return HAL_TIMEOUT;
+            return HAL_TIMEOUT;
+        }
     }
-  }
 
-  /* Check whether or not a transfer is actually suspended and change the DMA2D state accordingly */
-  if ((hdma2d->Instance->CR & DMA2D_CR_START) != 0U)
-  {
-    hdma2d->State = HAL_DMA2D_STATE_SUSPEND;
-  }
-  else
-  {
-    /* Make sure SUSP bit is cleared since it is meaningless
+    /* Check whether or not a transfer is actually suspended and change the DMA2D state accordingly */
+    if ((hdma2d->Instance->CR & DMA2D_CR_START) != 0U) {
+        hdma2d->State = HAL_DMA2D_STATE_SUSPEND;
+    } else {
+        /* Make sure SUSP bit is cleared since it is meaningless
        when no transfer is on-going */
-    CLEAR_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
-  }
+        CLEAR_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -907,22 +856,20 @@ HAL_StatusTypeDef HAL_DMA2D_Suspend(DMA2D_HandleTypeDef *hdma2d)
   *                 the configuration information for the DMA2D.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_Resume(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Check the SUSP and START bits */
-  if ((hdma2d->Instance->CR & (DMA2D_CR_SUSP | DMA2D_CR_START)) == (DMA2D_CR_SUSP | DMA2D_CR_START))
-  {
-    /* Ongoing transfer is suspended: change the DMA2D state before resuming */
-    hdma2d->State = HAL_DMA2D_STATE_BUSY;
-  }
+HAL_StatusTypeDef HAL_DMA2D_Resume(DMA2D_HandleTypeDef *hdma2d) {
+    /* Check the SUSP and START bits */
+    if ((hdma2d->Instance->CR & (DMA2D_CR_SUSP | DMA2D_CR_START)) == (DMA2D_CR_SUSP | DMA2D_CR_START)) {
+        /* Ongoing transfer is suspended: change the DMA2D state before resuming */
+        hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    }
 
-  /* Resume the DMA2D transfer */
-  /* START bit is reset to make sure not to set it again, in the event the HW clears it
+    /* Resume the DMA2D transfer */
+    /* START bit is reset to make sure not to set it again, in the event the HW clears it
      between the register read and the register write by the CPU (writing 0 has no
      effect on START bitvalue). */
-  CLEAR_BIT(hdma2d->Instance->CR, (DMA2D_CR_SUSP | DMA2D_CR_START));
+    CLEAR_BIT(hdma2d->Instance->CR, (DMA2D_CR_SUSP | DMA2D_CR_START));
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 
@@ -935,29 +882,25 @@ HAL_StatusTypeDef HAL_DMA2D_Resume(DMA2D_HandleTypeDef *hdma2d)
   *                   DMA2D_BACKGROUND_LAYER(0) / DMA2D_FOREGROUND_LAYER(1)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_EnableCLUT(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
+HAL_StatusTypeDef HAL_DMA2D_EnableCLUT(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Enable the background CLUT loading */
-    SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
-  }
-  else
-  {
-    /* Enable the foreground CLUT loading */
-    SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
-  }
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Enable the background CLUT loading */
+        SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
+    } else {
+        /* Enable the foreground CLUT loading */
+        SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -971,47 +914,44 @@ HAL_StatusTypeDef HAL_DMA2D_EnableCLUT(DMA2D_HandleTypeDef *hdma2d, uint32_t Lay
   *                   DMA2D_BACKGROUND_LAYER(0) / DMA2D_FOREGROUND_LAYER(1)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_CLUTStartLoad(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef *CLUTCfg, uint32_t LayerIdx)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
-  assert_param(IS_DMA2D_CLUT_CM(CLUTCfg->CLUTColorMode));
-  assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg->Size));
+HAL_StatusTypeDef HAL_DMA2D_CLUTStartLoad(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef *CLUTCfg, uint32_t LayerIdx) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
+    assert_param(IS_DMA2D_CLUT_CM(CLUTCfg->CLUTColorMode));
+    assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg->Size));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the CLUT of the background DMA2D layer */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Write background CLUT memory address */
-    WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t)CLUTCfg->pCLUT);
+    /* Configure the CLUT of the background DMA2D layer */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Write background CLUT memory address */
+        WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t) CLUTCfg->pCLUT);
 
-    /* Write background CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
-               ((CLUTCfg->Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
+        /* Write background CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
+                   ((CLUTCfg->Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT loading for the background */
-    SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
-  }
-  /* Configure the CLUT of the foreground DMA2D layer */
-  else
-  {
-    /* Write foreground CLUT memory address */
-    WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t)CLUTCfg->pCLUT);
+        /* Enable the CLUT loading for the background */
+        SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
+    }
+    /* Configure the CLUT of the foreground DMA2D layer */
+    else {
+        /* Write foreground CLUT memory address */
+        WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t) CLUTCfg->pCLUT);
 
-    /* Write foreground CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
-               ((CLUTCfg->Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
+        /* Write foreground CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
+                   ((CLUTCfg->Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT loading for the foreground */
-    SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
-  }
+        /* Enable the CLUT loading for the foreground */
+        SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1026,53 +966,50 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTStartLoad(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLU
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_DMA2D_CLUTStartLoad_IT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef *CLUTCfg,
-                                             uint32_t LayerIdx)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
-  assert_param(IS_DMA2D_CLUT_CM(CLUTCfg->CLUTColorMode));
-  assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg->Size));
+                                             uint32_t LayerIdx) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
+    assert_param(IS_DMA2D_CLUT_CM(CLUTCfg->CLUTColorMode));
+    assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg->Size));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the CLUT of the background DMA2D layer */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Write background CLUT memory address */
-    WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t)CLUTCfg->pCLUT);
+    /* Configure the CLUT of the background DMA2D layer */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Write background CLUT memory address */
+        WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t) CLUTCfg->pCLUT);
 
-    /* Write background CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
-               ((CLUTCfg->Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
+        /* Write background CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
+                   ((CLUTCfg->Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
-    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
+        /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
+        __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
 
-    /* Enable the CLUT loading for the background */
-    SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
-  }
-  /* Configure the CLUT of the foreground DMA2D layer */
-  else
-  {
-    /* Write foreground CLUT memory address */
-    WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t)CLUTCfg->pCLUT);
+        /* Enable the CLUT loading for the background */
+        SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
+    }
+    /* Configure the CLUT of the foreground DMA2D layer */
+    else {
+        /* Write foreground CLUT memory address */
+        WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t) CLUTCfg->pCLUT);
 
-    /* Write foreground CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
-               ((CLUTCfg->Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
+        /* Write foreground CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
+                   ((CLUTCfg->Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg->CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
-    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
+        /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
+        __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
 
-    /* Enable the CLUT loading for the foreground */
-    SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
-  }
+        /* Enable the CLUT loading for the foreground */
+        SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1089,47 +1026,44 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTStartLoad_IT(DMA2D_HandleTypeDef *hdma2d, DMA2D_
   *      code compactness, code size and improved heap usage.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_CLUTLoad(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef CLUTCfg, uint32_t LayerIdx)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
-  assert_param(IS_DMA2D_CLUT_CM(CLUTCfg.CLUTColorMode));
-  assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg.Size));
+HAL_StatusTypeDef HAL_DMA2D_CLUTLoad(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef CLUTCfg, uint32_t LayerIdx) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
+    assert_param(IS_DMA2D_CLUT_CM(CLUTCfg.CLUTColorMode));
+    assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg.Size));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the CLUT of the background DMA2D layer */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Write background CLUT memory address */
-    WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t)CLUTCfg.pCLUT);
+    /* Configure the CLUT of the background DMA2D layer */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Write background CLUT memory address */
+        WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t) CLUTCfg.pCLUT);
 
-    /* Write background CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
-               ((CLUTCfg.Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
+        /* Write background CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
+                   ((CLUTCfg.Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT loading for the background */
-    SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
-  }
-  /* Configure the CLUT of the foreground DMA2D layer */
-  else
-  {
-    /* Write foreground CLUT memory address */
-    WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t)CLUTCfg.pCLUT);
+        /* Enable the CLUT loading for the background */
+        SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
+    }
+    /* Configure the CLUT of the foreground DMA2D layer */
+    else {
+        /* Write foreground CLUT memory address */
+        WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t) CLUTCfg.pCLUT);
 
-    /* Write foreground CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
-               ((CLUTCfg.Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
+        /* Write foreground CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
+                   ((CLUTCfg.Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT loading for the foreground */
-    SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
-  }
+        /* Enable the CLUT loading for the foreground */
+        SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1146,53 +1080,50 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTLoad(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgT
   *      from code compactness, code size and improved heap usage.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_CLUTLoad_IT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef CLUTCfg, uint32_t LayerIdx)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
-  assert_param(IS_DMA2D_CLUT_CM(CLUTCfg.CLUTColorMode));
-  assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg.Size));
+HAL_StatusTypeDef HAL_DMA2D_CLUTLoad_IT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef CLUTCfg, uint32_t LayerIdx) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
+    assert_param(IS_DMA2D_CLUT_CM(CLUTCfg.CLUTColorMode));
+    assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg.Size));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the CLUT of the background DMA2D layer */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Write background CLUT memory address */
-    WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t)CLUTCfg.pCLUT);
+    /* Configure the CLUT of the background DMA2D layer */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Write background CLUT memory address */
+        WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t) CLUTCfg.pCLUT);
 
-    /* Write background CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
-               ((CLUTCfg.Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
+        /* Write background CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
+                   ((CLUTCfg.Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
-    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
+        /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
+        __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
 
-    /* Enable the CLUT loading for the background */
-    SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
-  }
-  /* Configure the CLUT of the foreground DMA2D layer */
-  else
-  {
-    /* Write foreground CLUT memory address */
-    WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t)CLUTCfg.pCLUT);
+        /* Enable the CLUT loading for the background */
+        SET_BIT(hdma2d->Instance->BGPFCCR, DMA2D_BGPFCCR_START);
+    }
+    /* Configure the CLUT of the foreground DMA2D layer */
+    else {
+        /* Write foreground CLUT memory address */
+        WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t) CLUTCfg.pCLUT);
 
-    /* Write foreground CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
-               ((CLUTCfg.Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
+        /* Write foreground CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
+                   ((CLUTCfg.Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
 
-    /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
-    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
+        /* Enable the CLUT Transfer Complete, transfer Error, configuration Error and CLUT Access Error interrupts */
+        __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
 
-    /* Enable the CLUT loading for the foreground */
-    SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
-  }
+        /* Enable the CLUT loading for the foreground */
+        SET_BIT(hdma2d->Instance->FGPFCCR, DMA2D_FGPFCCR_START);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1204,52 +1135,48 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTLoad_IT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTC
   *                   DMA2D_BACKGROUND_LAYER(0) / DMA2D_FOREGROUND_LAYER(1)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Abort(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx)
-{
-  uint32_t tickstart;
-  const __IO uint32_t *reg =  &(hdma2d->Instance->BGPFCCR);  /* by default, point at background register */
+HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Abort(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx) {
+    uint32_t tickstart;
+    const __IO uint32_t *reg = &(hdma2d->Instance->BGPFCCR); /* by default, point at background register */
 
-  /* Abort the CLUT loading */
-  SET_BIT(hdma2d->Instance->CR, DMA2D_CR_ABORT);
+    /* Abort the CLUT loading */
+    SET_BIT(hdma2d->Instance->CR, DMA2D_CR_ABORT);
 
-  /* If foreground CLUT loading is considered, update local variables */
-  if (LayerIdx == DMA2D_FOREGROUND_LAYER)
-  {
-    reg  = &(hdma2d->Instance->FGPFCCR);
-  }
-
-
-  /* Get tick */
-  tickstart = HAL_GetTick();
-
-  /* Check if the CLUT loading is aborted */
-  while ((*reg & DMA2D_BGPFCCR_START) != 0U)
-  {
-    if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_ABORT)
-    {
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
-
-      /* Change the DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
-
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
-
-      return HAL_TIMEOUT;
+    /* If foreground CLUT loading is considered, update local variables */
+    if (LayerIdx == DMA2D_FOREGROUND_LAYER) {
+        reg = &(hdma2d->Instance->FGPFCCR);
     }
-  }
 
-  /* Disable the CLUT Transfer Complete, Transfer Error, Configuration Error and CLUT Access Error interrupts */
-  __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
 
-  /* Change the DMA2D state*/
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    /* Get tick */
+    tickstart = HAL_GetTick();
 
-  /* Process Unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Check if the CLUT loading is aborted */
+    while ((*reg & DMA2D_BGPFCCR_START) != 0U) {
+        if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_ABORT) {
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
 
-  return HAL_OK;
+            /* Change the DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
+
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
+
+            return HAL_TIMEOUT;
+        }
+    }
+
+    /* Disable the CLUT Transfer Complete, Transfer Error, Configuration Error and CLUT Access Error interrupts */
+    __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CTC | DMA2D_IT_TE | DMA2D_IT_CE | DMA2D_IT_CAE);
+
+    /* Change the DMA2D state*/
+    hdma2d->State = HAL_DMA2D_STATE_READY;
+
+    /* Process Unlocked */
+    __HAL_UNLOCK(hdma2d);
+
+    return HAL_OK;
 }
 
 /**
@@ -1261,60 +1188,53 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Abort(DMA2D_HandleTypeDef *hdma2d, uint3
   *                   DMA2D_BACKGROUND_LAYER(0) / DMA2D_FOREGROUND_LAYER(1)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Suspend(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx)
-{
-  uint32_t tickstart;
-  uint32_t loadsuspended;
-  const __IO uint32_t *reg =  &(hdma2d->Instance->BGPFCCR);  /* by default, point at background register */
+HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Suspend(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx) {
+    uint32_t tickstart;
+    uint32_t loadsuspended;
+    const __IO uint32_t *reg = &(hdma2d->Instance->BGPFCCR); /* by default, point at background register */
 
-  /* Suspend the CLUT loading */
-  SET_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
+    /* Suspend the CLUT loading */
+    SET_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
 
-  /* If foreground CLUT loading is considered, update local variables */
-  if (LayerIdx == DMA2D_FOREGROUND_LAYER)
-  {
-    reg  = &(hdma2d->Instance->FGPFCCR);
-  }
-
-  /* Get tick */
-  tickstart = HAL_GetTick();
-
-  /* Check if the CLUT loading is suspended */
-  /* 1st condition: Suspend Check */
-  loadsuspended = ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP) ? 1UL : 0UL;
-  /* 2nd condition: Not Start Check */
-  loadsuspended |= ((*reg & DMA2D_BGPFCCR_START) != DMA2D_BGPFCCR_START) ? 1UL : 0UL;
-  while (loadsuspended == 0UL)
-  {
-    if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_SUSPEND)
-    {
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
-
-      /* Change the DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
-
-      return HAL_TIMEOUT;
+    /* If foreground CLUT loading is considered, update local variables */
+    if (LayerIdx == DMA2D_FOREGROUND_LAYER) {
+        reg = &(hdma2d->Instance->FGPFCCR);
     }
+
+    /* Get tick */
+    tickstart = HAL_GetTick();
+
+    /* Check if the CLUT loading is suspended */
     /* 1st condition: Suspend Check */
     loadsuspended = ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP) ? 1UL : 0UL;
     /* 2nd condition: Not Start Check */
     loadsuspended |= ((*reg & DMA2D_BGPFCCR_START) != DMA2D_BGPFCCR_START) ? 1UL : 0UL;
-  }
+    while (loadsuspended == 0UL) {
+        if ((HAL_GetTick() - tickstart) > DMA2D_TIMEOUT_SUSPEND) {
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
 
-  /* Check whether or not a transfer is actually suspended and change the DMA2D state accordingly */
-  if ((*reg & DMA2D_BGPFCCR_START) != 0U)
-  {
-    hdma2d->State = HAL_DMA2D_STATE_SUSPEND;
-  }
-  else
-  {
-    /* Make sure SUSP bit is cleared since it is meaningless
+            /* Change the DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
+
+            return HAL_TIMEOUT;
+        }
+        /* 1st condition: Suspend Check */
+        loadsuspended = ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP) ? 1UL : 0UL;
+        /* 2nd condition: Not Start Check */
+        loadsuspended |= ((*reg & DMA2D_BGPFCCR_START) != DMA2D_BGPFCCR_START) ? 1UL : 0UL;
+    }
+
+    /* Check whether or not a transfer is actually suspended and change the DMA2D state accordingly */
+    if ((*reg & DMA2D_BGPFCCR_START) != 0U) {
+        hdma2d->State = HAL_DMA2D_STATE_SUSPEND;
+    } else {
+        /* Make sure SUSP bit is cleared since it is meaningless
        when no transfer is on-going */
-    CLEAR_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
-  }
+        CLEAR_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
+    }
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1326,38 +1246,30 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Suspend(DMA2D_HandleTypeDef *hdma2d, uin
   *                   DMA2D_BACKGROUND_LAYER(0) / DMA2D_FOREGROUND_LAYER(1)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Resume(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx)
-{
-  /* Check the SUSP and START bits for background or foreground CLUT loading */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Background CLUT loading suspension check */
-    if ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP)
-    {
-      if ((hdma2d->Instance->BGPFCCR & DMA2D_BGPFCCR_START) == DMA2D_BGPFCCR_START)
-      {
-        /* Ongoing CLUT loading is suspended: change the DMA2D state before resuming */
-        hdma2d->State = HAL_DMA2D_STATE_BUSY;
-      }
+HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Resume(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx) {
+    /* Check the SUSP and START bits for background or foreground CLUT loading */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Background CLUT loading suspension check */
+        if ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP) {
+            if ((hdma2d->Instance->BGPFCCR & DMA2D_BGPFCCR_START) == DMA2D_BGPFCCR_START) {
+                /* Ongoing CLUT loading is suspended: change the DMA2D state before resuming */
+                hdma2d->State = HAL_DMA2D_STATE_BUSY;
+            }
+        }
+    } else {
+        /* Foreground CLUT loading suspension check */
+        if ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP) {
+            if ((hdma2d->Instance->FGPFCCR & DMA2D_FGPFCCR_START) == DMA2D_FGPFCCR_START) {
+                /* Ongoing CLUT loading is suspended: change the DMA2D state before resuming */
+                hdma2d->State = HAL_DMA2D_STATE_BUSY;
+            }
+        }
     }
-  }
-  else
-  {
-    /* Foreground CLUT loading suspension check */
-    if ((hdma2d->Instance->CR & DMA2D_CR_SUSP) == DMA2D_CR_SUSP)
-    {
-      if ((hdma2d->Instance->FGPFCCR & DMA2D_FGPFCCR_START) == DMA2D_FGPFCCR_START)
-      {
-        /* Ongoing CLUT loading is suspended: change the DMA2D state before resuming */
-        hdma2d->State = HAL_DMA2D_STATE_BUSY;
-      }
-    }
-  }
 
-  /* Resume the CLUT loading */
-  CLEAR_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
+    /* Resume the CLUT loading */
+    CLEAR_BIT(hdma2d->Instance->CR, DMA2D_CR_SUSP);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 
@@ -1369,127 +1281,111 @@ HAL_StatusTypeDef HAL_DMA2D_CLUTLoading_Resume(DMA2D_HandleTypeDef *hdma2d, uint
   * @param  Timeout Timeout duration
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_PollForTransfer(DMA2D_HandleTypeDef *hdma2d, uint32_t Timeout)
-{
-  uint32_t tickstart;
-  uint32_t layer_start;
-  __IO uint32_t isrflags = 0x0U;
+HAL_StatusTypeDef HAL_DMA2D_PollForTransfer(DMA2D_HandleTypeDef *hdma2d, uint32_t Timeout) {
+    uint32_t tickstart;
+    uint32_t layer_start;
+    __IO uint32_t isrflags = 0x0U;
 
-  /* Polling for DMA2D transfer */
-  if ((hdma2d->Instance->CR & DMA2D_CR_START) != 0U)
-  {
-    /* Get tick */
-    tickstart = HAL_GetTick();
+    /* Polling for DMA2D transfer */
+    if ((hdma2d->Instance->CR & DMA2D_CR_START) != 0U) {
+        /* Get tick */
+        tickstart = HAL_GetTick();
 
-    while (__HAL_DMA2D_GET_FLAG(hdma2d, DMA2D_FLAG_TC) == 0U)
-    {
-      isrflags = READ_REG(hdma2d->Instance->ISR);
-      if ((isrflags & (DMA2D_FLAG_CE | DMA2D_FLAG_TE)) != 0U)
-      {
-        if ((isrflags & DMA2D_FLAG_CE) != 0U)
-        {
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CE;
+        while (__HAL_DMA2D_GET_FLAG(hdma2d, DMA2D_FLAG_TC) == 0U) {
+            isrflags = READ_REG(hdma2d->Instance->ISR);
+            if ((isrflags & (DMA2D_FLAG_CE | DMA2D_FLAG_TE)) != 0U) {
+                if ((isrflags & DMA2D_FLAG_CE) != 0U) {
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CE;
+                }
+                if ((isrflags & DMA2D_FLAG_TE) != 0U) {
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TE;
+                }
+                /* Clear the transfer and configuration error flags */
+                __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CE | DMA2D_FLAG_TE);
+
+                /* Change DMA2D state */
+                hdma2d->State = HAL_DMA2D_STATE_ERROR;
+
+                /* Process unlocked */
+                __HAL_UNLOCK(hdma2d);
+
+                return HAL_ERROR;
+            }
+            /* Check for the Timeout */
+            if (Timeout != HAL_MAX_DELAY) {
+                if (((HAL_GetTick() - tickstart) > Timeout) || (Timeout == 0U)) {
+                    /* Update error code */
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
+
+                    /* Change the DMA2D state */
+                    hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
+
+                    /* Process unlocked */
+                    __HAL_UNLOCK(hdma2d);
+
+                    return HAL_TIMEOUT;
+                }
+            }
         }
-        if ((isrflags & DMA2D_FLAG_TE) != 0U)
-        {
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TE;
-        }
-        /* Clear the transfer and configuration error flags */
-        __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CE | DMA2D_FLAG_TE);
-
-        /* Change DMA2D state */
-        hdma2d->State = HAL_DMA2D_STATE_ERROR;
-
-        /* Process unlocked */
-        __HAL_UNLOCK(hdma2d);
-
-        return HAL_ERROR;
-      }
-      /* Check for the Timeout */
-      if (Timeout != HAL_MAX_DELAY)
-      {
-        if (((HAL_GetTick() - tickstart) > Timeout) || (Timeout == 0U))
-        {
-          /* Update error code */
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
-
-          /* Change the DMA2D state */
-          hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
-
-          /* Process unlocked */
-          __HAL_UNLOCK(hdma2d);
-
-          return HAL_TIMEOUT;
-        }
-      }
     }
-  }
-  /* Polling for CLUT loading (foreground or background) */
-  layer_start = hdma2d->Instance->FGPFCCR & DMA2D_FGPFCCR_START;
-  layer_start |= hdma2d->Instance->BGPFCCR & DMA2D_BGPFCCR_START;
-  if (layer_start != 0U)
-  {
-    /* Get tick */
-    tickstart = HAL_GetTick();
+    /* Polling for CLUT loading (foreground or background) */
+    layer_start = hdma2d->Instance->FGPFCCR & DMA2D_FGPFCCR_START;
+    layer_start |= hdma2d->Instance->BGPFCCR & DMA2D_BGPFCCR_START;
+    if (layer_start != 0U) {
+        /* Get tick */
+        tickstart = HAL_GetTick();
 
-    while (__HAL_DMA2D_GET_FLAG(hdma2d, DMA2D_FLAG_CTC) == 0U)
-    {
-      isrflags = READ_REG(hdma2d->Instance->ISR);
-      if ((isrflags & (DMA2D_FLAG_CAE | DMA2D_FLAG_CE | DMA2D_FLAG_TE)) != 0U)
-      {
-        if ((isrflags & DMA2D_FLAG_CAE) != 0U)
-        {
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CAE;
+        while (__HAL_DMA2D_GET_FLAG(hdma2d, DMA2D_FLAG_CTC) == 0U) {
+            isrflags = READ_REG(hdma2d->Instance->ISR);
+            if ((isrflags & (DMA2D_FLAG_CAE | DMA2D_FLAG_CE | DMA2D_FLAG_TE)) != 0U) {
+                if ((isrflags & DMA2D_FLAG_CAE) != 0U) {
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CAE;
+                }
+                if ((isrflags & DMA2D_FLAG_CE) != 0U) {
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CE;
+                }
+                if ((isrflags & DMA2D_FLAG_TE) != 0U) {
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TE;
+                }
+                /* Clear the CLUT Access Error, Configuration Error and Transfer Error flags */
+                __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CAE | DMA2D_FLAG_CE | DMA2D_FLAG_TE);
+
+                /* Change DMA2D state */
+                hdma2d->State = HAL_DMA2D_STATE_ERROR;
+
+                /* Process unlocked */
+                __HAL_UNLOCK(hdma2d);
+
+                return HAL_ERROR;
+            }
+            /* Check for the Timeout */
+            if (Timeout != HAL_MAX_DELAY) {
+                if (((HAL_GetTick() - tickstart) > Timeout) || (Timeout == 0U)) {
+                    /* Update error code */
+                    hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
+
+                    /* Change the DMA2D state */
+                    hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
+
+                    /* Process unlocked */
+                    __HAL_UNLOCK(hdma2d);
+
+                    return HAL_TIMEOUT;
+                }
+            }
         }
-        if ((isrflags & DMA2D_FLAG_CE) != 0U)
-        {
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CE;
-        }
-        if ((isrflags & DMA2D_FLAG_TE) != 0U)
-        {
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TE;
-        }
-        /* Clear the CLUT Access Error, Configuration Error and Transfer Error flags */
-        __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CAE | DMA2D_FLAG_CE | DMA2D_FLAG_TE);
-
-        /* Change DMA2D state */
-        hdma2d->State = HAL_DMA2D_STATE_ERROR;
-
-        /* Process unlocked */
-        __HAL_UNLOCK(hdma2d);
-
-        return HAL_ERROR;
-      }
-      /* Check for the Timeout */
-      if (Timeout != HAL_MAX_DELAY)
-      {
-        if (((HAL_GetTick() - tickstart) > Timeout) || (Timeout == 0U))
-        {
-          /* Update error code */
-          hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TIMEOUT;
-
-          /* Change the DMA2D state */
-          hdma2d->State = HAL_DMA2D_STATE_TIMEOUT;
-
-          /* Process unlocked */
-          __HAL_UNLOCK(hdma2d);
-
-          return HAL_TIMEOUT;
-        }
-      }
     }
-  }
 
-  /* Clear the transfer complete and CLUT loading flags */
-  __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TC | DMA2D_FLAG_CTC);
+    /* Clear the transfer complete and CLUT loading flags */
+    __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TC | DMA2D_FLAG_CTC);
 
-  /* Change DMA2D state */
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    /* Change DMA2D state */
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  /* Process unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Process unlocked */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 /**
   * @brief  Handle DMA2D interrupt request.
@@ -1497,168 +1393,149 @@ HAL_StatusTypeDef HAL_DMA2D_PollForTransfer(DMA2D_HandleTypeDef *hdma2d, uint32_
   *                 the configuration information for the DMA2D.
   * @retval HAL status
   */
-void HAL_DMA2D_IRQHandler(DMA2D_HandleTypeDef *hdma2d)
-{
-  uint32_t isrflags = READ_REG(hdma2d->Instance->ISR);
-  uint32_t crflags = READ_REG(hdma2d->Instance->CR);
+void HAL_DMA2D_IRQHandler(DMA2D_HandleTypeDef *hdma2d) {
+    uint32_t isrflags = READ_REG(hdma2d->Instance->ISR);
+    uint32_t crflags = READ_REG(hdma2d->Instance->CR);
 
-  /* Transfer Error Interrupt management ***************************************/
-  if ((isrflags & DMA2D_FLAG_TE) != 0U)
-  {
-    if ((crflags & DMA2D_IT_TE) != 0U)
-    {
-      /* Disable the transfer Error interrupt */
-      __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TE);
+    /* Transfer Error Interrupt management ***************************************/
+    if ((isrflags & DMA2D_FLAG_TE) != 0U) {
+        if ((crflags & DMA2D_IT_TE) != 0U) {
+            /* Disable the transfer Error interrupt */
+            __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TE);
 
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TE;
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_TE;
 
-      /* Clear the transfer error flag */
-      __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TE);
+            /* Clear the transfer error flag */
+            __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TE);
 
-      /* Change DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_ERROR;
+            /* Change DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_ERROR;
 
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
 
-      if (hdma2d->XferErrorCallback != NULL)
-      {
-        /* Transfer error Callback */
-        hdma2d->XferErrorCallback(hdma2d);
-      }
+            if (hdma2d->XferErrorCallback != NULL) {
+                /* Transfer error Callback */
+                hdma2d->XferErrorCallback(hdma2d);
+            }
+        }
     }
-  }
-  /* Configuration Error Interrupt management **********************************/
-  if ((isrflags & DMA2D_FLAG_CE) != 0U)
-  {
-    if ((crflags & DMA2D_IT_CE) != 0U)
-    {
-      /* Disable the Configuration Error interrupt */
-      __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CE);
+    /* Configuration Error Interrupt management **********************************/
+    if ((isrflags & DMA2D_FLAG_CE) != 0U) {
+        if ((crflags & DMA2D_IT_CE) != 0U) {
+            /* Disable the Configuration Error interrupt */
+            __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CE);
 
-      /* Clear the Configuration error flag */
-      __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CE);
+            /* Clear the Configuration error flag */
+            __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CE);
 
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CE;
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CE;
 
-      /* Change DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_ERROR;
+            /* Change DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_ERROR;
 
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
 
-      if (hdma2d->XferErrorCallback != NULL)
-      {
-        /* Transfer error Callback */
-        hdma2d->XferErrorCallback(hdma2d);
-      }
+            if (hdma2d->XferErrorCallback != NULL) {
+                /* Transfer error Callback */
+                hdma2d->XferErrorCallback(hdma2d);
+            }
+        }
     }
-  }
-  /* CLUT access Error Interrupt management ***********************************/
-  if ((isrflags & DMA2D_FLAG_CAE) != 0U)
-  {
-    if ((crflags & DMA2D_IT_CAE) != 0U)
-    {
-      /* Disable the CLUT access error interrupt */
-      __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CAE);
+    /* CLUT access Error Interrupt management ***********************************/
+    if ((isrflags & DMA2D_FLAG_CAE) != 0U) {
+        if ((crflags & DMA2D_IT_CAE) != 0U) {
+            /* Disable the CLUT access error interrupt */
+            __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CAE);
 
-      /* Clear the CLUT access error flag */
-      __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CAE);
+            /* Clear the CLUT access error flag */
+            __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CAE);
 
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CAE;
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_CAE;
 
-      /* Change DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_ERROR;
+            /* Change DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_ERROR;
 
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
 
-      if (hdma2d->XferErrorCallback != NULL)
-      {
-        /* Transfer error Callback */
-        hdma2d->XferErrorCallback(hdma2d);
-      }
+            if (hdma2d->XferErrorCallback != NULL) {
+                /* Transfer error Callback */
+                hdma2d->XferErrorCallback(hdma2d);
+            }
+        }
     }
-  }
-  /* Transfer watermark Interrupt management **********************************/
-  if ((isrflags & DMA2D_FLAG_TW) != 0U)
-  {
-    if ((crflags & DMA2D_IT_TW) != 0U)
-    {
-      /* Disable the transfer watermark interrupt */
-      __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TW);
+    /* Transfer watermark Interrupt management **********************************/
+    if ((isrflags & DMA2D_FLAG_TW) != 0U) {
+        if ((crflags & DMA2D_IT_TW) != 0U) {
+            /* Disable the transfer watermark interrupt */
+            __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TW);
 
-      /* Clear the transfer watermark flag */
-      __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TW);
+            /* Clear the transfer watermark flag */
+            __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TW);
 
-      /* Transfer watermark Callback */
+            /* Transfer watermark Callback */
 #if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
-      hdma2d->LineEventCallback(hdma2d);
+            hdma2d->LineEventCallback(hdma2d);
 #else
-      HAL_DMA2D_LineEventCallback(hdma2d);
+            HAL_DMA2D_LineEventCallback(hdma2d);
 #endif /* USE_HAL_DMA2D_REGISTER_CALLBACKS */
-
+        }
     }
-  }
-  /* Transfer Complete Interrupt management ************************************/
-  if ((isrflags & DMA2D_FLAG_TC) != 0U)
-  {
-    if ((crflags & DMA2D_IT_TC) != 0U)
-    {
-      /* Disable the transfer complete interrupt */
-      __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TC);
+    /* Transfer Complete Interrupt management ************************************/
+    if ((isrflags & DMA2D_FLAG_TC) != 0U) {
+        if ((crflags & DMA2D_IT_TC) != 0U) {
+            /* Disable the transfer complete interrupt */
+            __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_TC);
 
-      /* Clear the transfer complete flag */
-      __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TC);
+            /* Clear the transfer complete flag */
+            __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_TC);
 
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_NONE;
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_NONE;
 
-      /* Change DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_READY;
+            /* Change DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_READY;
 
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
 
-      if (hdma2d->XferCpltCallback != NULL)
-      {
-        /* Transfer complete Callback */
-        hdma2d->XferCpltCallback(hdma2d);
-      }
+            if (hdma2d->XferCpltCallback != NULL) {
+                /* Transfer complete Callback */
+                hdma2d->XferCpltCallback(hdma2d);
+            }
+        }
     }
-  }
-  /* CLUT Transfer Complete Interrupt management ******************************/
-  if ((isrflags & DMA2D_FLAG_CTC) != 0U)
-  {
-    if ((crflags & DMA2D_IT_CTC) != 0U)
-    {
-      /* Disable the CLUT transfer complete interrupt */
-      __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CTC);
+    /* CLUT Transfer Complete Interrupt management ******************************/
+    if ((isrflags & DMA2D_FLAG_CTC) != 0U) {
+        if ((crflags & DMA2D_IT_CTC) != 0U) {
+            /* Disable the CLUT transfer complete interrupt */
+            __HAL_DMA2D_DISABLE_IT(hdma2d, DMA2D_IT_CTC);
 
-      /* Clear the CLUT transfer complete flag */
-      __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CTC);
+            /* Clear the CLUT transfer complete flag */
+            __HAL_DMA2D_CLEAR_FLAG(hdma2d, DMA2D_FLAG_CTC);
 
-      /* Update error code */
-      hdma2d->ErrorCode |= HAL_DMA2D_ERROR_NONE;
+            /* Update error code */
+            hdma2d->ErrorCode |= HAL_DMA2D_ERROR_NONE;
 
-      /* Change DMA2D state */
-      hdma2d->State = HAL_DMA2D_STATE_READY;
+            /* Change DMA2D state */
+            hdma2d->State = HAL_DMA2D_STATE_READY;
 
-      /* Process Unlocked */
-      __HAL_UNLOCK(hdma2d);
+            /* Process Unlocked */
+            __HAL_UNLOCK(hdma2d);
 
-      /* CLUT Transfer complete Callback */
+            /* CLUT Transfer complete Callback */
 #if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
-      hdma2d->CLUTLoadingCpltCallback(hdma2d);
+            hdma2d->CLUTLoadingCpltCallback(hdma2d);
 #else
-      HAL_DMA2D_CLUTLoadingCpltCallback(hdma2d);
+            HAL_DMA2D_CLUTLoadingCpltCallback(hdma2d);
 #endif /* USE_HAL_DMA2D_REGISTER_CALLBACKS */
+        }
     }
-  }
-
 }
 
 /**
@@ -1667,12 +1544,11 @@ void HAL_DMA2D_IRQHandler(DMA2D_HandleTypeDef *hdma2d)
   *                 the configuration information for the DMA2D.
   * @retval None
   */
-__weak void HAL_DMA2D_LineEventCallback(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdma2d);
+__weak void HAL_DMA2D_LineEventCallback(DMA2D_HandleTypeDef *hdma2d) {
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(hdma2d);
 
-  /* NOTE : This function should not be modified; when the callback is needed,
+    /* NOTE : This function should not be modified; when the callback is needed,
             the HAL_DMA2D_LineEventCallback can be implemented in the user file.
    */
 }
@@ -1683,12 +1559,11 @@ __weak void HAL_DMA2D_LineEventCallback(DMA2D_HandleTypeDef *hdma2d)
   *                 the configuration information for the DMA2D.
   * @retval None
   */
-__weak void HAL_DMA2D_CLUTLoadingCpltCallback(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(hdma2d);
+__weak void HAL_DMA2D_CLUTLoadingCpltCallback(DMA2D_HandleTypeDef *hdma2d) {
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(hdma2d);
 
-  /* NOTE : This function should not be modified; when the callback is needed,
+    /* NOTE : This function should not be modified; when the callback is needed,
             the HAL_DMA2D_CLUTLoadingCpltCallback can be implemented in the user file.
    */
 }
@@ -1726,87 +1601,77 @@ __weak void HAL_DMA2D_CLUTLoadingCpltCallback(DMA2D_HandleTypeDef *hdma2d)
   *                   DMA2D_BACKGROUND_LAYER(0) / DMA2D_FOREGROUND_LAYER(1)
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_ConfigLayer(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx)
-{
-  DMA2D_LayerCfgTypeDef *pLayerCfg;
-  uint32_t regMask;
-  uint32_t regValue;
+HAL_StatusTypeDef HAL_DMA2D_ConfigLayer(DMA2D_HandleTypeDef *hdma2d, uint32_t LayerIdx) {
+    DMA2D_LayerCfgTypeDef *pLayerCfg;
+    uint32_t regMask;
+    uint32_t regValue;
 
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
-  assert_param(IS_DMA2D_OFFSET(hdma2d->LayerCfg[LayerIdx].InputOffset));
-  if (hdma2d->Init.Mode != DMA2D_R2M)
-  {
-    assert_param(IS_DMA2D_INPUT_COLOR_MODE(hdma2d->LayerCfg[LayerIdx].InputColorMode));
-    if (hdma2d->Init.Mode != DMA2D_M2M)
-    {
-      assert_param(IS_DMA2D_ALPHA_MODE(hdma2d->LayerCfg[LayerIdx].AlphaMode));
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
+    assert_param(IS_DMA2D_OFFSET(hdma2d->LayerCfg[LayerIdx].InputOffset));
+    if (hdma2d->Init.Mode != DMA2D_R2M) {
+        assert_param(IS_DMA2D_INPUT_COLOR_MODE(hdma2d->LayerCfg[LayerIdx].InputColorMode));
+        if (hdma2d->Init.Mode != DMA2D_M2M) {
+            assert_param(IS_DMA2D_ALPHA_MODE(hdma2d->LayerCfg[LayerIdx].AlphaMode));
+        }
     }
-  }
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  pLayerCfg = &hdma2d->LayerCfg[LayerIdx];
+    pLayerCfg = &hdma2d->LayerCfg[LayerIdx];
 
-  /* Prepare the value to be written to the BGPFCCR or FGPFCCR register */
-  regValue = pLayerCfg->InputColorMode | (pLayerCfg->AlphaMode << DMA2D_BGPFCCR_AM_Pos);
-  regMask  = DMA2D_BGPFCCR_CM | DMA2D_BGPFCCR_AM | DMA2D_BGPFCCR_ALPHA;
+    /* Prepare the value to be written to the BGPFCCR or FGPFCCR register */
+    regValue = pLayerCfg->InputColorMode | (pLayerCfg->AlphaMode << DMA2D_BGPFCCR_AM_Pos);
+    regMask = DMA2D_BGPFCCR_CM | DMA2D_BGPFCCR_AM | DMA2D_BGPFCCR_ALPHA;
 
 
-  if ((pLayerCfg->InputColorMode == DMA2D_INPUT_A4) || (pLayerCfg->InputColorMode == DMA2D_INPUT_A8))
-  {
-    regValue |= (pLayerCfg->InputAlpha & DMA2D_BGPFCCR_ALPHA);
-  }
-  else
-  {
-    regValue |= (pLayerCfg->InputAlpha << DMA2D_BGPFCCR_ALPHA_Pos);
-  }
-
-  /* Configure the background DMA2D layer */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Write DMA2D BGPFCCR register */
-    MODIFY_REG(hdma2d->Instance->BGPFCCR, regMask, regValue);
-
-    /* DMA2D BGOR register configuration -------------------------------------*/
-    WRITE_REG(hdma2d->Instance->BGOR, pLayerCfg->InputOffset);
-
-    /* DMA2D BGCOLR register configuration -------------------------------------*/
-    if ((pLayerCfg->InputColorMode == DMA2D_INPUT_A4) || (pLayerCfg->InputColorMode == DMA2D_INPUT_A8))
-    {
-      WRITE_REG(hdma2d->Instance->BGCOLR, pLayerCfg->InputAlpha & (DMA2D_BGCOLR_BLUE | DMA2D_BGCOLR_GREEN | \
-                                                                   DMA2D_BGCOLR_RED));
+    if ((pLayerCfg->InputColorMode == DMA2D_INPUT_A4) || (pLayerCfg->InputColorMode == DMA2D_INPUT_A8)) {
+        regValue |= (pLayerCfg->InputAlpha & DMA2D_BGPFCCR_ALPHA);
+    } else {
+        regValue |= (pLayerCfg->InputAlpha << DMA2D_BGPFCCR_ALPHA_Pos);
     }
-  }
-  /* Configure the foreground DMA2D layer */
-  else
-  {
 
+    /* Configure the background DMA2D layer */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Write DMA2D BGPFCCR register */
+        MODIFY_REG(hdma2d->Instance->BGPFCCR, regMask, regValue);
 
-    /* Write DMA2D FGPFCCR register */
-    MODIFY_REG(hdma2d->Instance->FGPFCCR, regMask, regValue);
+        /* DMA2D BGOR register configuration -------------------------------------*/
+        WRITE_REG(hdma2d->Instance->BGOR, pLayerCfg->InputOffset);
 
-    /* DMA2D FGOR register configuration -------------------------------------*/
-    WRITE_REG(hdma2d->Instance->FGOR, pLayerCfg->InputOffset);
-
-    /* DMA2D FGCOLR register configuration -------------------------------------*/
-    if ((pLayerCfg->InputColorMode == DMA2D_INPUT_A4) || (pLayerCfg->InputColorMode == DMA2D_INPUT_A8))
-    {
-      WRITE_REG(hdma2d->Instance->FGCOLR, pLayerCfg->InputAlpha & (DMA2D_FGCOLR_BLUE | DMA2D_FGCOLR_GREEN | \
-                                                                   DMA2D_FGCOLR_RED));
+        /* DMA2D BGCOLR register configuration -------------------------------------*/
+        if ((pLayerCfg->InputColorMode == DMA2D_INPUT_A4) || (pLayerCfg->InputColorMode == DMA2D_INPUT_A8)) {
+            WRITE_REG(hdma2d->Instance->BGCOLR, pLayerCfg->InputAlpha & (DMA2D_BGCOLR_BLUE | DMA2D_BGCOLR_GREEN |
+                                                                         DMA2D_BGCOLR_RED));
+        }
     }
-  }
-  /* Initialize the DMA2D state*/
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    /* Configure the foreground DMA2D layer */
+    else {
 
-  /* Process unlocked */
-  __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+        /* Write DMA2D FGPFCCR register */
+        MODIFY_REG(hdma2d->Instance->FGPFCCR, regMask, regValue);
+
+        /* DMA2D FGOR register configuration -------------------------------------*/
+        WRITE_REG(hdma2d->Instance->FGOR, pLayerCfg->InputOffset);
+
+        /* DMA2D FGCOLR register configuration -------------------------------------*/
+        if ((pLayerCfg->InputColorMode == DMA2D_INPUT_A4) || (pLayerCfg->InputColorMode == DMA2D_INPUT_A8)) {
+            WRITE_REG(hdma2d->Instance->FGCOLR, pLayerCfg->InputAlpha & (DMA2D_FGCOLR_BLUE | DMA2D_FGCOLR_GREEN |
+                                                                         DMA2D_FGCOLR_RED));
+        }
+    }
+    /* Initialize the DMA2D state*/
+    hdma2d->State = HAL_DMA2D_STATE_READY;
+
+    /* Process unlocked */
+    __HAL_UNLOCK(hdma2d);
+
+    return HAL_OK;
 }
 
 /**
@@ -1823,47 +1688,44 @@ HAL_StatusTypeDef HAL_DMA2D_ConfigLayer(DMA2D_HandleTypeDef *hdma2d, uint32_t La
   *      code size and improved heap usage.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_ConfigCLUT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef CLUTCfg, uint32_t LayerIdx)
-{
-  /* Check the parameters */
-  assert_param(IS_DMA2D_LAYER(LayerIdx));
-  assert_param(IS_DMA2D_CLUT_CM(CLUTCfg.CLUTColorMode));
-  assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg.Size));
+HAL_StatusTypeDef HAL_DMA2D_ConfigCLUT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCfgTypeDef CLUTCfg, uint32_t LayerIdx) {
+    /* Check the parameters */
+    assert_param(IS_DMA2D_LAYER(LayerIdx));
+    assert_param(IS_DMA2D_CLUT_CM(CLUTCfg.CLUTColorMode));
+    assert_param(IS_DMA2D_CLUT_SIZE(CLUTCfg.Size));
 
-  /* Process locked */
-  __HAL_LOCK(hdma2d);
+    /* Process locked */
+    __HAL_LOCK(hdma2d);
 
-  /* Change DMA2D peripheral state */
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    /* Change DMA2D peripheral state */
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Configure the CLUT of the background DMA2D layer */
-  if (LayerIdx == DMA2D_BACKGROUND_LAYER)
-  {
-    /* Write background CLUT memory address */
-    WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t)CLUTCfg.pCLUT);
+    /* Configure the CLUT of the background DMA2D layer */
+    if (LayerIdx == DMA2D_BACKGROUND_LAYER) {
+        /* Write background CLUT memory address */
+        WRITE_REG(hdma2d->Instance->BGCMAR, (uint32_t) CLUTCfg.pCLUT);
 
-    /* Write background CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
-               ((CLUTCfg.Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
-  }
-  /* Configure the CLUT of the foreground DMA2D layer */
-  else
-  {
-    /* Write foreground CLUT memory address */
-    WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t)CLUTCfg.pCLUT);
+        /* Write background CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->BGPFCCR, (DMA2D_BGPFCCR_CS | DMA2D_BGPFCCR_CCM),
+                   ((CLUTCfg.Size << DMA2D_BGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_BGPFCCR_CCM_Pos)));
+    }
+    /* Configure the CLUT of the foreground DMA2D layer */
+    else {
+        /* Write foreground CLUT memory address */
+        WRITE_REG(hdma2d->Instance->FGCMAR, (uint32_t) CLUTCfg.pCLUT);
 
-    /* Write foreground CLUT size and CLUT color mode */
-    MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
-               ((CLUTCfg.Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
-  }
+        /* Write foreground CLUT size and CLUT color mode */
+        MODIFY_REG(hdma2d->Instance->FGPFCCR, (DMA2D_FGPFCCR_CS | DMA2D_FGPFCCR_CCM),
+                   ((CLUTCfg.Size << DMA2D_FGPFCCR_CS_Pos) | (CLUTCfg.CLUTColorMode << DMA2D_FGPFCCR_CCM_Pos)));
+    }
 
-  /* Set the DMA2D state to Ready*/
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    /* Set the DMA2D state to Ready*/
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  /* Process unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Process unlocked */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 
@@ -1877,35 +1739,31 @@ HAL_StatusTypeDef HAL_DMA2D_ConfigCLUT(DMA2D_HandleTypeDef *hdma2d, DMA2D_CLUTCf
   * @retval HAL status
   */
 
-HAL_StatusTypeDef HAL_DMA2D_ProgramLineEvent(DMA2D_HandleTypeDef *hdma2d, uint32_t Line)
-{
-  /* Check the parameters */
-  if (Line > DMA2D_LWR_LW)
-  {
-    return HAL_ERROR;
-  }
-  else
-  {
-    /* Process locked */
-    __HAL_LOCK(hdma2d);
+HAL_StatusTypeDef HAL_DMA2D_ProgramLineEvent(DMA2D_HandleTypeDef *hdma2d, uint32_t Line) {
+    /* Check the parameters */
+    if (Line > DMA2D_LWR_LW) {
+        return HAL_ERROR;
+    } else {
+        /* Process locked */
+        __HAL_LOCK(hdma2d);
 
-    /* Change DMA2D peripheral state */
-    hdma2d->State = HAL_DMA2D_STATE_BUSY;
+        /* Change DMA2D peripheral state */
+        hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-    /* Sets the Line watermark configuration */
-    WRITE_REG(hdma2d->Instance->LWR, Line);
+        /* Sets the Line watermark configuration */
+        WRITE_REG(hdma2d->Instance->LWR, Line);
 
-    /* Enable the Line interrupt */
-    __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_TW);
+        /* Enable the Line interrupt */
+        __HAL_DMA2D_ENABLE_IT(hdma2d, DMA2D_IT_TW);
 
-    /* Initialize the DMA2D state*/
-    hdma2d->State = HAL_DMA2D_STATE_READY;
+        /* Initialize the DMA2D state*/
+        hdma2d->State = HAL_DMA2D_STATE_READY;
 
-    /* Process unlocked */
-    __HAL_UNLOCK(hdma2d);
+        /* Process unlocked */
+        __HAL_UNLOCK(hdma2d);
 
-    return HAL_OK;
-  }
+        return HAL_OK;
+    }
 }
 
 /**
@@ -1913,22 +1771,21 @@ HAL_StatusTypeDef HAL_DMA2D_ProgramLineEvent(DMA2D_HandleTypeDef *hdma2d, uint32
   * @param hdma2d DMA2D handle.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_EnableDeadTime(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Process Locked */
-  __HAL_LOCK(hdma2d);
+HAL_StatusTypeDef HAL_DMA2D_EnableDeadTime(DMA2D_HandleTypeDef *hdma2d) {
+    /* Process Locked */
+    __HAL_LOCK(hdma2d);
 
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Set DMA2D_AMTCR EN bit */
-  SET_BIT(hdma2d->Instance->AMTCR, DMA2D_AMTCR_EN);
+    /* Set DMA2D_AMTCR EN bit */
+    SET_BIT(hdma2d->Instance->AMTCR, DMA2D_AMTCR_EN);
 
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  /* Process Unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Process Unlocked */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1936,22 +1793,21 @@ HAL_StatusTypeDef HAL_DMA2D_EnableDeadTime(DMA2D_HandleTypeDef *hdma2d)
   * @param hdma2d DMA2D handle.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_DisableDeadTime(DMA2D_HandleTypeDef *hdma2d)
-{
-  /* Process Locked */
-  __HAL_LOCK(hdma2d);
+HAL_StatusTypeDef HAL_DMA2D_DisableDeadTime(DMA2D_HandleTypeDef *hdma2d) {
+    /* Process Locked */
+    __HAL_LOCK(hdma2d);
 
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Clear DMA2D_AMTCR EN bit */
-  CLEAR_BIT(hdma2d->Instance->AMTCR, DMA2D_AMTCR_EN);
+    /* Clear DMA2D_AMTCR EN bit */
+    CLEAR_BIT(hdma2d->Instance->AMTCR, DMA2D_AMTCR_EN);
 
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  /* Process Unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Process Unlocked */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -1962,22 +1818,21 @@ HAL_StatusTypeDef HAL_DMA2D_DisableDeadTime(DMA2D_HandleTypeDef *hdma2d)
   * @param DeadTime dead time value.
   * @retval HAL status
   */
-HAL_StatusTypeDef HAL_DMA2D_ConfigDeadTime(DMA2D_HandleTypeDef *hdma2d, uint8_t DeadTime)
-{
-  /* Process Locked */
-  __HAL_LOCK(hdma2d);
+HAL_StatusTypeDef HAL_DMA2D_ConfigDeadTime(DMA2D_HandleTypeDef *hdma2d, uint8_t DeadTime) {
+    /* Process Locked */
+    __HAL_LOCK(hdma2d);
 
-  hdma2d->State = HAL_DMA2D_STATE_BUSY;
+    hdma2d->State = HAL_DMA2D_STATE_BUSY;
 
-  /* Set DMA2D_AMTCR DT field */
-  MODIFY_REG(hdma2d->Instance->AMTCR, DMA2D_AMTCR_DT, (((uint32_t) DeadTime) << DMA2D_AMTCR_DT_Pos));
+    /* Set DMA2D_AMTCR DT field */
+    MODIFY_REG(hdma2d->Instance->AMTCR, DMA2D_AMTCR_DT, (((uint32_t) DeadTime) << DMA2D_AMTCR_DT_Pos));
 
-  hdma2d->State = HAL_DMA2D_STATE_READY;
+    hdma2d->State = HAL_DMA2D_STATE_READY;
 
-  /* Process Unlocked */
-  __HAL_UNLOCK(hdma2d);
+    /* Process Unlocked */
+    __HAL_UNLOCK(hdma2d);
 
-  return HAL_OK;
+    return HAL_OK;
 }
 
 /**
@@ -2007,9 +1862,8 @@ HAL_StatusTypeDef HAL_DMA2D_ConfigDeadTime(DMA2D_HandleTypeDef *hdma2d, uint8_t 
   *                 the configuration information for the DMA2D.
   * @retval HAL state
   */
-HAL_DMA2D_StateTypeDef HAL_DMA2D_GetState(DMA2D_HandleTypeDef *hdma2d)
-{
-  return hdma2d->State;
+HAL_DMA2D_StateTypeDef HAL_DMA2D_GetState(DMA2D_HandleTypeDef *hdma2d) {
+    return hdma2d->State;
 }
 
 /**
@@ -2018,9 +1872,8 @@ HAL_DMA2D_StateTypeDef HAL_DMA2D_GetState(DMA2D_HandleTypeDef *hdma2d)
   *               the configuration information for DMA2D.
   * @retval DMA2D Error Code
   */
-uint32_t HAL_DMA2D_GetError(DMA2D_HandleTypeDef *hdma2d)
-{
-  return hdma2d->ErrorCode;
+uint32_t HAL_DMA2D_GetError(DMA2D_HandleTypeDef *hdma2d) {
+    return hdma2d->ErrorCode;
 }
 
 /**
@@ -2047,68 +1900,57 @@ uint32_t HAL_DMA2D_GetError(DMA2D_HandleTypeDef *hdma2d)
   * @retval HAL status
   */
 static void DMA2D_SetConfig(DMA2D_HandleTypeDef *hdma2d, uint32_t pdata, uint32_t DstAddress, uint32_t Width,
-                            uint32_t Height)
-{
-  uint32_t tmp;
-  uint32_t tmp1;
-  uint32_t tmp2;
-  uint32_t tmp3;
-  uint32_t tmp4;
+                            uint32_t Height) {
+    uint32_t tmp;
+    uint32_t tmp1;
+    uint32_t tmp2;
+    uint32_t tmp3;
+    uint32_t tmp4;
 
-  /* Configure DMA2D data size */
-  MODIFY_REG(hdma2d->Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (Height | (Width << DMA2D_NLR_PL_Pos)));
+    /* Configure DMA2D data size */
+    MODIFY_REG(hdma2d->Instance->NLR, (DMA2D_NLR_NL | DMA2D_NLR_PL), (Height | (Width << DMA2D_NLR_PL_Pos)));
 
-  /* Configure DMA2D destination address */
-  WRITE_REG(hdma2d->Instance->OMAR, DstAddress);
+    /* Configure DMA2D destination address */
+    WRITE_REG(hdma2d->Instance->OMAR, DstAddress);
 
-  /* Register to memory DMA2D mode selected */
-  if (hdma2d->Init.Mode == DMA2D_R2M)
-  {
-    tmp1 = pdata & DMA2D_OCOLR_ALPHA_1;
-    tmp2 = pdata & DMA2D_OCOLR_RED_1;
-    tmp3 = pdata & DMA2D_OCOLR_GREEN_1;
-    tmp4 = pdata & DMA2D_OCOLR_BLUE_1;
+    /* Register to memory DMA2D mode selected */
+    if (hdma2d->Init.Mode == DMA2D_R2M) {
+        tmp1 = pdata & DMA2D_OCOLR_ALPHA_1;
+        tmp2 = pdata & DMA2D_OCOLR_RED_1;
+        tmp3 = pdata & DMA2D_OCOLR_GREEN_1;
+        tmp4 = pdata & DMA2D_OCOLR_BLUE_1;
 
-    /* Prepare the value to be written to the OCOLR register according to the color mode */
-    if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_ARGB8888)
+        /* Prepare the value to be written to the OCOLR register according to the color mode */
+        if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_ARGB8888) {
+            tmp = (tmp3 | tmp2 | tmp1 | tmp4);
+        } else if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_RGB888) {
+            tmp = (tmp3 | tmp2 | tmp4);
+        } else if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_RGB565) {
+            tmp2 = (tmp2 >> 19U);
+            tmp3 = (tmp3 >> 10U);
+            tmp4 = (tmp4 >> 3U);
+            tmp = ((tmp3 << 5U) | (tmp2 << 11U) | tmp4);
+        } else if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_ARGB1555) {
+            tmp1 = (tmp1 >> 31U);
+            tmp2 = (tmp2 >> 19U);
+            tmp3 = (tmp3 >> 11U);
+            tmp4 = (tmp4 >> 3U);
+            tmp = ((tmp3 << 5U) | (tmp2 << 10U) | (tmp1 << 15U) | tmp4);
+        } else /* Dhdma2d->Init.ColorMode = DMA2D_OUTPUT_ARGB4444 */
+        {
+            tmp1 = (tmp1 >> 28U);
+            tmp2 = (tmp2 >> 20U);
+            tmp3 = (tmp3 >> 12U);
+            tmp4 = (tmp4 >> 4U);
+            tmp = ((tmp3 << 4U) | (tmp2 << 8U) | (tmp1 << 12U) | tmp4);
+        }
+        /* Write to DMA2D OCOLR register */
+        WRITE_REG(hdma2d->Instance->OCOLR, tmp);
+    } else /* M2M, M2M_PFC or M2M_Blending DMA2D Mode */
     {
-      tmp = (tmp3 | tmp2 | tmp1 | tmp4);
+        /* Configure DMA2D source address */
+        WRITE_REG(hdma2d->Instance->FGMAR, pdata);
     }
-    else if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_RGB888)
-    {
-      tmp = (tmp3 | tmp2 | tmp4);
-    }
-    else if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_RGB565)
-    {
-      tmp2 = (tmp2 >> 19U);
-      tmp3 = (tmp3 >> 10U);
-      tmp4 = (tmp4 >> 3U);
-      tmp  = ((tmp3 << 5U) | (tmp2 << 11U) | tmp4);
-    }
-    else if (hdma2d->Init.ColorMode == DMA2D_OUTPUT_ARGB1555)
-    {
-      tmp1 = (tmp1 >> 31U);
-      tmp2 = (tmp2 >> 19U);
-      tmp3 = (tmp3 >> 11U);
-      tmp4 = (tmp4 >> 3U);
-      tmp  = ((tmp3 << 5U) | (tmp2 << 10U) | (tmp1 << 15U) | tmp4);
-    }
-    else /* Dhdma2d->Init.ColorMode = DMA2D_OUTPUT_ARGB4444 */
-    {
-      tmp1 = (tmp1 >> 28U);
-      tmp2 = (tmp2 >> 20U);
-      tmp3 = (tmp3 >> 12U);
-      tmp4 = (tmp4 >> 4U);
-      tmp  = ((tmp3 << 4U) | (tmp2 << 8U) | (tmp1 << 12U) | tmp4);
-    }
-    /* Write to DMA2D OCOLR register */
-    WRITE_REG(hdma2d->Instance->OCOLR, tmp);
-  }
-  else /* M2M, M2M_PFC or M2M_Blending DMA2D Mode */
-  {
-    /* Configure DMA2D source address */
-    WRITE_REG(hdma2d->Instance->FGMAR, pdata);
-  }
 }
 
 /**

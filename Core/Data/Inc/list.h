@@ -5,18 +5,18 @@
 #include <stdint.h>
 
 typedef struct ListItem {
-  uint32_t Value;        // Value for sorting
-  struct ListItem *Next; // Next item
-  struct ListItem *Prev; // Previous item
-  void *Owner;           // Owner of this item
-  struct List *Parent;   // List containing this item
+    uint32_t Value;       // Value for sorting
+    struct ListItem *Next;// Next item
+    struct ListItem *Prev;// Previous item
+    void *Owner;          // Owner of this item
+    struct List *Parent;  // List containing this item
 } ListItem_t;
 
 // List structure
 typedef struct List {
-  uint32_t Length;     // Number of items in list
-  ListItem_t *Current; // Current index
-  ListItem_t End;      // End marker
+    uint32_t Length;    // Number of items in list
+    ListItem_t *Current;// Current index
+    ListItem_t End;     // End marker
 } List_t;
 
 void list_item_init(ListItem_t *item);

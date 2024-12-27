@@ -1,5 +1,18 @@
-#include "list.h"
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#include "list.h"
+
+// Initialize a list item
+void list_item_init(ListItem_t *item) {
+  item->Parent = NULL;
+  item->Value = 0;
+}
+
+void list_item_set_value(ListItem_t *item, uint32_t value) {
+  item->Value = value;
+}
 
 // Initialize a list
 void list_init(List_t *list) {
@@ -14,11 +27,7 @@ void list_init(List_t *list) {
   list->Current = &(list->End);
 }
 
-// Initialize a list item
-void list_item_init(ListItem_t *item) {
-  item->Parent = NULL;
-  item->Value = 0;
-}
+bool list_valid(List_t *list) { return list->Current != NULL; }
 
 // Insert item into list in order (based on xItemValue)
 void list_insert(List_t *list, ListItem_t *new_item) {
@@ -59,4 +68,10 @@ void list_remove(ListItem_t *item_to_remove) {
 
   item_to_remove->Parent = NULL;
   list->Length--;
+}
+
+ListItem_t *list_head(List_t *list) {
+  if (list->Length == 0)
+    return NULL;
+  return list->End.Next;
 }

@@ -43,13 +43,13 @@ void scheduler_rr(void) {
     current_tcb->state = READY;
   }
 
-  if (terminated_list.Current && terminated_list.Length > 0) {
-    page_t *page = &(((TCB_t *)terminated_list.End.Next->Owner)->page);
+  if (list_valid(&terminated_list) && terminated_list.Length > 0) {
+    page_t *page = &(((TCB_t *)list_head(&terminated_list)->Owner)->page);
     list_remove(terminated_list.End.Next);
     page_free(page);
   }
 
-  current_tcb = ready_list.End.Next->Owner;
+  current_tcb = list_head(&ready_list)->Owner;
   list_remove(&(current_tcb->StateListItem));
   current_tcb->state = RUNNING;
 }

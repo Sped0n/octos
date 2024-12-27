@@ -52,7 +52,7 @@ uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy,
   list_item_init(&(tcb->StateListItem));
   tcb->StateListItem.Owner = tcb;
 
-  if (!ready_list.Current)
+  if (!list_valid(&ready_list))
     list_init(&ready_list);
 
   if (tcb->id == 0) {
@@ -73,7 +73,7 @@ void task_delete(TCB_t *tcb) {
 
   __disable_irq();
 
-  if (!terminated_list.Current)
+  if (!list_valid(&terminated_list))
     list_init(&terminated_list);
 
   if (tcb->state != RUNNING) {

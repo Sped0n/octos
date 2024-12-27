@@ -40,7 +40,6 @@ void task1(void) {
       printf("########hello from task1###########\n\r");
       mutex_release(&mutex_test);
       if (tp1 == 100000 || tp1 == 500000) {
-
         mutex_acquire(&mutex_test);
         printf("create return %d\n\r",
                task_create((task_func_t)&task0, NULL, PAGE_POLICY_POOL, 256));

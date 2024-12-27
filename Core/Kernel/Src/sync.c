@@ -8,6 +8,20 @@
 extern TCB_t *current_tcb;
 extern List_t ready_list;
 
+static void block_current_task(List_t *blocked_list) {
+  list_insert(blocked_list, &(current_tcb->StateListItem));
+  current_tcb->state = BLOCKED;
+  task_yield();
+}
+
+static void unblock_one_task(List_t *blocked_list) {
+  ListItem_t *head = list_head(blocked_list);
+  list_remove(head);
+  list_insert(&ready_list, head);
+  TCB_t *head_tcb = head->Owner;
+  head_tcb->state = READY;
+}
+
 // Semaphore functions
 void sema_init(Sema_t *sema, int32_t initial_count) {
   sema->Count = initial_count;
@@ -16,13 +30,11 @@ void sema_init(Sema_t *sema, int32_t initial_count) {
 
 void sema_acquire(Sema_t *sema) {
   __disable_irq();
+
   sema->Count--;
-  if (sema->Count < 0) {
-    list_remove(&(current_tcb->StateListItem));
-    list_insert(&(sema->BlockedList), &(current_tcb->StateListItem));
-    current_tcb->state = BLOCKED;
-    task_yield();
-  }
+  if (sema->Count < 0)
+    block_current_task(&(sema->BlockedList));
+
   __enable_irq();
 }
 
@@ -36,11 +48,8 @@ void sema_release(Sema_t *sema) {
     return;
   }
 
-  if (sema->BlockedList.Length > 0) {
-    TCB_t *temp = sema->BlockedList.End.Next->Owner;
-    list_insert(&ready_list, &(temp->StateListItem));
-    temp->state = READY;
-  }
+  if (sema->BlockedList.Length > 0)
+    unblock_one_task(&(sema->BlockedList));
 
   __enable_irq();
 }
@@ -53,23 +62,15 @@ void mutex_init(Mutex_t *mutex) {
 
 void mutex_acquire(Mutex_t *mutex) {
   __disable_irq();
-  if (mutex->Owner == NULL) {
+
+  if (mutex->Owner == NULL)
     mutex->Owner = current_tcb;
-    __enable_irq();
-    return;
-  } else if (mutex->Owner == current_tcb) {
-    // Already owns the mutex
-    __enable_irq();
-    return;
-  } else {
-    // Need to block
-    list_insert(&(mutex->BlockedList), &(current_tcb->StateListItem));
-    current_tcb->state = BLOCKED;
+  else if (mutex->Owner == current_tcb)
+    ;
+  else
+    block_current_task(&(mutex->BlockedList));
 
-    task_yield();
-
-    __enable_irq();
-  }
+  __enable_irq();
 }
 
 void mutex_release(Mutex_t *mutex) {
@@ -79,13 +80,8 @@ void mutex_release(Mutex_t *mutex) {
   __disable_irq();
 
   mutex->Owner = NULL;
-
-  if (mutex->BlockedList.Length > 0) {
-    TCB_t *temp = mutex->BlockedList.End.Next->Owner;
-    list_remove(mutex->BlockedList.End.Next);
-    list_insert(&ready_list, &(temp->StateListItem));
-    temp->state = READY;
-  }
+  if (mutex->BlockedList.Length > 0)
+    unblock_one_task(&(mutex->BlockedList));
 
   __enable_irq();
 }

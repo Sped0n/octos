@@ -25,17 +25,17 @@ void sema_init(Sema_t *sema, int32_t initial_count) {
 }
 
 void sema_acquire(Sema_t *sema) {
-    MICROS_DISABLE_IRQ();
+    ENTER_CRITICAL();
 
     sema->Count--;
     if (sema->Count < 0)
         block_current_task(&(sema->BlockedList));
 
-    MICROS_ENABLE_IRQ();
+    EXIT_CRITICAL();
 }
 
 void sema_release(Sema_t *sema) {
-    MICROS_DISABLE_IRQ();
+    ENTER_CRITICAL();
 
     sema->Count++;
 
@@ -47,7 +47,7 @@ void sema_release(Sema_t *sema) {
     if (sema->BlockedList.Length > 0)
         unblock_one_task(&(sema->BlockedList));
 
-    MICROS_ENABLE_IRQ();
+    EXIT_CRITICAL();
 }
 
 // Mutex functions
@@ -57,7 +57,7 @@ void mutex_init(Mutex_t *mutex) {
 }
 
 void mutex_acquire(Mutex_t *mutex) {
-    MICROS_DISABLE_IRQ();
+    ENTER_CRITICAL();
 
     if (mutex->Owner == NULL)
         mutex->Owner = current_tcb;
@@ -66,18 +66,18 @@ void mutex_acquire(Mutex_t *mutex) {
     else
         block_current_task(&(mutex->BlockedList));
 
-    MICROS_ENABLE_IRQ();
+    EXIT_CRITICAL();
 }
 
 void mutex_release(Mutex_t *mutex) {
     if (mutex->Owner != current_tcb)
         return;
 
-    MICROS_DISABLE_IRQ();
+    EXIT_CRITICAL();
 
     mutex->Owner = NULL;
     if (mutex->BlockedList.Length > 0)
         unblock_one_task(&(mutex->BlockedList));
 
-    MICROS_ENABLE_IRQ();
+    EXIT_CRITICAL();
 }

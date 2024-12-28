@@ -1,18 +1,10 @@
 #include "scheduler.h"
 #include "list.h"
-
-#include "Arch/stm32f4xx/Inc/api.h"
 #include "tcb.h"
 
 extern TCB_t *current_tcb;
 extern List_t ready_list;
 extern List_t terminated_list;
-
-void scheduler_trigger(void) {
-    MICROS_DISABLE_IRQ();
-    MICROS_TRIGGER_PENDSV();
-    MICROS_ENABLE_IRQ();
-}
 
 void scheduler_rr(void) {
     if (tcb_status(current_tcb) == RUNNING) {

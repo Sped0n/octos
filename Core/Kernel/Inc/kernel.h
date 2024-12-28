@@ -2,6 +2,7 @@
 #define __KERNEL_H__
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef enum {
     MILISECONDS = 1000,
@@ -14,5 +15,6 @@ typedef struct Quanta {
 } Quanta_t;
 
 void kernel_launch(Quanta_t *quanta);
+uint32_t kernel_get_current_tick(void);
 
 #endif

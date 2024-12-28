@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
+#include "kernel.h"
 #include "list.h"
 #include "page.h"
 #include "scheduler.h"
@@ -10,11 +11,15 @@
 
 extern TCB_t *current_tcb;
 extern List_t ready_list;
+extern List_t pending_ready_list;
+extern List_t delayed_list;
+extern List_t delayed_list_overflow;
+extern List_t suspended_list;
 extern List_t terminated_list;
 
 uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
                     size_t page_size) {
-    MICROS_DISABLE_IRQ();
+    ENTER_CRITICAL();
 
     Page_t page;
     page_alloc(&page, page_policy, page_size);
@@ -31,7 +36,7 @@ uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
         list_insert(&ready_list, &(tcb->StateListItem));
     }
 
-    MICROS_ENABLE_IRQ();
+    EXIT_CRITICAL();
     return 0;
 }
 
@@ -39,7 +44,7 @@ void task_delete(TCB_t *tcb) {
     if (!tcb || tcb_status(tcb) == TERMINATED)
         return;
 
-    MICROS_DISABLE_IRQ();
+    ENTER_CRITICAL();
 
     if (!list_valid(&terminated_list))
         list_init(&terminated_list);
@@ -50,7 +55,7 @@ void task_delete(TCB_t *tcb) {
     list_insert(&terminated_list, &(tcb->StateListItem));
 
     scheduler_trigger();
-    MICROS_ENABLE_IRQ();
+    EXIT_CRITICAL();
 }
 
 void task_terminate(void) { task_delete(current_tcb); }

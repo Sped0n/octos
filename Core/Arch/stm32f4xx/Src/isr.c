@@ -74,8 +74,6 @@ __attribute__((naked)) void PendSV_Handler(void) {
    * R1 and R0 onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8,
    * R9, R10 & R11) to save the context of the current task
    */
-    /* Disable interrupts */
-    __asm("CPSID   I");
     /* Push registers R4-R11 */
     __asm("PUSH    {R4-R11}");
     /* Load R0 with the address of current tcb pointer */
@@ -100,8 +98,6 @@ __attribute__((naked)) void PendSV_Handler(void) {
     __asm("LDR     SP, [R1]");
     /* Pop registers R4-R11 */
     __asm("POP     {R4-R11}");
-    /* Enable interrupt */
-    __asm("CPSIE   I");
     /* Return from exception */
     __asm("BX      LR");
 }

@@ -50,8 +50,8 @@ void kernel_tick_increment(void) {
         if (list_item_get_value(head) <= current_tick) {
             list_remove(head);
             list_item_set_value(head, 0);
-            // Add to ready list
-            list_insert(&ready_list, head);
+            // Add to pending ready list
+            list_insert_end(&pending_ready_list, head);
         } else {
             break;// No more tasks to wake
         }

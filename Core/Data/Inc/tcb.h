@@ -61,7 +61,7 @@ MICROS_INLINE inline void tcb_release(TCB_t *tcb) {
     page_free(tcb->Page);
 }
 
-MICROS_INLINE inline ThreadState_t tcb_status(TCB_t *tcb) {
+MICROS_INLINE static inline ThreadState_t tcb_status(TCB_t *tcb) {
     const List_t *parent = tcb->StateListItem.Parent;
     if (parent == NULL) return RUNNING;
     else if (parent == &terminated_list)

@@ -2,7 +2,6 @@
 #define __KERNEL_H__
 
 #include "Kernel/Inc/utils.h"
-#include "global.h"
 #include <stdint.h>
 
 extern uint32_t current_tick;

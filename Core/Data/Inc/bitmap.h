@@ -1,9 +1,10 @@
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
 
-#include "global.h"
 #include <stddef.h>
 #include <stdint.h>
+
+#include "Kernel/Inc/utils.h"
 
 typedef struct {
     uint32_t *data;

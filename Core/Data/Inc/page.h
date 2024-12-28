@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "bitmap.h"
-#include "global.h"
 
 typedef enum {
     PAGE_POLICY_STATIC,

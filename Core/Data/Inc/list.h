@@ -6,7 +6,6 @@
 #include <stdint.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
-#include "global.h"
 
 typedef struct ListItem {
     uint32_t Value;       // Value for sorting

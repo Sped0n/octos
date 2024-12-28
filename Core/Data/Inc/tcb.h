@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "global.h"
 #include "list.h"
 #include "page.h"
 

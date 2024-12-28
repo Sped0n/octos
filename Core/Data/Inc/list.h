@@ -1,10 +1,12 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-#include "global.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "Arch/stm32f4xx/Inc/api.h"
+#include "global.h"
 
 typedef struct ListItem {
     uint32_t Value;       // Value for sorting
@@ -47,7 +49,9 @@ MICROS_INLINE inline void list_init(List_t *list) {
 MICROS_INLINE static inline bool list_valid(List_t *list) { return list->Current != NULL; }
 
 // Insert item into list in order (based on xItemValue)
-MICROS_INLINE inline void list_insert(List_t *list, ListItem_t *new_item) {
+MICROS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item) {
+    MICROS_DSB();
+    MICROS_ISB();
     ListItem_t *iterator;
 
     // Find insertion position
@@ -69,7 +73,9 @@ MICROS_INLINE inline void list_insert(List_t *list, ListItem_t *new_item) {
     list->Length++;
 }
 
-MICROS_INLINE inline void list_insert_end(List_t *list, ListItem_t *new_item) {
+MICROS_INLINE static inline void list_insert_end(List_t *list, ListItem_t *new_item) {
+    MICROS_DSB();
+    MICROS_ISB();
     // Get the last real item (End.Prev points to the last actual item)
     ListItem_t *last = list->End.Prev;
 
@@ -87,7 +93,9 @@ MICROS_INLINE inline void list_insert_end(List_t *list, ListItem_t *new_item) {
 }
 
 // Remove item from list
-MICROS_INLINE inline void list_remove(ListItem_t *item_to_remove) {
+MICROS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
+    MICROS_DSB();
+    MICROS_ISB();
     if (!item_to_remove->Parent)
         return;
     List_t *list = item_to_remove->Parent;

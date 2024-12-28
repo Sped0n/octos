@@ -1,4 +1,5 @@
 #include "Arch/stm32f4xx/Inc/api.h"
+#include "global.h"
 #include "kernel.h"
 #include "tcb.h"
 
@@ -6,7 +7,7 @@
 
 extern TCB_t *current_tcb;
 
-__attribute__((naked)) void scheduler_launch(void) {
+MICROS_NAKED void scheduler_launch(void) {
     /* Load the SP reg with the stacked SP value */
     __asm("LDR     SP, %0" ::"m"(current_tcb->StackTop));
     /* Pop registers R4-R11(user saved context) */

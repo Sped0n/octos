@@ -6,6 +6,8 @@
 #include "stm32f4xx.h"// IWYU pragma: keep
 
 #define MAX_SYSCALL_INTERRUPT_PRIORITY 14
+#define MICROS_DSB() __DSB()
+#define MICROS_ISB() __ISB()
 
 static uint32_t interrupt_state;
 

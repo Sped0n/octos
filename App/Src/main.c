@@ -1,4 +1,5 @@
 #include "main.h"
+#include "global.h"
 #include "kernel.h"
 #include "led.h"
 #include "page.h"
@@ -106,7 +107,8 @@ int main(void) {
     task_create((TaskFunc_t) &task2, NULL, PAGE_POLICY_DYNAMIC, 256);
 
     // Launch kernel with 1ms time quantum
-    kernel_launch(1);
+    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};
+    kernel_launch(&quanta);
 
     // Should never reach here
     while (1);

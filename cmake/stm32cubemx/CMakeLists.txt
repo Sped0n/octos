@@ -28,6 +28,7 @@ target_include_directories(stm32cubemx INTERFACE
     ../../Drivers/Inc
     ../../Core/Kernel/Inc
     ../../Core/Data/Inc
+    ../../Core
     ../../App/Inc
     ../../
     ${ARM_TOOLCHAIN_DIR}/include
@@ -45,6 +46,8 @@ target_sources(stm32cubemx INTERFACE
     ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usart.c
     ${DRIVER_SOURCES}
     ${KERNEL_SOURCES}
+    ../../Core/Arch/stm32f4xx/Src/isr.c
+    ../../Core/Arch/stm32f4xx/Src/api.c
     ${DATA_SOURCES}
     ${APP_SOURCES}
 )

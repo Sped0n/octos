@@ -1,7 +1,7 @@
 #ifndef __ARCH_STM32F4xx_API_H__
 #define __ARCH_STM32F4xx_API_H__
 
-#include "global.h"
+#include "kernel.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
 
 #define MICROS_ENABLE_IRQ() __enable_irq()

@@ -7,12 +7,11 @@
 typedef struct {
     uint32_t *data;
     size_t size;
-} bitmap_t;
+} Bitmap_t;
 
-void bitmap_init(bitmap_t *bm, uint32_t *data, size_t size);
-void bitmap_set(bitmap_t *bm, uint32_t pos);
-void bitmap_reset(bitmap_t *bm, uint32_t pos);
-int bitmap_test(bitmap_t *bm, uint32_t pos);
-int32_t bitmap_first_zero(bitmap_t *bm);
+void bitmap_init(Bitmap_t *bm, uint32_t *data, size_t size);
+void bitmap_set(Bitmap_t *bm, uint32_t pos);
+void bitmap_reset(Bitmap_t *bm, uint32_t pos);
+int32_t bitmap_first_zero(Bitmap_t *bm);
 
 #endif

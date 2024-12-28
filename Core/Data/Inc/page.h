@@ -9,15 +9,15 @@ typedef enum {
     PAGE_POLICY_POOL,
     PAGE_POLICY_DYNAMIC,
     PAGE_POLICY_ERROR
-} page_policy_t;
+} PagePolicy_t;
 
 typedef struct {
     uint32_t *raw;
     size_t size;
-    page_policy_t policy;
-} page_t;
+    PagePolicy_t policy;
+} Page_t;
 
-void page_alloc(page_t *page, page_policy_t policy, size_t size);
-void page_free(page_t *page);
+void page_alloc(Page_t *page, PagePolicy_t policy, size_t size);
+void page_free(Page_t *page);
 
 #endif

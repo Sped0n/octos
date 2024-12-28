@@ -17,8 +17,8 @@ List_t terminated_list;
 
 static uint8_t next_id = 0;
 
-static void task_stack_init(TCB_t *tcb, task_func_t func, void *arg) {
-    uint32_t *stack_top = &tcb->page.raw[tcb->page.size - 16];
+static void task_stack_init(TCB_t *tcb, TaskFunc_t func, void *arg) {
+    uint32_t *stack_top = &tcb->Page.raw[tcb->Page.size - 16];
 
     // Initialize stack
     stack_top[15] = (uint32_t) (1U << 24);// PSR
@@ -33,12 +33,12 @@ static void task_stack_init(TCB_t *tcb, task_func_t func, void *arg) {
     tcb->SP = stack_top;
 }
 
-uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy,
-                    uint16_t page_size) {
+uint8_t task_create(TaskFunc_t func, void *arg, PagePolicy_t page_policy,
+                    size_t page_size) {
 
     __disable_irq();
 
-    page_t page;
+    Page_t page;
     page_alloc(&page, page_policy, page_size);
     if (!page.raw) {
         __enable_irq();
@@ -46,8 +46,8 @@ uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy,
     }
 
     TCB_t *tcb = (TCB_t *) page.raw;
-    tcb->page = page;
-    tcb->id = next_id++;
+    tcb->Page = page;
+    tcb->ID = next_id++;
     task_stack_init(tcb, func, arg);
     list_item_init(&(tcb->StateListItem));
     tcb->StateListItem.Owner = tcb;
@@ -55,11 +55,11 @@ uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy,
     if (!list_valid(&ready_list))
         list_init(&ready_list);
 
-    if (tcb->id == 0) {
-        tcb->state = RUNNING;
+    if (tcb->ID == 0) {
+        tcb->State = RUNNING;
         current_tcb = tcb;
     } else {
-        tcb->state = READY;
+        tcb->State = READY;
         list_insert(&ready_list, &(tcb->StateListItem));
     }
 
@@ -68,7 +68,7 @@ uint8_t task_create(task_func_t func, void *arg, page_policy_t page_policy,
 }
 
 void task_delete(TCB_t *tcb) {
-    if (!tcb || tcb->state == TERMINATED)
+    if (!tcb || tcb->State == TERMINATED)
         return;
 
     __disable_irq();
@@ -76,11 +76,11 @@ void task_delete(TCB_t *tcb) {
     if (!list_valid(&terminated_list))
         list_init(&terminated_list);
 
-    if (tcb->state != RUNNING) {
+    if (tcb->State != RUNNING) {
         list_remove(&(tcb->StateListItem));
     }
     list_insert(&terminated_list, &(tcb->StateListItem));
-    tcb->state = TERMINATED;
+    tcb->State = TERMINATED;
 
     scheduler_trigger();
     __enable_irq();

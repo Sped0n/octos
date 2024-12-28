@@ -38,18 +38,18 @@ void scheduler_trigger(void) {
 }
 
 void scheduler_rr(void) {
-    if (current_tcb->state == RUNNING) {
+    if (current_tcb->State == RUNNING) {
         list_insert(&ready_list, &(current_tcb->StateListItem));
-        current_tcb->state = READY;
+        current_tcb->State = READY;
     }
 
     if (list_valid(&terminated_list) && terminated_list.Length > 0) {
-        page_t *page = &(((TCB_t *) list_head(&terminated_list)->Owner)->page);
-        list_remove(terminated_list.End.Next);
-        page_free(page);
+        ListItem_t *head = list_head(&terminated_list);
+        list_remove(head);
+        page_free(&(((TCB_t *) head->Owner)->Page));
     }
 
     current_tcb = list_head(&ready_list)->Owner;
     list_remove(&(current_tcb->StateListItem));
-    current_tcb->state = RUNNING;
+    current_tcb->State = RUNNING;
 }

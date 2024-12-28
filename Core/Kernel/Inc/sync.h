@@ -1,9 +1,10 @@
 #ifndef __SYNC_H__
 #define __SYNC_H__
 
+#include <stdint.h>
+
 #include "list.h"
 #include "task.h"
-#include <stdint.h>
 
 typedef struct Sema {
     int32_t Count;

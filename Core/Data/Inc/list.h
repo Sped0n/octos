@@ -2,6 +2,7 @@
 #define __LIST_H__
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct ListItem {
@@ -14,7 +15,7 @@ typedef struct ListItem {
 
 // List structure
 typedef struct List {
-    uint32_t Length;    // Number of items in list
+    size_t Length;      // Number of items in list
     ListItem_t *Current;// Current index
     ListItem_t End;     // End marker
 } List_t;

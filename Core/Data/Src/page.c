@@ -13,7 +13,7 @@
 static uint32_t page_pool[PAGE_POOL_SIZE][PAGE_SIZE];
 static bool page_inited = false;
 static uint32_t bitmap_data[(PAGE_POOL_SIZE + 31) / 32];
-static bitmap_t page_bitmap;
+static Bitmap_t page_bitmap;
 
 static void page_pool_init(void) {
     page_inited = true;
@@ -21,7 +21,7 @@ static void page_pool_init(void) {
     memset(page_pool, 0, sizeof(page_pool));
 }
 
-void page_alloc(page_t *page, page_policy_t policy, size_t size) {
+void page_alloc(Page_t *page, PagePolicy_t policy, size_t size) {
     page->raw = NULL;
     page->size = size;
     page->policy = policy;
@@ -51,7 +51,7 @@ void page_alloc(page_t *page, page_policy_t policy, size_t size) {
     }
 }
 
-void page_free(page_t *page) {
+void page_free(Page_t *page) {
     if (!page->raw)
         return;
 

@@ -32,9 +32,9 @@ extern List_t *delayed_list_overflow;
 extern List_t *suspended_list;
 extern List_t *terminated_list;
 
-extern uint32_t tcb_id;
+static uint32_t tcb_id;
 
-MICROS_INLINE inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args) {
+MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args) {
     TCB_t *tcb = (TCB_t *) page->raw;
     tcb->Page = page;
 

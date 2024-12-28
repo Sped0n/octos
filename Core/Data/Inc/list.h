@@ -33,10 +33,14 @@ MICROS_INLINE static inline void list_item_set_value(ListItem_t *item, uint32_t 
     item->Value = value;
 }
 
+MICROS_INLINE static inline uint32_t list_item_get_value(ListItem_t *item) {
+    return item->Value;
+}
+
 // Initialize a list
 MICROS_INLINE inline void list_init(List_t *list) {
     // Set list end marker value to maximum possible
-    list->End.Value = 0xFF;
+    list->End.Value = UINT32_MAX;
 
     // Initialize end marker pointers
     list->End.Next = &(list->End);

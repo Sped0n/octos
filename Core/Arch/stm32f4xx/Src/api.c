@@ -1,6 +1,6 @@
 #include "Arch/stm32f4xx/Inc/api.h"
+#include "Kernel/Inc/utils.h"
 #include "global.h"
-#include "kernel.h"
 #include "tcb.h"
 
 #include "stm32f4xx.h"// IWYU pragma: keep

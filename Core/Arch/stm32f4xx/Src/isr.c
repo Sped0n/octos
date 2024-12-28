@@ -21,6 +21,7 @@
 #include "Arch/stm32f4xx/Inc/isr.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "kernel.h"
 #include "scheduler.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
 /* USER CODE END Includes */
@@ -105,4 +106,7 @@ __attribute__((naked)) void PendSV_Handler(void) {
 /**
  * @brief This function handles System tick timer.
  */
-void SysTick_Handler(void) { scheduler_trigger(); }
+void SysTick_Handler(void) {
+    kernel_tick_increment();
+    scheduler_trigger();
+}

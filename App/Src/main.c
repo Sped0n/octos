@@ -1,5 +1,5 @@
 #include "main.h"
-#include "global.h"
+#include "Kernel/Inc/utils.h"
 #include "kernel.h"
 #include "led.h"
 #include "page.h"
@@ -16,15 +16,8 @@ Mutex_t mutex_test;
 void task0(void) {
     BSP_LED_Toggle(LED1);
     while (1) {
-        if (tp0 % 30 == 0 && tp0 > 0) {
-            BSP_LED_Toggle(LED1);
-        }
-        tp0++;
-        if (tp0 == 201) {
-            BSP_LED_Off(LED1);
-            task_terminate();
-        }
-        task_yield();
+        task_delay(time_to_ticks(1, SECONDS));
+        BSP_LED_Toggle(LED1);
     }
 }
 
@@ -40,7 +33,7 @@ void task1(void) {
             mutex_acquire(&mutex_test);
             printf("########hello from task1###########\n\r");
             mutex_release(&mutex_test);
-            if (tp1 == 100000 || tp1 == 500000) {
+            if (tp1 == 100000) {
                 mutex_acquire(&mutex_test);
                 printf("create return %d\n\r",
                        task_create((TaskFunc_t) &task0, NULL, PAGE_POLICY_POOL, 256));
@@ -107,7 +100,7 @@ int main(void) {
     task_create((TaskFunc_t) &task2, NULL, PAGE_POLICY_DYNAMIC, 256);
 
     // Launch kernel with 1ms time quantum
-    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};
+    Quanta_t quanta = {.Unit = MICROSECONDS, .Value = 500};
     kernel_launch(&quanta);
 
     // Should never reach here

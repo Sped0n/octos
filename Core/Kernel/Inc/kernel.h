@@ -1,20 +1,16 @@
 #ifndef __KERNEL_H__
 #define __KERNEL_H__
 
-#include <stddef.h>
+#include "Kernel/Inc/utils.h"
+#include "global.h"
 #include <stdint.h>
 
-typedef enum {
-    MILISECONDS = 1000,
-    MICROSECONDS = 1000000
-} QuantaUnit_t;
-
-typedef struct Quanta {
-    QuantaUnit_t Unit;
-    size_t Value;
-} Quanta_t;
+extern uint32_t current_tick;
 
 void kernel_launch(Quanta_t *quanta);
-uint32_t kernel_get_current_tick(void);
+void kernel_tick_increment(void);
+MICROS_INLINE static inline uint32_t kernel_get_tick(void) {
+    return current_tick;
+}
 
 #endif

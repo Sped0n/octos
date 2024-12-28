@@ -24,7 +24,7 @@ uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
     Page_t page;
     page_alloc(&page, page_policy, page_size);
     if (!page.raw) {
-        __enable_irq();
+        EXIT_CRITICAL();
         return 1;
     }
 
@@ -32,6 +32,7 @@ uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
 
     if (tcb->TCBNumber == 0) {
         current_tcb = tcb;
+        list_init(&ready_list);
     } else {
         list_insert(&ready_list, &(tcb->StateListItem));
     }
@@ -46,9 +47,6 @@ void task_delete(TCB_t *tcb) {
 
     ENTER_CRITICAL();
 
-    if (!list_valid(&terminated_list))
-        list_init(&terminated_list);
-
     if (tcb_status(tcb) != RUNNING) {
         list_remove(&(tcb->StateListItem));
     }
@@ -61,3 +59,20 @@ void task_delete(TCB_t *tcb) {
 void task_terminate(void) { task_delete(current_tcb); }
 
 void task_yield(void) { scheduler_trigger(); }
+
+void task_delay(uint32_t ticks_to_delay) {
+    const uint32_t current_tick = kernel_get_tick();
+    const uint32_t tick_to_wake = current_tick + ticks_to_delay;
+
+    list_item_set_value(&(current_tcb->StateListItem), tick_to_wake);
+
+    if (tick_to_wake < current_tick) {
+        // Overflow will occur, add to overflow list
+        list_insert(&delayed_list_overflow, &(current_tcb->StateListItem));
+    } else {
+        // Add to normal delayed list
+        list_insert(&delayed_list, &(current_tcb->StateListItem));
+    }
+    // Switch task
+    task_yield();
+}

@@ -7,9 +7,6 @@
 #include "page.h"
 #include "tcb.h"
 
-
-typedef void (*TaskFunc_t)(void *arg);
-
 uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
                     size_t page_size);
 void task_delete(TCB_t *tcb);

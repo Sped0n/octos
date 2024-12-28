@@ -8,11 +8,9 @@
 #include "task.h"
 #include "tcb.h"
 
-
 extern TCB_t *current_tcb;
 extern List_t ready_list;
 extern List_t terminated_list;
-
 
 uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
                     size_t page_size) {
@@ -28,10 +26,8 @@ uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
     TCB_t *tcb = tcb_build(&page, func, args);
 
     if (tcb->TCBNumber == 0) {
-        tcb->State = RUNNING;
         current_tcb = tcb;
     } else {
-        tcb->State = READY;
         list_insert(&ready_list, &(tcb->StateListItem));
     }
 
@@ -40,7 +36,7 @@ uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
 }
 
 void task_delete(TCB_t *tcb) {
-    if (!tcb || tcb->State == TERMINATED)
+    if (!tcb || tcb_status(tcb) == TERMINATED)
         return;
 
     MICROS_DISABLE_IRQ();
@@ -48,11 +44,10 @@ void task_delete(TCB_t *tcb) {
     if (!list_valid(&terminated_list))
         list_init(&terminated_list);
 
-    if (tcb->State != RUNNING) {
+    if (tcb_status(tcb) != RUNNING) {
         list_remove(&(tcb->StateListItem));
     }
     list_insert(&terminated_list, &(tcb->StateListItem));
-    tcb->State = TERMINATED;
 
     scheduler_trigger();
     MICROS_ENABLE_IRQ();

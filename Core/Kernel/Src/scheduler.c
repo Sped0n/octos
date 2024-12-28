@@ -8,7 +8,6 @@ extern TCB_t *current_tcb;
 extern List_t ready_list;
 extern List_t terminated_list;
 
-
 void scheduler_trigger(void) {
     MICROS_DISABLE_IRQ();
     MICROS_TRIGGER_PENDSV();
@@ -16,9 +15,8 @@ void scheduler_trigger(void) {
 }
 
 void scheduler_rr(void) {
-    if (current_tcb->State == RUNNING) {
+    if (tcb_status(current_tcb) == RUNNING) {
         list_insert(&ready_list, &(current_tcb->StateListItem));
-        current_tcb->State = READY;
     }
 
     if (list_valid(&terminated_list) && terminated_list.Length > 0) {
@@ -29,5 +27,4 @@ void scheduler_rr(void) {
 
     current_tcb = list_head(&ready_list)->Owner;
     list_remove(&(current_tcb->StateListItem));
-    current_tcb->State = RUNNING;
 }

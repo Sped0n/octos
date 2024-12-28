@@ -52,6 +52,23 @@ void list_insert(List_t *list, ListItem_t *new_item) {
     list->Length++;
 }
 
+void list_insert_end(List_t *list, ListItem_t *new_item) {
+    // Get the last real item (End.Prev points to the last actual item)
+    ListItem_t *last = list->End.Prev;
+
+    // Insert the new item before the end marker
+    new_item->Next = &(list->End);
+    new_item->Prev = last;
+    last->Next = new_item;
+    list->End.Prev = new_item;
+
+    // Remember which list the item is in
+    new_item->Parent = list;
+
+    // Increment counter
+    list->Length++;
+}
+
 // Remove item from list
 void list_remove(ListItem_t *item_to_remove) {
     if (!item_to_remove->Parent)

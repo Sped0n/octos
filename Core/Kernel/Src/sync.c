@@ -10,7 +10,6 @@ extern List_t ready_list;
 
 static void block_current_task(List_t *blocked_list) {
     list_insert(blocked_list, &(current_tcb->StateListItem));
-    current_tcb->State = BLOCKED;
     task_yield();
 }
 
@@ -18,8 +17,6 @@ static void unblock_one_task(List_t *blocked_list) {
     ListItem_t *head = list_head(blocked_list);
     list_remove(head);
     list_insert(&ready_list, head);
-    TCB_t *head_tcb = head->Owner;
-    head_tcb->State = READY;
 }
 
 void sema_init(Sema_t *sema, int32_t initial_count) {

@@ -21,6 +21,7 @@ typedef struct TCB {
     uint32_t *StackTop;
     Page_t *Page;
     ListItem_t StateListItem;
+    uint8_t Priority;
     uint32_t TCBNumber;
 } TCB_t;
 
@@ -34,7 +35,7 @@ extern List_t *terminated_list;
 
 static uint32_t tcb_id;
 
-MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args) {
+MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     TCB_t *tcb = (TCB_t *) page->raw;
     tcb->Page = page;
 
@@ -50,8 +51,9 @@ MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void
     tcb->StackTop = stack_top;
 
     tcb->TCBNumber = tcb_id++;
-
+    tcb->Priority = priority;
     list_item_init(&(tcb->StateListItem));
+    list_item_set_value(&(tcb->StateListItem), UINT8_MAX - priority);
     tcb->StateListItem.Owner = tcb;
 
     return tcb;

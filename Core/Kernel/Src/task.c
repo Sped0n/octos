@@ -17,7 +17,7 @@ extern List_t *delayed_list_overflow;
 extern List_t *suspended_list;
 extern List_t *terminated_list;
 
-uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
+uint8_t task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t page_policy,
                     size_t page_size) {
     ENTER_CRITICAL();
 
@@ -28,7 +28,7 @@ uint8_t task_create(TaskFunc_t func, void *args, PagePolicy_t page_policy,
         return 1;
     }
 
-    TCB_t *tcb = tcb_build(&page, func, args);
+    TCB_t *tcb = tcb_build(&page, func, args, priority);
 
     if (tcb->TCBNumber == 0) {
         current_tcb = tcb;

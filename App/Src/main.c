@@ -36,7 +36,7 @@ void task1(void) {
             if (tp1 == 300000) {
                 mutex_acquire(&mutex_test);
                 printf("create return %d\n\r",
-                       task_create((TaskFunc_t) &task0, NULL, PAGE_POLICY_POOL, 256));
+                       task_create((TaskFunc_t) &task0, NULL, 0, PAGE_POLICY_POOL, 256));
                 mutex_release(&mutex_test);
             }
         }
@@ -96,8 +96,8 @@ int main(void) {
     // Initialize variables
     tp0 = tp1 = tp2 = 0;
 
-    task_create((TaskFunc_t) &task1, NULL, PAGE_POLICY_POOL, 256);
-    task_create((TaskFunc_t) &task2, NULL, PAGE_POLICY_DYNAMIC, 256);
+    task_create((TaskFunc_t) &task1, NULL, 2, PAGE_POLICY_POOL, 256);
+    task_create((TaskFunc_t) &task2, NULL, 0, PAGE_POLICY_DYNAMIC, 256);
 
     // Launch kernel with 1ms time quantum
     Quanta_t quanta = {.Unit = MICROSECONDS, .Value = 500};

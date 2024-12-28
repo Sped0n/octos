@@ -1,11 +1,12 @@
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
-#include "global.h"
 #include "tcb.h"
 
 #include "stm32f4xx.h"// IWYU pragma: keep
 
 extern TCB_t *current_tcb;
+
+uint32_t interrupt_state;
 
 MICROS_NAKED void scheduler_launch(void) {
     /* Load the SP reg with the stacked SP value */

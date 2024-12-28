@@ -18,7 +18,7 @@ typedef struct Mutex {
 } Mutex_t;
 
 extern TCB_t *current_tcb;
-extern List_t ready_list;
+extern List_t *ready_list;
 
 MICROS_INLINE static inline void block_current_task(List_t *blocked_list) {
     list_insert(blocked_list, &(current_tcb->StateListItem));
@@ -28,7 +28,7 @@ MICROS_INLINE static inline void block_current_task(List_t *blocked_list) {
 MICROS_INLINE static inline void unblock_one_task(List_t *blocked_list) {
     ListItem_t *head = list_head(blocked_list);
     list_remove(head);
-    list_insert(&ready_list, head);
+    list_insert(ready_list, head);
 }
 
 MICROS_INLINE inline void sema_init(Sema_t *sema, int32_t initial_count) {

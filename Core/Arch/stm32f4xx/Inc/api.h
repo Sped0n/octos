@@ -2,7 +2,6 @@
 #define __ARCH_STM32F4xx_API_H__
 
 #include "Kernel/Inc/utils.h"
-#include "global.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
 #include <stdint.h>
 
@@ -10,8 +9,7 @@
 #define MICROS_DSB() __DSB()
 #define MICROS_ISB() __ISB()
 
-static uint32_t interrupt_state;
-extern Quanta_t kernel_quanta;
+extern uint32_t interrupt_state;
 
 MICROS_INLINE static inline void ENTER_CRITICAL(void) {
     interrupt_state = __get_BASEPRI();

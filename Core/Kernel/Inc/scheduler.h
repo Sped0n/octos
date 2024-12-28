@@ -6,8 +6,8 @@
 #include "tcb.h"
 
 extern TCB_t *current_tcb;
-extern List_t ready_list;
-extern List_t terminated_list;
+extern List_t *ready_list;
+extern List_t *terminated_list;
 
 static inline void scheduler_trigger(void) {
     CTX_SWITCH();

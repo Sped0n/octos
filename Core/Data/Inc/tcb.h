@@ -25,12 +25,12 @@ typedef struct TCB {
 } TCB_t;
 
 extern TCB_t *current_tcb;
-extern List_t ready_list;
-extern List_t pending_ready_list;
-extern List_t delayed_list;
-extern List_t delayed_list_overflow;
-extern List_t suspended_list;
-extern List_t terminated_list;
+extern List_t *ready_list;
+extern List_t *pending_ready_list;
+extern List_t *delayed_list;
+extern List_t *delayed_list_overflow;
+extern List_t *suspended_list;
+extern List_t *terminated_list;
 
 extern uint32_t tcb_id;
 
@@ -64,13 +64,13 @@ MICROS_INLINE inline void tcb_release(TCB_t *tcb) {
 MICROS_INLINE static inline ThreadState_t tcb_status(TCB_t *tcb) {
     const List_t *parent = tcb->StateListItem.Parent;
     if (parent == NULL) return RUNNING;
-    else if (parent == &terminated_list)
+    else if (parent == terminated_list)
         return TERMINATED;
-    else if (parent == &delayed_list || parent == &delayed_list_overflow)
+    else if (parent == delayed_list || parent == delayed_list_overflow)
         return BLOCKED;// sleeping
-    else if (parent == &ready_list || parent == &pending_ready_list)
+    else if (parent == ready_list || parent == pending_ready_list)
         return READY;
-    else if (parent == &suspended_list)
+    else if (parent == suspended_list)
         return SUSPENDED;
     else
         return BLOCKED;// mutex/semaphore

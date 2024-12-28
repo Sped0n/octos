@@ -53,7 +53,7 @@ MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void
     tcb->TCBNumber = tcb_id++;
     tcb->Priority = priority;
     list_item_init(&(tcb->StateListItem));
-    list_item_set_value(&(tcb->StateListItem), UINT8_MAX - priority);
+    list_item_set_value(&(tcb->StateListItem), priority);
     tcb->StateListItem.Owner = tcb;
 
     return tcb;

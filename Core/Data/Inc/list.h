@@ -58,7 +58,7 @@ MICROS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item)
     ListItem_t *iterator;
 
     // Find insertion position
-    for (iterator = &(list->End); iterator->Next->Value <= new_item->Value;
+    for (iterator = &(list->End); iterator->Next->Value < new_item->Value;
          iterator = iterator->Next) {
         // Empty loop body
     }
@@ -119,6 +119,12 @@ MICROS_INLINE static inline ListItem_t *list_head(List_t *list) {
     if (list->Length == 0)
         return NULL;
     return list->End.Next;
+}
+
+MICROS_INLINE static inline ListItem_t *list_tail(List_t *list) {
+    if (list->Length == 0)
+        return NULL;
+    return list->End.Prev;
 }
 
 #endif

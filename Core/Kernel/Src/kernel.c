@@ -1,8 +1,6 @@
-#include <stdint.h>
-
+#include "kernel.h"
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
-#include "kernel.h"
 #include "list.h"
 #include "tcb.h"
 
@@ -61,7 +59,7 @@ void kernel_tick_increment(void) {
         ListItem_t *head = list_head(delayed_list);
         if (list_item_get_value(head) <= current_tick) {
             list_remove(head);
-            list_item_set_value(head, UINT8_MAX - ((TCB_t *) head->Owner)->Priority);
+            list_item_set_value(head, ((TCB_t *) head->Owner)->Priority);
             // Add to pending ready list
             list_insert_end(pending_ready_list, head);
         } else {

@@ -23,7 +23,7 @@ List_t *delayed_list_overflow = &delayed_list_overflow_internal;
 List_t *suspended_list = &suspended_list_internal;
 List_t *terminated_list = &terminated_list_internal;
 
-Quanta_t *kernel_quanta;
+Quanta_t *kernel_quanta = &kernel_quanta_internal;
 
 
 void kernel_launch(Quanta_t *quanta) {

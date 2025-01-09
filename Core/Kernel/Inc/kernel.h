@@ -8,7 +8,7 @@ extern uint32_t current_tick;
 
 void kernel_launch(Quanta_t *quanta);
 void kernel_tick_increment(void);
-MICROS_INLINE static inline uint32_t kernel_get_tick(void) {
+OCTOS_INLINE static inline uint32_t kernel_get_tick(void) {
     return current_tick;
 }
 

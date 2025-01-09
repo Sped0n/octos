@@ -30,12 +30,12 @@ extern bool page_inited;
 extern uint32_t bitmap_data[(PAGE_POOL_SIZE + 31) / 32];
 extern Bitmap_t page_bitmap;
 
-MICROS_INLINE inline void page_pool_init(void) {
+OCTOS_INLINE inline void page_pool_init(void) {
     page_inited = true;
     bitmap_init(&page_bitmap, bitmap_data, PAGE_POOL_SIZE);
 }
 
-MICROS_INLINE inline void page_alloc(Page_t *page, PagePolicy_t policy, size_t size) {
+OCTOS_INLINE inline void page_alloc(Page_t *page, PagePolicy_t policy, size_t size) {
     page->raw = NULL;
     page->size = size;
     page->policy = policy;
@@ -64,7 +64,7 @@ MICROS_INLINE inline void page_alloc(Page_t *page, PagePolicy_t policy, size_t s
     }
 }
 
-MICROS_INLINE inline void page_free(Page_t *page) {
+OCTOS_INLINE inline void page_free(Page_t *page) {
     if (!page->raw)
         return;
 

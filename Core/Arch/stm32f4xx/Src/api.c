@@ -8,7 +8,7 @@ extern TCB_t *current_tcb;
 
 uint32_t interrupt_state;
 
-MICROS_NAKED void scheduler_launch(void) {
+OCTOS_NAKED void scheduler_launch(void) {
     /* Load the SP reg with the stacked SP value */
     __asm("LDR     SP, %0" ::"m"(current_tcb->StackTop));
     /* Pop registers R4-R11(user saved context) */
@@ -32,8 +32,8 @@ MICROS_NAKED void scheduler_launch(void) {
 
 void setup_interrupt_priority(void) {
     /* Set priority for interrupts (Max 0, Min 15) */
-    NVIC_SetPriority(SysTick_IRQn, MAX_SYSCALL_INTERRUPT_PRIORITY);
-    NVIC_SetPriority(PendSV_IRQn, MAX_SYSCALL_INTERRUPT_PRIORITY + 1);
+    NVIC_SetPriority(SysTick_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
+    NVIC_SetPriority(PendSV_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY + 1);
 }
 
 void setup_systick(Quanta_t *quanta) {

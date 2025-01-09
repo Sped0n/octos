@@ -35,7 +35,7 @@ extern List_t *terminated_list;
 
 static uint32_t tcb_id;
 
-MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
+OCTOS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     TCB_t *tcb = (TCB_t *) page->raw;
     tcb->Page = page;
 
@@ -59,11 +59,11 @@ MICROS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void
     return tcb;
 }
 
-MICROS_INLINE inline void tcb_release(TCB_t *tcb) {
+OCTOS_INLINE inline void tcb_release(TCB_t *tcb) {
     page_free(tcb->Page);
 }
 
-MICROS_INLINE static inline ThreadState_t tcb_status(TCB_t *tcb) {
+OCTOS_INLINE static inline ThreadState_t tcb_status(TCB_t *tcb) {
     const List_t *parent = tcb->StateListItem.Parent;
     if (parent == NULL) return RUNNING;
     else if (parent == terminated_list)

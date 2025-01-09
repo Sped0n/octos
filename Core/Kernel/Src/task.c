@@ -19,12 +19,12 @@ extern List_t *terminated_list;
 
 uint8_t task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t page_policy,
                     size_t page_size) {
-    ENTER_CRITICAL();
+    OCTOS_ENTER_CRITICAL();
 
     Page_t page;
     page_alloc(&page, page_policy, page_size);
     if (!page.raw) {
-        EXIT_CRITICAL();
+        OCTOS_EXIT_CRITICAL();
         return 1;
     }
 
@@ -37,7 +37,7 @@ uint8_t task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t 
         list_insert(ready_list, &(tcb->StateListItem));
     }
 
-    EXIT_CRITICAL();
+    OCTOS_EXIT_CRITICAL();
     return 0;
 }
 
@@ -45,7 +45,7 @@ void task_delete(TCB_t *tcb) {
     if (!tcb || tcb_status(tcb) == TERMINATED)
         return;
 
-    ENTER_CRITICAL();
+    OCTOS_ENTER_CRITICAL();
 
     if (tcb_status(tcb) != RUNNING) {
         list_remove(&(tcb->StateListItem));
@@ -53,7 +53,7 @@ void task_delete(TCB_t *tcb) {
     list_insert(terminated_list, &(tcb->StateListItem));
 
     scheduler_trigger();
-    EXIT_CRITICAL();
+    OCTOS_EXIT_CRITICAL();
 }
 
 void task_terminate(void) { task_delete(current_tcb); }

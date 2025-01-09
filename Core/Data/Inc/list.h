@@ -23,21 +23,21 @@ typedef struct List {
 } List_t;
 
 // Initialize a list item
-MICROS_INLINE inline void list_item_init(ListItem_t *item) {
+OCTOS_INLINE inline void list_item_init(ListItem_t *item) {
     item->Parent = NULL;
     item->Value = 0;
 }
 
-MICROS_INLINE static inline void list_item_set_value(ListItem_t *item, uint32_t value) {
+OCTOS_INLINE static inline void list_item_set_value(ListItem_t *item, uint32_t value) {
     item->Value = value;
 }
 
-MICROS_INLINE static inline uint32_t list_item_get_value(ListItem_t *item) {
+OCTOS_INLINE static inline uint32_t list_item_get_value(ListItem_t *item) {
     return item->Value;
 }
 
 // Initialize a list
-MICROS_INLINE inline void list_init(List_t *list) {
+OCTOS_INLINE inline void list_init(List_t *list) {
     // Set list end marker value to maximum possible
     list->End.Value = UINT32_MAX;
 
@@ -49,12 +49,12 @@ MICROS_INLINE inline void list_init(List_t *list) {
     list->Current = &(list->End);
 }
 
-MICROS_INLINE static inline bool list_valid(List_t *list) { return list->Current != NULL; }
+OCTOS_INLINE static inline bool list_valid(List_t *list) { return list->Current != NULL; }
 
 // Insert item into list in order (based on xItemValue)
-MICROS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item) {
-    MICROS_DSB();
-    MICROS_ISB();
+OCTOS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item) {
+    OCTOS_DSB();
+    OCTOS_ISB();
     ListItem_t *iterator;
 
     // Find insertion position
@@ -76,9 +76,9 @@ MICROS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item)
     list->Length++;
 }
 
-MICROS_INLINE static inline void list_insert_end(List_t *list, ListItem_t *new_item) {
-    MICROS_DSB();
-    MICROS_ISB();
+OCTOS_INLINE static inline void list_insert_end(List_t *list, ListItem_t *new_item) {
+    OCTOS_DSB();
+    OCTOS_ISB();
     // Get the last real item (End.Prev points to the last actual item)
     ListItem_t *last = list->End.Prev;
 
@@ -96,9 +96,9 @@ MICROS_INLINE static inline void list_insert_end(List_t *list, ListItem_t *new_i
 }
 
 // Remove item from list
-MICROS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
-    MICROS_DSB();
-    MICROS_ISB();
+OCTOS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
+    OCTOS_DSB();
+    OCTOS_ISB();
     if (!item_to_remove->Parent)
         return;
     List_t *list = item_to_remove->Parent;
@@ -115,13 +115,13 @@ MICROS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
     list->Length--;
 }
 
-MICROS_INLINE static inline ListItem_t *list_head(List_t *list) {
+OCTOS_INLINE static inline ListItem_t *list_head(List_t *list) {
     if (list->Length == 0)
         return NULL;
     return list->End.Next;
 }
 
-MICROS_INLINE static inline ListItem_t *list_tail(List_t *list) {
+OCTOS_INLINE static inline ListItem_t *list_tail(List_t *list) {
     if (list->Length == 0)
         return NULL;
     return list->End.Prev;

@@ -10,7 +10,7 @@ extern List_t *ready_list;
 extern List_t *terminated_list;
 
 static inline void scheduler_trigger(void) {
-    CTX_SWITCH();
+    OCTOS_CTX_SWITCH();
 }
 
 void scheduler_rr(void);

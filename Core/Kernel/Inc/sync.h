@@ -59,7 +59,7 @@ OCTOS_INLINE static inline void sema_release(Sema_t *sema) {
     sema->Count++;
 
     if (sema->Count > 0) {
-        __enable_irq();
+        OCTOS_EXIT_CRITICAL();
         return;
     }
 

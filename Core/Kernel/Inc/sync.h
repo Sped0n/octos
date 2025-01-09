@@ -98,7 +98,7 @@ OCTOS_INLINE static inline void mutex_release(Mutex_t *mutex) {
     if (mutex->Owner != current_tcb)
         return;
 
-    OCTOS_EXIT_CRITICAL();
+    OCTOS_ENTER_CRITICAL();
 
     if (mutex->BlockedList.Length > 0) {
         mutex->Owner = list_tail(&(mutex->BlockedList))->Owner;

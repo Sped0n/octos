@@ -6,7 +6,7 @@
 
 extern TCB_t *current_tcb;
 
-int32_t critical_nesting = 0;
+uint32_t critical_nesting = 0;
 
 OCTOS_NAKED void scheduler_launch(void) {
     /* Load the SP reg with the stacked SP value */

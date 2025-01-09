@@ -9,7 +9,7 @@
 #define OCTOS_DSB() __DSB()
 #define OCTOS_ISB() __ISB()
 
-extern uint32_t critical_nesting;
+extern int32_t critical_nesting;
 
 OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
     // according to
@@ -24,10 +24,8 @@ OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
 
 OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL(void) {
     critical_nesting--;
-    if (critical_nesting == 0) {
+    if (critical_nesting <= 0) {
         __set_BASEPRI(0);
-        __DSB();
-        __ISB();
     }
 }
 
@@ -45,8 +43,6 @@ OCTOS_INLINE static inline uint32_t OCTOS_SET_INT_MASK_FROM_ISR(void) {
 
 OCTOS_INLINE static inline void OCTOS_CLEAR_INT_MASK_FROM_ISR(uint32_t new_mask_value) {
     __set_BASEPRI(new_mask_value);
-    __DSB();
-    __ISB();
 }
 
 OCTOS_INLINE static inline void OCTOS_CTX_SWITCH(void) {

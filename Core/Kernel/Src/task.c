@@ -52,7 +52,8 @@ void task_delete(TCB_t *tcb) {
     }
     list_insert(terminated_list, &(tcb->StateListItem));
 
-    scheduler_trigger();
+    task_yield();
+
     OCTOS_EXIT_CRITICAL();
 }
 
@@ -61,6 +62,8 @@ void task_terminate(void) { task_delete(current_tcb); }
 void task_yield(void) { scheduler_trigger(); }
 
 void task_delay(uint32_t ticks_to_delay) {
+    OCTOS_ENTER_CRITICAL();
+
     const uint32_t current_tick = kernel_get_tick();
     const uint32_t tick_to_wake = current_tick + ticks_to_delay;
 
@@ -73,6 +76,18 @@ void task_delay(uint32_t ticks_to_delay) {
         // Add to normal delayed list
         list_insert(delayed_list, &(current_tcb->StateListItem));
     }
-    // Switch task
+
     task_yield();
+
+    OCTOS_EXIT_CRITICAL();
+}
+
+void task_suspend(void) {
+    OCTOS_ENTER_CRITICAL();
+
+    list_insert(suspended_list, &(current_tcb->StateListItem));
+
+    task_yield();
+
+    OCTOS_EXIT_CRITICAL();
 }

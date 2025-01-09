@@ -13,5 +13,6 @@ void task_delete(TCB_t *tcb);
 void task_terminate(void);
 void task_yield(void);
 void task_delay(uint32_t ticks_to_delay);
+void task_suspend(void);
 
 #endif

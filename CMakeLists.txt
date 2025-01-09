@@ -81,5 +81,4 @@ add_custom_target(flash
 add_custom_target(gdbhost
   openocd -f interface/stlink.cfg -c "transport select hla_swd"
   -f target/stm32f4x.cfg -c "init" -c "reset halt"
-  DEPENDS ${CMAKE_PROJECT_NAME}
   COMMENT "Running OpenOCD as a GDB host.")

@@ -21,6 +21,7 @@ typedef struct TCB {
     uint32_t *StackTop;
     Page_t *Page;
     ListItem_t StateListItem;
+    ListItem_t EventListItem;
     uint8_t Priority;
     uint8_t BasePriority; /* Priority last assigned to the task */
     uint32_t TCBNumber;

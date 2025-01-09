@@ -17,17 +17,18 @@ void scheduler_rr(void) {
     }
 
     if (list_valid(terminated_list) && terminated_list->Length > 0) {
-        ListItem_t *head = list_head(terminated_list);
-        list_remove(head);
-        tcb_release(head->Owner);
+        ListItem_t *tail = list_tail(terminated_list);
+        list_remove(tail);
+        tcb_release(tail->Owner);
     }
 
-    while (pending_ready_list->Length > 0) {
+    /* if we have any task in pending ready list, make it current_tcb instantly */
+    if (pending_ready_list->Length > 0) {
         ListItem_t *head = list_head(pending_ready_list);
+        current_tcb = head->Owner;
         list_remove(head);
-        list_insert(ready_list, head);
+    } else {
+        current_tcb = list_tail(ready_list)->Owner;
+        list_remove(&(current_tcb->StateListItem));
     }
-
-    current_tcb = list_tail(ready_list)->Owner;
-    list_remove(&(current_tcb->StateListItem));
 }

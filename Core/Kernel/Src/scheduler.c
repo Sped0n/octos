@@ -12,7 +12,7 @@ extern List_t *terminated_list;
 void scheduler_rr(void) {
     if (tcb_status(current_tcb) == RUNNING) {
         uint8_t priority = list_item_get_value(&(current_tcb->StateListItem));
-        list_item_set_value(&(current_tcb->StateListItem), priority == 0 ? current_tcb->Priority : (priority - 1));
+        list_item_set_value(&(current_tcb->StateListItem), priority == 0 ? current_tcb->BasePriority : (priority - 1));
         list_insert(ready_list, &(current_tcb->StateListItem));
     }
 

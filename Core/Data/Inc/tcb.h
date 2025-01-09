@@ -22,6 +22,7 @@ typedef struct TCB {
     Page_t *Page;
     ListItem_t StateListItem;
     uint8_t Priority;
+    uint8_t BasePriority; /* Priority last assigned to the task */
     uint32_t TCBNumber;
 } TCB_t;
 
@@ -52,6 +53,7 @@ OCTOS_INLINE static inline TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void 
 
     tcb->TCBNumber = tcb_id++;
     tcb->Priority = priority;
+    tcb->BasePriority = priority;
     list_item_init(&(tcb->StateListItem));
     list_item_set_value(&(tcb->StateListItem), priority);
     tcb->StateListItem.Owner = tcb;
@@ -76,6 +78,13 @@ OCTOS_INLINE static inline ThreadState_t tcb_status(TCB_t *tcb) {
         return SUSPENDED;
     else
         return BLOCKED;// mutex/semaphore
+}
+
+OCTOS_INLINE static inline void tcb_recover_priority(TCB_t *tcb) {
+    if (tcb->BasePriority != tcb->Priority) {
+        tcb->BasePriority = tcb->Priority;
+        tcb->StateListItem.Value = tcb->Priority;
+    }
 }
 
 #endif

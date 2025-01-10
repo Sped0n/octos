@@ -1,11 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "itc.h"
 #include "kernel.h"
 #include "led.h"
 #include "main.h"
 #include "page.h"
-#include "queue.h"
 #include "sync.h"
 #include "task.h"
 #include "usart.h"
@@ -17,7 +17,7 @@
 
 volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0;
 
-Queue_t queue_test;
+MsgQueue_t queue_test;
 
 Mutex_t mutex_test;
 
@@ -42,7 +42,7 @@ void task1(void) {
         if (tp1 == 5000) {
             task_create((TaskFunc_t) &task0, NULL, 2, PAGE_POLICY_DYNAMIC, 256);
         }
-        if (queue_recv(&queue_test, &recv_buffer, 0)) {
+        if (msg_queue_recv(&queue_test, &recv_buffer, 0)) {
             mutex_acquire(&mutex_test);
             printf("%s", &recv_buffer);
             if (recv_buffer == '\r') {
@@ -60,7 +60,7 @@ void task2(void) {
         if (tp2 % 5000 == 0 && tp2 > 0) {
             BSP_LED_Toggle(LED3);
             for (size_t i = 0; sentence[i] != '\0'; i++) {
-                if (!queue_send(&queue_test, &sentence[i], 0)) {
+                if (!msg_queue_send(&queue_test, &sentence[i], 0)) {
                     mutex_acquire(&mutex_test);
                     printf("queue send timeout !!!\n\r");
                     mutex_release(&mutex_test);
@@ -107,7 +107,7 @@ int main(void) {
 
     // Initialize queue
     uint8_t queue_storage[QUEUE_SIZE * ITEM_SIZE];
-    queue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
+    msg_queue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
 
     // Initialize variables
     tp0 = tp1 = tp2 = 0;

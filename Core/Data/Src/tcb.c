@@ -3,6 +3,8 @@
 #include "list.h"
 #include "tcb.h"
 
+static uint32_t tcb_id = 0;
+
 TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     TCB_t *tcb = (TCB_t *) page->raw;
     tcb->Page = page;
@@ -29,4 +31,8 @@ TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     tcb->EventListItem.Owner = tcb;
 
     return tcb;
+}
+
+void tcb_release(TCB_t *tcb) {
+    page_free(tcb->Page);
 }

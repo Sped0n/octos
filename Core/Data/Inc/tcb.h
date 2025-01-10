@@ -35,13 +35,8 @@ extern List_t *delayed_list_overflow;
 extern List_t *suspended_list;
 extern List_t *terminated_list;
 
-static uint32_t tcb_id;
-
 TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority);
-
-OCTOS_INLINE inline void tcb_release(TCB_t *tcb) {
-    page_free(tcb->Page);
-}
+void tcb_release(TCB_t *tcb);
 
 OCTOS_INLINE static inline ThreadState_t tcb_status(TCB_t *tcb) {
     const List_t *parent = tcb->StateListItem.Parent;

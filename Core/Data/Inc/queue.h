@@ -7,35 +7,54 @@
 
 #include "Kernel/Inc/utils.h"
 
+/**
+  * @brief Queue structure definition for managing circular buffer
+  */
 typedef struct Queue {
-    uint8_t *Buffer;
-    size_t ItemSize;
-    size_t MaxSize;
-    size_t Size;
-    size_t WriteIndex;
-    size_t ReadIndex;
+    uint8_t *Buffer;   /*!< Pointer to the buffer memory */
+    size_t ItemSize;   /*!< Size of each item in bytes */
+    size_t MaxSize;    /*!< Maximum number of items that can be stored */
+    size_t Size;       /*!< Current number of items in the queue */
+    size_t WriteIndex; /*!< Index for next write operation */
+    size_t ReadIndex;  /*!< Index for next read operation */
 } Queue_t;
 
-// Initialize a queue with given storage buffer
 void queue_init(Queue_t *queue, void *buffer, size_t item_size, size_t max_size);
-
-// Core queue operations
 bool queue_send_from_isr(Queue_t *queue, const void *item);
 bool queue_recv_from_isr(Queue_t *queue, void *buffer);
 
-// Queue status checks
+/**
+  * @brief Check if queue is full
+  * @param queue: Pointer to queue structure
+  * @retval true if queue is full, false otherwise
+  */
 OCTOS_INLINE static inline bool queue_is_full(const Queue_t *queue) {
     return queue->Size >= queue->MaxSize;
 }
 
+/**
+  * @brief Check if queue is empty
+  * @param queue: Pointer to queue structure
+  * @retval true if queue is empty, false otherwise
+  */
 OCTOS_INLINE static inline bool queue_is_empty(const Queue_t *queue) {
     return queue->Size == 0;
 }
 
+/**
+  * @brief Get current number of items in queue
+  * @param queue: Pointer to queue structure
+  * @retval Current size of queue
+  */
 OCTOS_INLINE static inline size_t queue_size(const Queue_t *queue) {
     return queue->Size;
 }
 
+/**
+  * @brief Get number of free spaces in queue
+  * @param queue: Pointer to queue structure
+  * @retval Number of available spaces
+  */
 OCTOS_INLINE static inline size_t queue_spaces(const Queue_t *queue) {
     return queue->MaxSize - queue->Size;
 }

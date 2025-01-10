@@ -1,10 +1,19 @@
 #include <stdint.h>
 
 #include "list.h"
+#include "page.h"
 #include "tcb.h"
 
 static uint32_t tcb_id = 0;
 
+/**
+  * @brief Create and initialize a new Thread Control Block
+  * @param page Memory page to use for the thread
+  * @param func Function pointer to the thread's task
+  * @param args Arguments to pass to the thread's task
+  * @param priority Initial priority for the thread
+  * @retval TCB_t* Pointer to the created Thread Control Block
+  */
 TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     TCB_t *tcb = (TCB_t *) page->raw;
     tcb->Page = page;
@@ -21,8 +30,8 @@ TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     tcb->StackTop = stack_top;
 
     tcb->TCBNumber = tcb_id++;
+    tcb->RootPriority = priority;
     tcb->Priority = priority;
-    tcb->BasePriority = priority;
     list_item_init(&(tcb->StateListItem));
     list_item_init(&(tcb->EventListItem));
     list_item_set_value(&(tcb->StateListItem), priority);
@@ -33,6 +42,11 @@ TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     return tcb;
 }
 
+/**
+  * @brief Release resources associated with a Thread Control Block
+  * @param tcb Pointer to the Thread Control Block to release
+  * @retval None
+  */
 void tcb_release(TCB_t *tcb) {
     page_free(tcb->Page);
 }

@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -17,15 +18,25 @@ extern List_t *delayed_list_overflow;
 extern List_t *suspended_list;
 extern List_t *terminated_list;
 
-uint8_t task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t page_policy,
-                    size_t page_size) {
+/**
+  * @brief Creates a new task with specified parameters
+  * @param func Function pointer to the task entry
+  * @param args Arguments passed to the task function
+  * @param priority Task priority level
+  * @param page_policy Memory page allocation policy
+  * @param page_size Size of memory page to allocate
+  * @retval true if task created successfully
+  * @retval false if task creation failed
+  */
+bool task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t page_policy,
+                 size_t page_size) {
     OCTOS_ENTER_CRITICAL();
 
     Page_t page;
     page_alloc(&page, page_policy, page_size);
     if (!page.raw) {
         OCTOS_EXIT_CRITICAL();
-        return 1;
+        return false;
     }
 
     TCB_t *tcb = tcb_build(&page, func, args, priority);
@@ -38,9 +49,14 @@ uint8_t task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t 
     }
 
     OCTOS_EXIT_CRITICAL();
-    return 0;
+    return true;
 }
 
+/**
+  * @brief Deletes specified task and moves it to terminated state
+  * @param tcb Pointer to task control block to delete
+  * @retval None
+  */
 void task_delete(TCB_t *tcb) {
     if (!tcb || tcb_status(tcb) == TERMINATED)
         return;
@@ -57,10 +73,23 @@ void task_delete(TCB_t *tcb) {
     task_yield();
 }
 
+/**
+  * @brief Terminates the currently running task
+  * @retval None
+  */
 void task_terminate(void) { task_delete(current_tcb); }
 
+/**
+  * @brief Yields execution of current task to scheduler
+  * @retval None
+  */
 void task_yield(void) { scheduler_trigger(); }
 
+/**
+  * @brief Delays current task for specified number of ticks
+  * @param ticks_to_delay Number of ticks to delay task
+  * @retval None
+  */
 void task_delay(uint32_t ticks_to_delay) {
     OCTOS_ENTER_CRITICAL();
 
@@ -82,6 +111,10 @@ void task_delay(uint32_t ticks_to_delay) {
     task_yield();
 }
 
+/**
+  * @brief Suspends execution of current task
+  * @retval None
+  */
 void task_suspend(void) {
     OCTOS_ENTER_CRITICAL();
 

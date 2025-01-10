@@ -1,13 +1,13 @@
-#include <string.h>
-
 #include "itc.h"
-#include "sync.h"
 #include "task.h"
-#include "tcb.h"
-
 
 extern TCB_t *current_tcb;
 
+/**
+  * @brief Wakes up first task in waiting list if any exists
+  * @param event_list Pointer to list of waiting tasks
+  * @retval None
+  */
 static void try_wake_waiting_task(List_t *event_list) {
     if (event_list->Length == 0) return;
 
@@ -17,22 +17,41 @@ static void try_wake_waiting_task(List_t *event_list) {
     TCB_t *tcb = item->Owner;
     item = &(tcb->StateListItem);
     if (tcb_status(tcb) != SUSPENDED) {
-        list_item_set_value(item, tcb->BasePriority);
+        list_item_set_value(item, tcb->Priority);
     }
     list_remove(item);
     list_insert_end(pending_ready_list, item);
 }
 
-static bool is_mqueue_ops_timeout(void) {
+/**
+  * @brief Checks if current message queue operation timed out
+  * @retval true if operation timed out, false otherwise
+  */
+OCTOS_INLINE static inline bool is_mqueue_ops_timeout(void) {
     return current_tcb->EventListItem.Parent != NULL;
 }
 
+/**
+  * @brief Initializes a message queue
+  * @param mqueue Pointer to message queue to initialize
+  * @param buffer Pointer to buffer that will hold queue data
+  * @param item_size Size of each item in the queue
+  * @param max_size Maximum number of items in the queue
+  * @retval None
+  */
 void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size, size_t max_size) {
     queue_init(&mqueue->Queue, buffer, item_size, max_size);
     list_init(&mqueue->SenderList);
     list_init(&mqueue->ReceiverList);
 }
 
+/**
+  * @brief Sends a message to the queue
+  * @param mqueue Pointer to message queue
+  * @param item Pointer to item to send
+  * @param timeout_ticks Maximum time to wait if queue is full (0 for infinite)
+  * @retval true if message was sent successfully, false if timed out
+  */
 bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks) {
     OCTOS_ENTER_CRITICAL();
 
@@ -70,6 +89,13 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks
     return success;
 }
 
+/**
+  * @brief Receives a message from the queue
+  * @param mqueue Pointer to message queue
+  * @param buffer Pointer where received item will be stored
+  * @param timeout_ticks Maximum time to wait if queue is empty (0 for infinite)
+  * @retval true if message was received successfully, false if timed out
+  */
 bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
     OCTOS_ENTER_CRITICAL();
 

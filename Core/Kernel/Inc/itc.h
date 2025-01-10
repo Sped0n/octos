@@ -7,16 +7,16 @@
 #include "list.h"
 #include "queue.h"
 
+/**
+  * @brief Message queue structure containing queue and waiting lists
+  */
 typedef struct MsgQueue {
-    Queue_t Queue;
-    List_t SenderList;
-    List_t ReceiverList;
+    Queue_t Queue;       /*!< Underlying queue structure for message storage */
+    List_t SenderList;   /*!< List of tasks waiting to send messages */
+    List_t ReceiverList; /*!< List of tasks waiting to receive messages */
 } MsgQueue_t;
 
-// Initialize message queue
 void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size, size_t max_size);
-
-// Send/receive with timeout
 bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks);
 bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks);
 

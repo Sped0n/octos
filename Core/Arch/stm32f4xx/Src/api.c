@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
 #include "tcb.h"
@@ -8,7 +10,13 @@ extern TCB_t *current_tcb;
 
 uint32_t critical_nesting = 0;
 
-OCTOS_NAKED void scheduler_launch(void) {
+/**
+  * @brief Launches the first task by restoring its context and enabling interrupts
+  * @note This function is marked as naked to prevent compiler from adding prologue/epilogue
+  * @note Function performs stack manipulation to restore saved context and exception frame
+  * @retval None
+  */
+OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void) {
     /* Load the SP reg with the stacked SP value */
     __asm("LDR     SP, %0" ::"m"(current_tcb->StackTop));
     /* Pop registers R4-R11(user saved context) */
@@ -30,13 +38,24 @@ OCTOS_NAKED void scheduler_launch(void) {
     __asm("BX      LR");
 }
 
-void setup_interrupt_priority(void) {
+/**
+  * @brief Configures NVIC interrupt priorities for system calls
+  * @note Sets priority levels for SysTick and PendSV interrupts
+  * @retval None
+  */
+void OCTOS_SETUP_INTPRI(void) {
     /* Set priority for interrupts (Max 0, Min 15) */
     NVIC_SetPriority(SysTick_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
     NVIC_SetPriority(PendSV_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY + 1);
 }
 
-void setup_systick(Quanta_t *quanta) {
+/**
+  * @brief Initializes the SysTick timer with specified time quantum
+  * @param quanta Pointer to Quanta structure containing timer configuration
+  * @note Configures SysTick for specified time slice scheduling
+  * @retval None
+  */
+void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
     /* Reset systick */
     SysTick->CTRL = 0;
     /* Clear systick current value register */
@@ -47,6 +66,11 @@ void setup_systick(Quanta_t *quanta) {
     SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk;
 }
 
-void enable_systick(void) {
+/**
+  * @brief Enables the SysTick timer
+  * @note Starts the SysTick counter by setting the ENABLE bit
+  * @retval None
+  */
+void OCTOS_ENABLE_SYSTICK(void) {
     SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 }

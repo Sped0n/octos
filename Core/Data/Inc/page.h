@@ -7,36 +7,27 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bitmap.h"
-
+/**
+  * @brief Page allocation policy enumeration
+  */
 typedef enum {
-    PAGE_POLICY_STATIC,
-    PAGE_POLICY_POOL,
-    PAGE_POLICY_DYNAMIC,
-    PAGE_POLICY_ERROR
+    PAGE_POLICY_STATIC,  /*!< Static allocation policy */
+    PAGE_POLICY_POOL,    /*!< Pool-based allocation policy */
+    PAGE_POLICY_DYNAMIC, /*!< Dynamic allocation policy */
+    PAGE_POLICY_ERROR    /*!< Error state policy */
 } PagePolicy_t;
 
+/**
+  * @brief Page structure definition
+  */
 typedef struct {
-    uint32_t *raw;
-    size_t size;
-    PagePolicy_t policy;
+    uint32_t *raw;       /*!< Pointer to raw page data */
+    size_t size;         /*!< Size of page in words */
+    PagePolicy_t policy; /*!< Page allocation policy */
 } Page_t;
 
-#define PAGE_POOL_SIZE 8
-#define PAGE_SIZE 512// Size in words (uint32_t)
-
-extern uint32_t page_pool[PAGE_POOL_SIZE][PAGE_SIZE];
-extern bool page_inited;
-extern uint32_t bitmap_data[(PAGE_POOL_SIZE + 31) / 32];
-extern Bitmap_t page_bitmap;
-
-void page_alloc(Page_t *page, PagePolicy_t policy, size_t size);
+void page_alloc(Page_t *page, PagePolicy_t policy, size_t size_in_words);
 void page_free(Page_t *page);
-
-OCTOS_INLINE inline void page_pool_init(void) {
-    page_inited = true;
-    bitmap_init(&page_bitmap, bitmap_data, PAGE_POOL_SIZE);
-}
-
+void page_pool_init(void);
 
 #endif

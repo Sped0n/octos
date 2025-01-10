@@ -26,6 +26,7 @@ TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     list_item_set_value(&(tcb->StateListItem), priority);
     list_item_set_value(&(tcb->StateListItem), priority);
     tcb->StateListItem.Owner = tcb;
+    tcb->EventListItem.Owner = tcb;
 
     return tcb;
 }

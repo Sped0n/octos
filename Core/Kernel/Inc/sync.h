@@ -20,19 +20,18 @@ typedef struct Mutex {
 } Mutex_t;
 
 extern TCB_t *current_tcb;
-extern List_t *ready_list;
+extern List_t *pending_ready_list;
 
 /* helper functions */
 
 OCTOS_INLINE static inline void block_current_task(List_t *blocked_list) {
     list_insert(blocked_list, &(current_tcb->StateListItem));
-    task_yield();
 }
 
 OCTOS_INLINE static inline void unblock_one_task(List_t *blocked_list) {
     ListItem_t *tail = list_tail(blocked_list);
     list_remove(tail);
-    list_insert(ready_list, tail);
+    list_insert_end(pending_ready_list, tail);
 }
 
 
@@ -51,6 +50,8 @@ OCTOS_INLINE static inline void sema_acquire(Sema_t *sema) {
         block_current_task(&(sema->BlockedList));
 
     OCTOS_EXIT_CRITICAL();
+
+    if (sema->Count < 0) task_yield();
 }
 
 OCTOS_INLINE static inline void sema_release(Sema_t *sema) {
@@ -77,6 +78,8 @@ OCTOS_INLINE inline void mutex_init(Mutex_t *mutex) {
 }
 
 OCTOS_INLINE static inline void mutex_acquire(Mutex_t *mutex) {
+    bool need_yield = false;
+
     OCTOS_ENTER_CRITICAL();
 
     if (mutex->Owner == NULL)
@@ -84,6 +87,7 @@ OCTOS_INLINE static inline void mutex_acquire(Mutex_t *mutex) {
     else if (mutex->Owner == current_tcb)
         ;
     else {
+        need_yield = true;
         block_current_task(&(mutex->BlockedList));
         if (current_tcb->Priority > mutex->Owner->Priority) {
             mutex->Owner->BasePriority = current_tcb->Priority;       // update priority
@@ -92,6 +96,8 @@ OCTOS_INLINE static inline void mutex_acquire(Mutex_t *mutex) {
     }
 
     OCTOS_EXIT_CRITICAL();
+
+    if (need_yield) task_yield();
 }
 
 OCTOS_INLINE static inline void mutex_release(Mutex_t *mutex) {

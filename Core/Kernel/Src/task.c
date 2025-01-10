@@ -52,9 +52,9 @@ void task_delete(TCB_t *tcb) {
     }
     list_insert(terminated_list, &(tcb->StateListItem));
 
-    task_yield();
-
     OCTOS_EXIT_CRITICAL();
+
+    task_yield();
 }
 
 void task_terminate(void) { task_delete(current_tcb); }
@@ -77,9 +77,9 @@ void task_delay(uint32_t ticks_to_delay) {
         list_insert(delayed_list, &(current_tcb->StateListItem));
     }
 
-    task_yield();
-
     OCTOS_EXIT_CRITICAL();
+
+    task_yield();
 }
 
 void task_suspend(void) {
@@ -87,7 +87,7 @@ void task_suspend(void) {
 
     list_insert(suspended_list, &(current_tcb->StateListItem));
 
-    task_yield();
-
     OCTOS_EXIT_CRITICAL();
+
+    task_yield();
 }

@@ -1,16 +1,24 @@
-#include "main.h"
-#include "Kernel/Inc/utils.h"
-#include "kernel.h"
-#include "led.h"
-#include "page.h"
-#include "stm32f429xx.h"
-#include "sync.h"
-#include "task.h"
-#include "usart.h"
 #include <stdint.h>
 #include <stdio.h>
 
+#include "kernel.h"
+#include "led.h"
+#include "main.h"
+#include "page.h"
+#include "queue.h"
+#include "sync.h"
+#include "task.h"
+#include "usart.h"
+#include "utils.h"
+
+#define QUEUE_SIZE 10
+#define ITEM_SIZE sizeof(char)
+
+
 volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0;
+
+Queue_t queue_test;
+
 Mutex_t mutex_test;
 
 void task0(void) {
@@ -24,19 +32,20 @@ void task0(void) {
 // main.c
 
 void task1(void) {
+    char recv_buffer;
 
     BSP_LED_Toggle(LED2);
     while (1) {
-        if (tp1 % 100000 == 0 && tp1 > 0) {
+        if (tp1 % 1000 == 0 && tp1 > 0) {
             BSP_LED_Toggle(LED2);
-
+        }
+        if (tp1 == 5000) {
+            task_create((TaskFunc_t) &task0, NULL, 2, PAGE_POLICY_DYNAMIC, 256);
+        }
+        if (queue_recv(&queue_test, &recv_buffer, 0)) {
             mutex_acquire(&mutex_test);
-            printf("########hello from task1###########\n\r");
-            mutex_release(&mutex_test);
-            if (tp1 == 300000) {
-                mutex_acquire(&mutex_test);
-                printf("create return %d\n\r",
-                       task_create((TaskFunc_t) &task0, NULL, 0, PAGE_POLICY_POOL, 256));
+            printf("%s", &recv_buffer);
+            if (recv_buffer == '\r') {
                 mutex_release(&mutex_test);
             }
         }
@@ -45,15 +54,18 @@ void task1(void) {
 }
 
 void task2(void) {
-
+    const char sentence[] = "---------hello from task1, from task2---------\n\r";
     BSP_LED_Toggle(LED3);
     while (1) {
-        if (tp2 % 10000 == 0 && tp2 > 0) {
+        if (tp2 % 5000 == 0 && tp2 > 0) {
             BSP_LED_Toggle(LED3);
-
-            mutex_acquire(&mutex_test);
-            printf("---------hello from task2---------\n\r");
-            mutex_release(&mutex_test);
+            for (size_t i = 0; sentence[i] != '\0'; i++) {
+                if (!queue_send(&queue_test, &sentence[i], 0)) {
+                    mutex_acquire(&mutex_test);
+                    printf("queue send timeout !!!\n\r");
+                    mutex_release(&mutex_test);
+                }
+            }
         }
         tp2++;
     }
@@ -93,6 +105,10 @@ int main(void) {
     // Initialize mutex
     mutex_init(&mutex_test);
 
+    // Initialize queue
+    uint8_t queue_storage[QUEUE_SIZE * ITEM_SIZE];
+    queue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
+
     // Initialize variables
     tp0 = tp1 = tp2 = 0;
 
@@ -100,7 +116,7 @@ int main(void) {
     task_create((TaskFunc_t) &task2, NULL, 0, PAGE_POLICY_DYNAMIC, 256);
 
     // Launch kernel with 1ms time quantum
-    Quanta_t quanta = {.Unit = MICROSECONDS, .Value = 500};
+    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};
     kernel_launch(&quanta);
 
     // Should never reach here

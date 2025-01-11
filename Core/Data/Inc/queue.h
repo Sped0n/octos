@@ -20,8 +20,8 @@ typedef struct Queue {
 } Queue_t;
 
 void queue_init(Queue_t *queue, void *buffer, size_t item_size, size_t max_size);
-bool queue_send_from_isr(Queue_t *queue, const void *item);
-bool queue_recv_from_isr(Queue_t *queue, void *buffer);
+bool queue_send(Queue_t *queue, const void *item);
+bool queue_recv(Queue_t *queue, void *buffer);
 
 /**
   * @brief Check if queue is full

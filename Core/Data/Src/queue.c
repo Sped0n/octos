@@ -23,13 +23,13 @@ void queue_init(Queue_t *queue, void *buffer, size_t item_size, size_t max_size)
 }
 
 /**
-  * @brief Send item to queue from ISR context
+  * @brief Send item to queue
   * @param queue: Pointer to queue structure
   * @param item: Pointer to item to be added
   * @retval true if item was successfully added, false if queue is full
   * @note This function instantly return
   */
-bool queue_send_from_isr(Queue_t *queue, const void *item) {
+bool queue_send(Queue_t *queue, const void *item) {
     if (queue_is_full(queue))
         return false;
 
@@ -46,13 +46,13 @@ bool queue_send_from_isr(Queue_t *queue, const void *item) {
 }
 
 /**
-  * @brief Receive item from queue from ISR context
+  * @brief Receive item from queue
   * @param queue: Pointer to queue structure
   * @param buffer: Buffer to store received item
   * @retval true if item was successfully received, false if queue is empty
   * @note This function instantly return
   */
-bool queue_recv_from_isr(Queue_t *queue, void *buffer) {
+bool queue_recv(Queue_t *queue, void *buffer) {
     if (queue_is_empty(queue))
         return false;
 

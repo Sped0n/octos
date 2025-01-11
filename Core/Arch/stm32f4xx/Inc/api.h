@@ -54,7 +54,7 @@ OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL(void) {
   * @note Priority levels are mapped to bits [7:4] according to Cortex-M4 architecture  
   * @retval Original BASEPRI value before masking
   */
-OCTOS_INLINE static inline uint32_t OCTOS_SET_INT_MASK_FROM_ISR(void) {
+OCTOS_INLINE static inline uint32_t OCTOS_ENTER_CRITICAL_FROM_ISR(void) {
     uint32_t original_base_priority = __get_BASEPRI();
     // according to
     // * Cortex-M4 Devices Generic User Guide (Page 2-9), bits [31:8] are reserved
@@ -71,7 +71,7 @@ OCTOS_INLINE static inline uint32_t OCTOS_SET_INT_MASK_FROM_ISR(void) {
   * @param new_mask_value New BASEPRI value to restore
   * @retval None
   */
-OCTOS_INLINE static inline void OCTOS_CLEAR_INT_MASK_FROM_ISR(uint32_t new_mask_value) {
+OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL_FROM_ISR(uint32_t new_mask_value) {
     __set_BASEPRI(new_mask_value);
 }
 

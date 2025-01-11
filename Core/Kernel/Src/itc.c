@@ -1,3 +1,6 @@
+#include <stdint.h>
+
+#include "Arch/stm32f4xx/Inc/api.h"
 #include "itc.h"
 #include "task.h"
 
@@ -55,7 +58,7 @@ void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size, size_t m
 bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks) {
     OCTOS_ENTER_CRITICAL();
 
-    if (queue_send_from_isr(&mqueue->Queue, item)) {
+    if (queue_send(&mqueue->Queue, item)) {
         try_wake_waiting_task(&mqueue->ReceiverList);
         OCTOS_EXIT_CRITICAL();
         return true;
@@ -79,7 +82,7 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks
     if (is_mqueue_ops_timeout()) {
         list_remove(&(current_tcb->EventListItem));
     } else {
-        success = queue_send_from_isr(&mqueue->Queue, item);
+        success = queue_send(&mqueue->Queue, item);
         if (success) {
             try_wake_waiting_task(&mqueue->ReceiverList);
         }
@@ -99,7 +102,7 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks
 bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
     OCTOS_ENTER_CRITICAL();
 
-    if (queue_recv_from_isr(&mqueue->Queue, buffer)) {
+    if (queue_recv(&mqueue->Queue, buffer)) {
         try_wake_waiting_task(&mqueue->SenderList);
         OCTOS_EXIT_CRITICAL();
         return true;
@@ -122,7 +125,7 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
     if (is_mqueue_ops_timeout()) {
         list_remove(&(current_tcb->EventListItem));
     } else {
-        success = queue_recv_from_isr(&mqueue->Queue, buffer);
+        success = queue_recv(&mqueue->Queue, buffer);
         if (success) {
             try_wake_waiting_task(&mqueue->SenderList);
         }
@@ -140,11 +143,14 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
   * @note This function must only be called from ISR context
   */
 bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item) {
-    bool success = queue_send_from_isr(&mqueue->Queue, item);
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
+    bool success = queue_send(&mqueue->Queue, item);
     if (success) {
         try_wake_waiting_task(&mqueue->ReceiverList);
     }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
     return success;
 }
@@ -157,11 +163,14 @@ bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item) {
   * @note This function must only be called from ISR context
   */
 bool msg_queue_recv_from_isr(MsgQueue_t *mqueue, void *buffer) {
-    bool success = queue_recv_from_isr(&mqueue->Queue, buffer);
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
+    bool success = queue_recv(&mqueue->Queue, buffer);
     if (success) {
         try_wake_waiting_task(&mqueue->SenderList);
     }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
     return success;
 }

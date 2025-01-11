@@ -131,3 +131,37 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
     OCTOS_EXIT_CRITICAL();
     return success;
 }
+
+/**
+  * @brief Sends a message to the queue from ISR context
+  * @param mqueue Pointer to message queue
+  * @param item Pointer to item to send
+  * @retval true if message was sent successfully, false if queue is full
+  * @note This function must only be called from ISR context
+  */
+bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item) {
+    bool success = queue_send_from_isr(&mqueue->Queue, item);
+
+    if (success) {
+        try_wake_waiting_task(&mqueue->ReceiverList);
+    }
+
+    return success;
+}
+
+/**
+  * @brief Receives a message from the queue from ISR context
+  * @param mqueue Pointer to message queue
+  * @param buffer Pointer where received item will be stored
+  * @retval true if message was received successfully, false if queue is empty
+  * @note This function must only be called from ISR context
+  */
+bool msg_queue_recv_from_isr(MsgQueue_t *mqueue, void *buffer) {
+    bool success = queue_recv_from_isr(&mqueue->Queue, buffer);
+
+    if (success) {
+        try_wake_waiting_task(&mqueue->SenderList);
+    }
+
+    return success;
+}

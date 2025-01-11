@@ -6,7 +6,6 @@
 #include "kernel.h"
 #include "list.h"
 #include "page.h"
-#include "scheduler.h"
 #include "task.h"
 #include "tcb.h"
 
@@ -79,13 +78,7 @@ void task_delete(TCB_t *tcb) {
   */
 void task_terminate(void) { task_delete(current_tcb); }
 
-/**
-  * @brief Yields execution of current task to scheduler
-  * @retval None
-  */
-void task_yield(void) { scheduler_trigger(); }
-
-/**
+/*
   * @brief Delays current task for specified number of ticks
   * @param ticks_to_delay Number of ticks to delay task
   * @retval None

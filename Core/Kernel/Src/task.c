@@ -17,6 +17,7 @@ extern List_t *delayed_list_overflow;
 extern List_t *suspended_list;
 extern List_t *terminated_list;
 
+
 /**
   * @brief Creates a new task with specified parameters
   * @param func Function pointer to the task entry
@@ -53,30 +54,30 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t pag
 
 /**
   * @brief Deletes specified task and moves it to terminated state
+  * @note A context switch may occur
   * @param tcb Pointer to task control block to delete
   * @retval None
   */
 void task_delete(TCB_t *tcb) {
-    if (!tcb || tcb_status(tcb) == TERMINATED)
-        return;
+    bool need_yield = false;
 
     OCTOS_ENTER_CRITICAL();
+
+    if (!tcb || tcb_status(tcb) == TERMINATED) {
+        OCTOS_EXIT_CRITICAL();
+        return;
+    }
 
     if (tcb_status(tcb) != RUNNING) {
         list_remove(&(tcb->StateListItem));
     }
-    list_insert(terminated_list, &(tcb->StateListItem));
+    list_insert_end(terminated_list, &(tcb->StateListItem));
+    need_yield = tcb == current_tcb;
 
     OCTOS_EXIT_CRITICAL();
 
-    task_yield();
+    if (need_yield) task_yield();
 }
-
-/**
-  * @brief Terminates the currently running task
-  * @retval None
-  */
-void task_terminate(void) { task_delete(current_tcb); }
 
 /*
   * @brief Delays current task for specified number of ticks
@@ -105,15 +106,20 @@ void task_delay(uint32_t ticks_to_delay) {
 }
 
 /**
-  * @brief Suspends execution of current task
+  * @brief Suspend a task from executing
+  * @note The task will be moved to the suspended list and a context switch may occur
+  * @param tcb Pointer to the TCB of the task to be suspended
   * @retval None
   */
-void task_suspend(void) {
+void task_suspend(TCB_t *tcb) {
+    bool need_yield = false;
+
     OCTOS_ENTER_CRITICAL();
 
-    list_insert(suspended_list, &(current_tcb->StateListItem));
+    list_insert(suspended_list, &(tcb->StateListItem));
+    need_yield = tcb == current_tcb;
 
     OCTOS_EXIT_CRITICAL();
 
-    task_yield();
+    if (need_yield) task_yield();
 }

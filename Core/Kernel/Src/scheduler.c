@@ -25,9 +25,9 @@ void scheduler_rr(void) {
     }
 
     if (terminated_list->Length > 0) {
-        ListItem_t *tail = list_tail(terminated_list);
-        list_remove(tail);
-        tcb_release(tail->Owner);
+        ListItem_t *head = list_head(terminated_list);
+        list_remove(head);
+        tcb_release(head->Owner);
     }
 
     /* if we have any task in pending ready list, make it current_tcb instantly */

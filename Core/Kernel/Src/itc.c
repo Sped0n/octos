@@ -66,7 +66,7 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks
 
     list_insert(&(mqueue->SenderList), &(current_tcb->EventListItem));
     if (timeout_ticks == 0) {
-        task_suspend();
+        task_suspend(current_tcb);
     } else {
         task_delay(timeout_ticks);
     }
@@ -110,7 +110,7 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
 
     list_insert(&(mqueue->ReceiverList), &(current_tcb->EventListItem));
     if (timeout_ticks == 0) {
-        task_suspend();
+        task_suspend(current_tcb);
     } else {
         task_delay(timeout_ticks);
     }

@@ -2,7 +2,6 @@
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
-#include "stm32f429xx.h"
 #include "tcb.h"
 
 #include "stm32f4xx.h"// IWYU pragma: keep
@@ -77,4 +76,16 @@ void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
   */
 void OCTOS_ENABLE_SYSTICK(void) {
     SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+}
+
+/**
+ * @brief Handles assertion failure by entering a critical section and halting execution
+ * @param file Source file where assertion failed
+ * @param line Line number where assertion failed
+ * @note Marked with OCTOS_UNUSED to suppress unused parameter warnings
+ * @note Enters an infinite loop to prevent further execution after assertion failure
+ */
+void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file, OCTOS_UNUSED uint64_t line) {
+    OCTOS_ENTER_CRITICAL();
+    for (;;);
 }

@@ -9,6 +9,8 @@
 #define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 5
 #define OCTOS_DSB() __DSB()
 #define OCTOS_ISB() __ISB()
+#define configASSERT(x) \
+    if ((x) == 0) OCTOS_ASSERT_CALLED(__FILE__, __LINE__)
 
 extern uint32_t critical_nesting;
 
@@ -16,6 +18,7 @@ OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void);
 void OCTOS_SETUP_INTPRI(void);
 void OCTOS_SETUP_SYSTICK(Quanta_t *quanta);
 void OCTOS_ENABLE_SYSTICK(void);
+void OCTOS_ASSERT_CALLED(const char *file, uint64_t line);
 
 /**
   * @brief Enter critical section by setting BASEPRI register to mask interrupts

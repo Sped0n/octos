@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
+#include "attr.h"
 
 /**
   * @brief List item structure definition

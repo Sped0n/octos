@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 #include "Kernel/Inc/utils.h"
+#include "attr.h"
+
 #include "stm32f4xx.h"// IWYU pragma: keep
 
 #define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 5

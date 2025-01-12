@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
+#include "attr.h"
 #include "list.h"
 #include "task.h"
 #include "tcb.h"

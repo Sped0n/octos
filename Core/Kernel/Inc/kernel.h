@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
-#include "Kernel/Inc/utils.h"
+#include "attr.h"
 
 extern volatile uint32_t current_tick;
 

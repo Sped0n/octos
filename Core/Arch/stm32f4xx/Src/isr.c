@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Arch/stm32f4xx/Inc/api.h"
+#include "attr.h"
 #include "kernel.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
 /* USER CODE END Includes */
@@ -69,7 +70,7 @@
 /**
  * @brief This function handles Pendable request for system service.
  */
-__attribute__((naked)) void PendSV_Handler(void) {
+OCTOS_NAKED void PendSV_Handler(void) {
     /* ------ STEP 1 - SAVE THE CURRENT TASK CONTEXT ------ */
     /* At this point the processor has already pushed PSR, PC, LR, R12, R3, R2,
      * R1 and R0 onto the stack. We need to push the rest(i.e R4, R5, R6, R7, R8,

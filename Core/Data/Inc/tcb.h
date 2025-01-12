@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "attr.h"
 #include "list.h"
 #include "page.h"
 

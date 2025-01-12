@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "Kernel/Inc/utils.h"
+#include "attr.h"
 
 /**
   * @brief Bitmap data structure definition

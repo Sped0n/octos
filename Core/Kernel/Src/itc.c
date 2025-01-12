@@ -143,6 +143,8 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
   * @note This function must only be called from ISR context
   */
 bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
     bool success = queue_send(&mqueue->Queue, item);
@@ -163,6 +165,8 @@ bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item) {
   * @note This function must only be called from ISR context
   */
 bool msg_queue_recv_from_isr(MsgQueue_t *mqueue, void *buffer) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
     bool success = queue_recv(&mqueue->Queue, buffer);

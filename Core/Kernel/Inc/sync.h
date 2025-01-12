@@ -120,6 +120,8 @@ OCTOS_INLINE static inline void sema_release(Sema_t *sema) {
   * @retval true if semaphore was successfully acquired, false otherwise
   */
 OCTOS_INLINE static inline bool sema_acquire_from_isr(Sema_t *sema) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
     int32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
     if (sema->Count <= 0) {
         OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
@@ -138,6 +140,8 @@ OCTOS_INLINE static inline bool sema_acquire_from_isr(Sema_t *sema) {
   * @retval None
   */
 OCTOS_INLINE static inline void sema_release_from_isr(Sema_t *sema) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
     bool higher_priority_task_woken = false;
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
@@ -242,6 +246,8 @@ OCTOS_INLINE static inline bool mutex_release(Mutex_t *mutex) {
   * @retval false if mutex is already owned by another task
   */
 OCTOS_INLINE static inline bool mutex_acquire_from_isr(Mutex_t *mutex) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
     if (mutex->Owner != NULL) {
         OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
@@ -260,6 +266,8 @@ OCTOS_INLINE static inline bool mutex_acquire_from_isr(Mutex_t *mutex) {
   * @retval false if mutex is not owned by current task
   */
 OCTOS_INLINE static inline bool mutex_release_from_isr(Mutex_t *mutex) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
     bool higher_priority_task_woken = false;
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();

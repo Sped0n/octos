@@ -11,7 +11,7 @@
 #define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 5
 #define OCTOS_DSB() __DSB()
 #define OCTOS_ISB() __ISB()
-#define configASSERT(x) \
+#define OCTOS_ASSERT(x) \
     if ((x) == 0) OCTOS_ASSERT_CALLED(__FILE__, __LINE__)
 
 extern uint32_t critical_nesting;
@@ -87,6 +87,12 @@ OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL_FROM_ISR(uint32_t new_mask_v
   */
 OCTOS_INLINE static inline void OCTOS_CTX_SWITCH(void) {
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
+OCTOS_INLINE static inline void OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID(void) {
+    uint32_t isr_number = __get_IPSR();
+    uint32_t current_priority = NVIC_GetPriority((IRQn_Type) (isr_number - 16));
+    OCTOS_ASSERT(current_priority >= OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
 }
 
 #endif

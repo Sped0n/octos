@@ -2,6 +2,7 @@
 #define __ARCH_STM32F4xx_API_H__
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "Kernel/Inc/utils.h"
@@ -22,6 +23,8 @@ void OCTOS_SETUP_INTPRI(void);
 void OCTOS_SETUP_SYSTICK(Quanta_t *quanta);
 void OCTOS_ENABLE_SYSTICK(void);
 void OCTOS_ASSERT_CALLED(const char *file, uint64_t line);
+void *OCTOS_MALLOC(size_t wanted_size);
+void OCTOS_FREE(void *ptr_to_free);
 
 /**
   * @brief Enter critical section by setting BASEPRI register to mask interrupts

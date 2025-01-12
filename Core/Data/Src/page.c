@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "Arch/stm32f4xx/Inc/api.h"
 #include "bitmap.h"
 #include "config.h"
 #include "page.h"
@@ -34,7 +35,7 @@ void page_alloc(Page_t *page, PagePolicy_t policy, size_t size_in_words) {
             break;
         }
         case PAGE_POLICY_DYNAMIC:
-            page->raw = malloc(size_in_words * sizeof(uint32_t));
+            page->raw = OCTOS_MALLOC(size_in_words * sizeof(uint32_t));
             if (page->raw)
                 memset(page->raw, 0, size_in_words * sizeof(uint32_t));
             break;
@@ -60,7 +61,7 @@ void page_free(Page_t *page) {
                 }
             break;
         case PAGE_POLICY_DYNAMIC:
-            free(page->raw);
+            OCTOS_FREE(page->raw);
             break;
         default:
             break;

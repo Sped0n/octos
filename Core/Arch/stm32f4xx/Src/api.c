@@ -1,7 +1,9 @@
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
+#include "task.h"
 #include "tcb.h"
 
 #include "stm32f4xx.h"// IWYU pragma: keep
@@ -85,4 +87,38 @@ void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file,
                          OCTOS_UNUSED uint64_t line) {
     OCTOS_ENTER_CRITICAL();
     for (;;);
+}
+
+/**
+  * @brief Allocate memory in a thread-safe manner
+  * @note This function suspends all tasks before allocating memory to ensure thread safety
+  * @param wanted_size The size of the memory block to allocate
+  * @retval Pointer to the allocated memory block, or NULL if allocation fails
+  */
+void *OCTOS_MALLOC(size_t wanted_size) {
+    void *result;
+
+    task_suspend_all();
+
+    result = malloc(wanted_size);
+
+    task_resume_all();
+
+    return result;
+}
+
+/**
+  * @brief Free memory in a thread-safe manner
+  * @note This function suspends all tasks before freeing memory to ensure thread safety
+  * @param ptr_to_free Pointer to the memory block to free
+  * @retval None
+  */
+void OCTOS_FREE(void *ptr_to_free) {
+    if (ptr_to_free) {
+        task_suspend_all();
+
+        free(ptr_to_free);
+
+        task_resume_all();
+    }
 }

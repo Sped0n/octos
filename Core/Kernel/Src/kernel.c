@@ -1,11 +1,18 @@
-#include "kernel.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
+#include "kernel.h"
 #include "list.h"
 #include "tcb.h"
 
 TCB_t *current_tcb;
-volatile uint32_t current_tick;
+volatile uint32_t current_tick = 0;
+volatile uint32_t critical_nesting = 0;
+volatile bool yield_pending = false;
+volatile uint32_t scheduler_suspended = 0;
+volatile uint32_t pended_ticks = 0;
 
 static List_t ready_list_internal;
 static List_t pending_ready_list_internal;

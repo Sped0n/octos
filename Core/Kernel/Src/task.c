@@ -16,7 +16,8 @@ extern List_t *delayed_list;
 extern List_t *delayed_list_overflow;
 extern List_t *suspended_list;
 extern List_t *terminated_list;
-
+extern volatile uint32_t pended_ticks;
+extern volatile uint32_t scheduler_suspended;
 
 /**
   * @brief Creates a new task with specified parameters
@@ -28,9 +29,9 @@ extern List_t *terminated_list;
   * @retval true if task created successfully
   * @retval false if task creation failed
   */
-bool task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t page_policy,
-                 size_t page_size) {
-    OCTOS_ENTER_CRITICAL();
+bool task_create(TaskFunc_t func, void *args, uint8_t priority,
+                 PagePolicy_t page_policy, size_t page_size) {
+    task_suspend_all();
 
     Page_t page;
     page_alloc(&page, page_policy, page_size);
@@ -48,7 +49,7 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t pag
         list_insert(ready_list, &(tcb->StateListItem));
     }
 
-    OCTOS_EXIT_CRITICAL();
+    task_resume_all();
     return true;
 }
 
@@ -59,7 +60,7 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority, PagePolicy_t pag
   * @retval None
   */
 void task_delete(TCB_t *tcb) {
-    bool need_yield = false;
+    bool switch_required = false;
 
     OCTOS_ENTER_CRITICAL();
 
@@ -68,15 +69,13 @@ void task_delete(TCB_t *tcb) {
         return;
     }
 
-    if (tcb_status(tcb) != RUNNING) {
-        list_remove(&(tcb->StateListItem));
-    }
+    if (tcb_status(tcb) != RUNNING) { list_remove(&(tcb->StateListItem)); }
     list_insert_end(terminated_list, &(tcb->StateListItem));
-    need_yield = tcb == current_tcb;
+    switch_required = tcb == current_tcb;
 
     OCTOS_EXIT_CRITICAL();
 
-    if (need_yield) task_yield();
+    if (switch_required) task_yield();
 }
 
 /*
@@ -112,14 +111,85 @@ void task_delay(uint32_t ticks_to_delay) {
   * @retval None
   */
 void task_suspend(TCB_t *tcb) {
-    bool need_yield = false;
+    bool switch_required = false;
 
     OCTOS_ENTER_CRITICAL();
 
     list_insert(suspended_list, &(tcb->StateListItem));
-    need_yield = tcb == current_tcb;
+    switch_required = tcb == current_tcb;
 
     OCTOS_EXIT_CRITICAL();
 
-    if (need_yield) task_yield();
+    if (switch_required) task_yield();
+}
+
+/** 
+  * @brief Resume a suspended task
+  * @note If the resumed task has a higher priority than the current task, a yield will occur
+  * @param tcb Pointer to the TCB of the task to be resumed
+  * @retval None
+  */
+void task_resume(TCB_t *tcb) {
+    OCTOS_ENTER_CRITICAL();
+
+    if (tcb == current_tcb) {
+        OCTOS_EXIT_CRITICAL();
+        return;
+    } else if (tcb->RootPriority > current_tcb->RootPriority) {
+        task_yield();
+    }
+
+    OCTOS_EXIT_CRITICAL();
+}
+
+/** 
+  * @brief Resume a suspended task from an ISR context
+  * @note If the resumed task has a higher priority than the current task, a yield will occur
+  * @param tcb Pointer to the TCB of the task to be resumed
+  * @retval None
+  */
+void task_resume_from_isr(TCB_t *tcb) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    bool switch_required = false;
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    if (tcb == current_tcb) {
+        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+        return;
+    } else if (tcb->RootPriority > current_tcb->RootPriority) {
+        switch_required = true;
+    }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+
+    OCTOS_YIELD_FROM_ISR(switch_required);
+}
+
+/** 
+  * @brief Resume the scheduler and process any pending ticks
+  * @note This function decrements the scheduler suspension counter and processes any pending ticks
+  * @retval None
+  */
+void task_resume_all(void) {
+    OCTOS_ENTER_CRITICAL();
+
+    OCTOS_ASSERT(scheduler_suspended > 0);
+    scheduler_suspended--;
+    if (scheduler_suspended > 0) {
+        OCTOS_EXIT_CRITICAL();
+        return;
+    }
+
+    uint32_t local_pended_ticks = pended_ticks;
+    if (local_pended_ticks > 0) {
+        do {
+            kernel_tick_increment();
+            local_pended_ticks--;
+        } while (local_pended_ticks > 0);
+        pended_ticks = 0;
+    }
+
+    OCTOS_EXIT_CRITICAL();
 }

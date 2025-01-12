@@ -11,7 +11,7 @@
 #include "usart.h"
 #include "utils.h"
 
-#define QUEUE_SIZE 10
+#define QUEUE_SIZE 20
 #define ITEM_SIZE sizeof(char)
 
 

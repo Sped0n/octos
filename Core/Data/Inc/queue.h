@@ -19,7 +19,8 @@ typedef struct Queue {
     size_t ReadIndex;  /*!< Index for next read operation */
 } Queue_t;
 
-void queue_init(Queue_t *queue, void *buffer, size_t item_size, size_t max_size);
+void queue_init(Queue_t *queue, void *buffer, size_t item_size,
+                size_t max_size);
 bool queue_send(Queue_t *queue, const void *item);
 bool queue_recv(Queue_t *queue, void *buffer);
 

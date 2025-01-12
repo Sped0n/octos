@@ -42,7 +42,8 @@ OCTOS_INLINE static inline bool is_mqueue_ops_timeout(void) {
   * @param max_size Maximum number of items in the queue
   * @retval None
   */
-void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size, size_t max_size) {
+void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size,
+                    size_t max_size) {
     queue_init(&mqueue->Queue, buffer, item_size, max_size);
     list_init(&mqueue->SenderList);
     list_init(&mqueue->ReceiverList);
@@ -55,7 +56,8 @@ void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size, size_t m
   * @param timeout_ticks Maximum time to wait if queue is full (0 for infinite)
   * @retval true if message was sent successfully, false if timed out
   */
-bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks) {
+bool msg_queue_send(MsgQueue_t *mqueue, const void *item,
+                    uint32_t timeout_ticks) {
     OCTOS_ENTER_CRITICAL();
 
     if (queue_send(&mqueue->Queue, item)) {
@@ -73,8 +75,6 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks
 
     OCTOS_EXIT_CRITICAL();
 
-    task_yield();
-
     OCTOS_ENTER_CRITICAL();
 
     bool success = false;
@@ -83,9 +83,7 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks
         list_remove(&(current_tcb->EventListItem));
     } else {
         success = queue_send(&mqueue->Queue, item);
-        if (success) {
-            try_wake_waiting_task(&mqueue->ReceiverList);
-        }
+        if (success) { try_wake_waiting_task(&mqueue->ReceiverList); }
     }
 
     OCTOS_EXIT_CRITICAL();
@@ -117,8 +115,6 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
 
     OCTOS_EXIT_CRITICAL();
 
-    task_yield();
-
     OCTOS_ENTER_CRITICAL();
     bool success = false;
 
@@ -126,9 +122,7 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
         list_remove(&(current_tcb->EventListItem));
     } else {
         success = queue_recv(&mqueue->Queue, buffer);
-        if (success) {
-            try_wake_waiting_task(&mqueue->SenderList);
-        }
+        if (success) try_wake_waiting_task(&mqueue->SenderList);
     }
 
     OCTOS_EXIT_CRITICAL();
@@ -148,9 +142,7 @@ bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item) {
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
     bool success = queue_send(&mqueue->Queue, item);
-    if (success) {
-        try_wake_waiting_task(&mqueue->ReceiverList);
-    }
+    if (success) try_wake_waiting_task(&mqueue->ReceiverList);
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
@@ -170,9 +162,7 @@ bool msg_queue_recv_from_isr(MsgQueue_t *mqueue, void *buffer) {
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
     bool success = queue_recv(&mqueue->Queue, buffer);
-    if (success) {
-        try_wake_waiting_task(&mqueue->SenderList);
-    }
+    if (success) try_wake_waiting_task(&mqueue->SenderList);
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 

@@ -47,6 +47,4 @@ TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
   * @param tcb Pointer to the Thread Control Block to release
   * @retval None
   */
-void tcb_release(TCB_t *tcb) {
-    page_free(tcb->Page);
-}
+void tcb_release(TCB_t *tcb) { page_free(tcb->Page); }

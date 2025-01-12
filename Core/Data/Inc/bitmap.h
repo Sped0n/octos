@@ -48,8 +48,7 @@ OCTOS_INLINE static inline void bitmap_reset(Bitmap_t *bm, uint32_t pos) {
   */
 OCTOS_INLINE static inline int32_t bitmap_first_zero(Bitmap_t *bm) {
     for (size_t i = 0; i < (bm->size + 31) / 32; i++)
-        if (bm->data[i] != ~0U)
-            return i * 32 + __builtin_clz(~bm->data[i]);
+        if (bm->data[i] != ~0U) return i * 32 + __builtin_clz(~bm->data[i]);
 
     return -1;
 }

@@ -60,7 +60,8 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-
+extern volatile uint32_t scheduler_suspended;
+extern volatile uint32_t pended_ticks;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -108,6 +109,10 @@ OCTOS_NAKED void PendSV_Handler(void) {
  * @brief This function handles System tick timer.
  */
 void SysTick_Handler(void) {
-    kernel_tick_increment();
-    OCTOS_CTX_SWITCH();
+    if (scheduler_suspended > 0) {
+        pended_ticks++;
+    } else {
+        kernel_tick_increment();
+        OCTOS_CTX_SWITCH();
+    }
 }

@@ -16,8 +16,10 @@ typedef struct MsgQueue {
     List_t ReceiverList; /*!< List of tasks waiting to receive messages */
 } MsgQueue_t;
 
-void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size, size_t max_size);
-bool msg_queue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks);
+void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size,
+                    size_t max_size);
+bool msg_queue_send(MsgQueue_t *mqueue, const void *item,
+                    uint32_t timeout_ticks);
 bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks);
 bool msg_queue_send_from_isr(MsgQueue_t *mqueue, const void *item);
 bool msg_queue_recv_from_isr(MsgQueue_t *mqueue, void *buffer);

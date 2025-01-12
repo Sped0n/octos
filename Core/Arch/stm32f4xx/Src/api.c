@@ -8,8 +8,6 @@
 
 extern TCB_t *current_tcb;
 
-uint32_t critical_nesting = 0;
-
 /**
   * @brief Launches the first task by restoring its context and enabling interrupts
   * @note This function is marked as naked to prevent compiler from adding prologue/epilogue
@@ -74,9 +72,7 @@ void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
   * @note Starts the SysTick counter by setting the ENABLE bit
   * @retval None
   */
-void OCTOS_ENABLE_SYSTICK(void) {
-    SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
-}
+void OCTOS_ENABLE_SYSTICK(void) { SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk; }
 
 /**
  * @brief Handles assertion failure by entering a critical section and halting execution
@@ -85,7 +81,8 @@ void OCTOS_ENABLE_SYSTICK(void) {
  * @note Marked with OCTOS_UNUSED to suppress unused parameter warnings
  * @note Enters an infinite loop to prevent further execution after assertion failure
  */
-void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file, OCTOS_UNUSED uint64_t line) {
+void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file,
+                         OCTOS_UNUSED uint64_t line) {
     OCTOS_ENTER_CRITICAL();
     for (;;);
 }

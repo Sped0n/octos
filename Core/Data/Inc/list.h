@@ -45,7 +45,8 @@ OCTOS_INLINE inline void list_item_init(ListItem_t *item) {
   * @param value The value to set
   * @retval None
   */
-OCTOS_INLINE static inline void list_item_set_value(ListItem_t *item, uint32_t value) {
+OCTOS_INLINE static inline void list_item_set_value(ListItem_t *item,
+                                                    uint32_t value) {
     item->Value = value;
 }
 
@@ -80,7 +81,8 @@ OCTOS_INLINE inline void list_init(List_t *list) {
   * @param new_item Pointer to the new ListItem_t to insert
   * @retval None
   */
-OCTOS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item) {
+OCTOS_INLINE static inline void list_insert(List_t *list,
+                                            ListItem_t *new_item) {
     OCTOS_DSB();
     OCTOS_ISB();
 
@@ -105,7 +107,8 @@ OCTOS_INLINE static inline void list_insert(List_t *list, ListItem_t *new_item) 
   * @param new_item Pointer to the new ListItem_t to insert
   * @retval None
   */
-OCTOS_INLINE static inline void list_insert_end(List_t *list, ListItem_t *new_item) {
+OCTOS_INLINE static inline void list_insert_end(List_t *list,
+                                                ListItem_t *new_item) {
     OCTOS_DSB();
     OCTOS_ISB();
 
@@ -131,8 +134,7 @@ OCTOS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
     OCTOS_DSB();
     OCTOS_ISB();
 
-    if (!item_to_remove->Parent)
-        return;
+    if (!item_to_remove->Parent) return;
     List_t *list = item_to_remove->Parent;
 
     item_to_remove->Prev->Next = item_to_remove->Next;
@@ -148,8 +150,7 @@ OCTOS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
   * @return Pointer to the first ListItem_t in the list, or NULL if the list is empty
   */
 OCTOS_INLINE static inline ListItem_t *list_head(List_t *list) {
-    if (list->Length == 0)
-        return NULL;
+    if (list->Length == 0) return NULL;
     return list->End.Next;
 }
 
@@ -159,8 +160,7 @@ OCTOS_INLINE static inline ListItem_t *list_head(List_t *list) {
   * @return Pointer to the last ListItem_t in the list, or NULL if the list is empty
   */
 OCTOS_INLINE static inline ListItem_t *list_tail(List_t *list) {
-    if (list->Length == 0)
-        return NULL;
+    if (list->Length == 0) return NULL;
     return list->End.Prev;
 }
 

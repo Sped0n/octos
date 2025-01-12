@@ -78,8 +78,7 @@ OCTOS_INLINE static inline void sema_acquire(Sema_t *sema) {
     OCTOS_ENTER_CRITICAL();
 
     sema->Count--;
-    if (sema->Count < 0)
-        block_current_task(&(sema->BlockedList));
+    if (sema->Count < 0) block_current_task(&(sema->BlockedList));
 
     OCTOS_EXIT_CRITICAL();
 
@@ -106,7 +105,8 @@ OCTOS_INLINE static inline void sema_release(Sema_t *sema) {
     }
 
     if (sema->BlockedList.Length > 0) {
-        higher_priority_task_woken = unblock_one_task(&(sema->BlockedList)) > current_tcb->RootPriority;
+        higher_priority_task_woken = unblock_one_task(&(sema->BlockedList)) >
+                                     current_tcb->RootPriority;
     }
 
     OCTOS_EXIT_CRITICAL();
@@ -142,7 +142,7 @@ OCTOS_INLINE static inline bool sema_acquire_from_isr(Sema_t *sema) {
 OCTOS_INLINE static inline void sema_release_from_isr(Sema_t *sema) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-    bool higher_priority_task_woken = false;
+    bool switch_required = false;
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
@@ -154,12 +154,13 @@ OCTOS_INLINE static inline void sema_release_from_isr(Sema_t *sema) {
     }
 
     if (sema->BlockedList.Length > 0) {
-        higher_priority_task_woken = unblock_one_task(&(sema->BlockedList)) > current_tcb->RootPriority;
+        switch_required = unblock_one_task(&(sema->BlockedList)) >
+                          current_tcb->RootPriority;
     }
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
-    task_yield_from_isr(higher_priority_task_woken);
+    task_yield_from_isr(switch_required);
 }
 
 /* Mutex ---------------------------------------------------------------------*/
@@ -182,16 +183,15 @@ OCTOS_INLINE inline void mutex_init(Mutex_t *mutex) {
   * @retval None
   */
 OCTOS_INLINE static inline void mutex_acquire(Mutex_t *mutex) {
-    bool need_yield = false;
+    bool switch_required = false;
 
     OCTOS_ENTER_CRITICAL();
 
-    if (mutex->Owner == NULL)
-        mutex->Owner = current_tcb;
+    if (mutex->Owner == NULL) mutex->Owner = current_tcb;
     else if (mutex->Owner == current_tcb)
         ;
     else {
-        need_yield = true;
+        switch_required = true;
         block_current_task(&(mutex->BlockedList));
         if (current_tcb->RootPriority > mutex->Owner->RootPriority) {
             /* Priority inheritance */
@@ -199,11 +199,13 @@ OCTOS_INLINE static inline void mutex_acquire(Mutex_t *mutex) {
             /* Update current priority value */
             mutex->Owner->StateListItem.Value = current_tcb->RootPriority;
         }
+
+        task_yield();
     }
 
     OCTOS_EXIT_CRITICAL();
 
-    if (need_yield) task_yield();
+    if (switch_required) task_yield();
 }
 
 /**
@@ -225,7 +227,8 @@ OCTOS_INLINE static inline bool mutex_release(Mutex_t *mutex) {
 
     if (mutex->BlockedList.Length > 0) {
         mutex->Owner = list_tail(&(mutex->BlockedList))->Owner;
-        higher_priority_task_woken = unblock_one_task(&(mutex->BlockedList)) > current_tcb->RootPriority;
+        higher_priority_task_woken = unblock_one_task(&(mutex->BlockedList)) >
+                                     current_tcb->RootPriority;
     } else {
         mutex->Owner = NULL;
     }
@@ -249,13 +252,15 @@ OCTOS_INLINE static inline bool mutex_acquire_from_isr(Mutex_t *mutex) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
     if (mutex->Owner != NULL) {
         OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
         return false;
     }
-
     mutex->Owner = current_tcb;
+
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+
     return true;
 }
 
@@ -268,7 +273,7 @@ OCTOS_INLINE static inline bool mutex_acquire_from_isr(Mutex_t *mutex) {
 OCTOS_INLINE static inline bool mutex_release_from_isr(Mutex_t *mutex) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
-    bool higher_priority_task_woken = false;
+    bool switch_required = false;
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
@@ -279,7 +284,8 @@ OCTOS_INLINE static inline bool mutex_release_from_isr(Mutex_t *mutex) {
 
     if (mutex->BlockedList.Length > 0) {
         mutex->Owner = list_tail(&(mutex->BlockedList))->Owner;
-        higher_priority_task_woken = unblock_one_task(&(mutex->BlockedList)) > current_tcb->RootPriority;
+        switch_required = unblock_one_task(&(mutex->BlockedList)) >
+                          current_tcb->RootPriority;
     } else {
         mutex->Owner = NULL;
     }
@@ -288,7 +294,7 @@ OCTOS_INLINE static inline bool mutex_release_from_isr(Mutex_t *mutex) {
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
-    task_yield_from_isr(higher_priority_task_woken);
+    task_yield_from_isr(switch_required);
 
     return true;
 }

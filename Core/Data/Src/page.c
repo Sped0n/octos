@@ -23,8 +23,7 @@ void page_alloc(Page_t *page, PagePolicy_t policy, size_t size_in_words) {
 
     switch (policy) {
         case PAGE_POLICY_POOL: {
-            if (page_bitmap.size != PAGE_POOL_SIZE)
-                page_pool_init();
+            if (page_bitmap.size != PAGE_POOL_SIZE) page_pool_init();
             int32_t index = bitmap_first_zero(&page_bitmap);
             if (index >= 0 && index < PAGE_POOL_SIZE) {
                 bitmap_set(&page_bitmap, index);
@@ -50,8 +49,7 @@ void page_alloc(Page_t *page, PagePolicy_t policy, size_t size_in_words) {
   * @retval None
   */
 void page_free(Page_t *page) {
-    if (!page->raw)
-        return;
+    if (!page->raw) return;
 
     switch (page->policy) {
         case PAGE_POLICY_POOL:

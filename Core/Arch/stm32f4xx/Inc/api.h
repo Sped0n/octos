@@ -1,6 +1,7 @@
 #ifndef __ARCH_STM32F4xx_API_H__
 #define __ARCH_STM32F4xx_API_H__
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "Kernel/Inc/utils.h"
@@ -11,10 +12,10 @@
 #define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 5
 #define OCTOS_DSB() __DSB()
 #define OCTOS_ISB() __ISB()
-#define OCTOS_ASSERT(x) \
+#define OCTOS_ASSERT(x)                                                        \
     if ((x) == 0) OCTOS_ASSERT_CALLED(__FILE__, __LINE__)
 
-extern uint32_t critical_nesting;
+extern volatile uint32_t critical_nesting;
 
 OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void);
 void OCTOS_SETUP_INTPRI(void);
@@ -34,7 +35,8 @@ OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
     // * Cortex-M4 Devices Generic User Guide (Page 2-9), bits [31:8] are reserved
     // * RM0090 Rev 21 (Page 374), 4 bits of interrupt priority (16 levels) are used
     // the priority levels are map to bit [7:4]
-    __set_BASEPRI(OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - __NVIC_PRIO_BITS));
+    __set_BASEPRI(OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY
+                  << (8 - __NVIC_PRIO_BITS));
     __DSB();
     __ISB();
     critical_nesting++;
@@ -47,9 +49,7 @@ OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
   */
 OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL(void) {
     critical_nesting--;
-    if (critical_nesting == 0) {
-        __set_BASEPRI(0);
-    }
+    if (critical_nesting == 0) { __set_BASEPRI(0); }
 }
 
 /**
@@ -65,7 +65,8 @@ OCTOS_INLINE static inline uint32_t OCTOS_ENTER_CRITICAL_FROM_ISR(void) {
     // * Cortex-M4 Devices Generic User Guide (Page 2-9), bits [31:8] are reserved
     // * RM0090 Rev 21 (Page 374), 4 bits of interrupt priority (16 levels) are used
     // the priority levels are map to bit [7:4]
-    __set_BASEPRI(OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - __NVIC_PRIO_BITS));
+    __set_BASEPRI(OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY
+                  << (8 - __NVIC_PRIO_BITS));
     __DSB();
     __ISB();
     return original_base_priority;
@@ -76,7 +77,8 @@ OCTOS_INLINE static inline uint32_t OCTOS_ENTER_CRITICAL_FROM_ISR(void) {
   * @param new_mask_value New BASEPRI value to restore
   * @retval None
   */
-OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL_FROM_ISR(uint32_t new_mask_value) {
+OCTOS_INLINE static inline void
+OCTOS_EXIT_CRITICAL_FROM_ISR(uint32_t new_mask_value) {
     __set_BASEPRI(new_mask_value);
 }
 
@@ -89,10 +91,23 @@ OCTOS_INLINE static inline void OCTOS_CTX_SWITCH(void) {
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
-OCTOS_INLINE static inline void OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID(void) {
+OCTOS_INLINE static inline void
+OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID(void) {
     uint32_t isr_number = __get_IPSR();
     uint32_t current_priority = NVIC_GetPriority((IRQn_Type) (isr_number - 16));
     OCTOS_ASSERT(current_priority >= OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
 }
+
+OCTOS_INLINE static inline void OCTOS_YIELD(void) {
+    SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+    OCTOS_DSB();
+    OCTOS_ISB();
+}
+
+OCTOS_INLINE static inline void OCTOS_YIELD_FROM_ISR(bool flag) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+    if (flag) SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
 
 #endif

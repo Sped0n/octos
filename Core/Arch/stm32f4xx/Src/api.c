@@ -2,6 +2,7 @@
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "Kernel/Inc/utils.h"
+#include "stm32f429xx.h"
 #include "tcb.h"
 
 #include "stm32f4xx.h"// IWYU pragma: keep
@@ -39,14 +40,17 @@ OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void) {
 }
 
 /**
-  * @brief Configures NVIC interrupt priorities for system calls
-  * @note Sets priority levels for SysTick and PendSV interrupts
-  * @retval None
-  */
+ * @brief Configures the Nested Vectored Interrupt Controller (NVIC) priority settings
+ * @note Sets the priority grouping to use all bits for preempt priority
+ * @note Configures priority for SysTick and PendSV interrupts
+ * @retval None
+ */
 void OCTOS_SETUP_INTPRI(void) {
+    /* Assign all the priority bits to be preempt priority bits */
+    NVIC_SetPriorityGrouping(0x00000003U);
     /* Set priority for interrupts (Max 0, Min 15) */
     NVIC_SetPriority(SysTick_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
-    NVIC_SetPriority(PendSV_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY + 1);
+    NVIC_SetPriority(PendSV_IRQn, 15);
 }
 
 /**

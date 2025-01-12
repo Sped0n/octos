@@ -6,7 +6,7 @@
 #include "Kernel/Inc/utils.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
 
-#define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 14
+#define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 5
 #define OCTOS_DSB() __DSB()
 #define OCTOS_ISB() __ISB()
 

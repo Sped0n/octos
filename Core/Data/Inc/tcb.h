@@ -30,7 +30,7 @@ typedef enum ThreadState {
   */
 typedef struct TCB {
     uint32_t *StackTop;       /*!< Pointer to the top of thread's stack */
-    Page_t *Page;             /*!< Memory page allocated for this thread */
+    Page_t Page;              /*!< Memory page allocated for this thread */
     ListItem_t StateListItem; /*!< List item for thread state lists */
     ListItem_t EventListItem; /*!< List item for event waiting lists */
     uint8_t RootPriority;     /*!< Original priority of the thread */
@@ -47,7 +47,6 @@ extern List_t *suspended_list;
 extern List_t *terminated_list;
 
 TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority);
-void tcb_release(TCB_t *tcb);
 
 /**
   * @brief Get the current state of a thread

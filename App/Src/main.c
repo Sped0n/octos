@@ -5,7 +5,6 @@
 #include "kernel.h"
 #include "led.h"
 #include "main.h"
-#include "page.h"
 #include "sync.h"
 #include "task.h"
 #include "usart.h"
@@ -16,6 +15,7 @@
 
 
 volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0;
+uint32_t task1_buffer[256];
 
 MsgQueue_t queue_test;
 
@@ -36,25 +36,20 @@ void task1(void) {
 
     BSP_LED_Toggle(LED2);
     while (1) {
-        if (tp1 % 1000 == 0 && tp1 > 0) {
-            BSP_LED_Toggle(LED2);
-        }
-        if (tp1 == 5000) {
-            task_create((TaskFunc_t) &task0, NULL, 2, PAGE_POLICY_DYNAMIC, 256);
-        }
+        if (tp1 % 1000 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
+        if (tp1 == 5000) { task_create((TaskFunc_t) &task0, NULL, 2, 256); }
         if (msg_queue_recv(&queue_test, &recv_buffer, 0)) {
             mutex_acquire(&mutex_test);
             printf("%s", &recv_buffer);
-            if (recv_buffer == '\r') {
-                mutex_release(&mutex_test);
-            }
+            if (recv_buffer == '\r') { mutex_release(&mutex_test); }
         }
         tp1++;
     }
 }
 
 void task2(void) {
-    const char sentence[] = "---------hello from task1, from task2---------\n\r";
+    const char sentence[] =
+            "---------hello from task1, from task2---------\n\r";
     BSP_LED_Toggle(LED3);
     while (1) {
         if (tp2 % 5000 == 0 && tp2 > 0) {
@@ -78,11 +73,10 @@ void USART3_Init(void) {
     EXT_GPIO_TypeDef usart3_rx = {.Port = GPIOD,
                                   .Pin = LL_GPIO_PIN_9,
                                   .Alternate = (7U << GPIO_AFRH_AFSEL9_Pos)};
-    USART_Config_t config = {
-            .USARTx = USART3,
-            .TX = &usart3_tx,
-            .RX = &usart3_rx,
-            .BaudRate = 115200};
+    USART_Config_t config = {.USARTx = USART3,
+                             .TX = &usart3_tx,
+                             .RX = &usart3_rx,
+                             .BaudRate = 115200};
     BSP_USART_Init(&config);
     BSP_USART_Enable(config.USARTx);
 }
@@ -112,8 +106,8 @@ int main(void) {
     // Initialize variables
     tp0 = tp1 = tp2 = 0;
 
-    task_create((TaskFunc_t) &task1, NULL, 2, PAGE_POLICY_POOL, 256);
-    task_create((TaskFunc_t) &task2, NULL, 0, PAGE_POLICY_DYNAMIC, 256);
+    task_create_static((TaskFunc_t) &task1, NULL, 2, task1_buffer, 256);
+    task_create((TaskFunc_t) &task2, NULL, 0, 256);
 
     // Launch kernel with 1ms time quantum
     Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};

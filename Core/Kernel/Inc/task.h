@@ -7,7 +7,6 @@
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "attr.h"
-#include "page.h"
 #include "tcb.h"
 
 extern TCB_t *current_tcb;
@@ -15,8 +14,11 @@ extern volatile bool yield_pending;
 extern volatile uint32_t scheduler_suspended;
 
 bool task_create(TaskFunc_t func, void *args, uint8_t priority,
-                 PagePolicy_t page_policy, size_t page_size);
+                 size_t page_size_in_words);
+bool task_create_static(TaskFunc_t func, void *args, uint8_t priority,
+                        uint32_t *buffer, size_t page_size_in_words);
 void task_delete(TCB_t *tcb);
+void task_release(TCB_t *tcb);
 void task_delay(uint32_t ticks_to_delay);
 void task_suspend(TCB_t *tcb);
 void task_resume(TCB_t *tcb);

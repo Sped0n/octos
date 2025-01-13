@@ -20,25 +20,28 @@ extern volatile uint32_t pended_ticks;
 extern volatile uint32_t scheduler_suspended;
 
 /**
-  * @brief Creates a new task with specified parameters
+  * @brief Creates a new task with dynamically allocated memory
   * @param func Function pointer to the task entry
   * @param args Arguments passed to the task function
   * @param priority Task priority level
-  * @param page_policy Memory page allocation policy
-  * @param page_size Size of memory page to allocate
+  * @param page_size_in_words Size of memory needed in 32-bit words
   * @retval true if task created successfully
   * @retval false if task creation failed
   */
 bool task_create(TaskFunc_t func, void *args, uint8_t priority,
-                 PagePolicy_t page_policy, size_t page_size) {
+                 size_t page_size_in_words) {
     task_suspend_all();
 
-    Page_t page;
-    page_alloc(&page, page_policy, page_size);
+    Page_t page = {0};
+    page.policy = PAGE_POLICY_DYNAMIC;
+    page.size = page_size_in_words;
+    page.raw = OCTOS_MALLOC(page_size_in_words * sizeof(uint32_t));
+
     if (!page.raw) {
-        OCTOS_EXIT_CRITICAL();
+        task_resume_all();
         return false;
     }
+    memset(page.raw, 0, page_size_in_words * sizeof(uint32_t));
 
     TCB_t *tcb = tcb_build(&page, func, args, priority);
 
@@ -54,28 +57,89 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority,
 }
 
 /**
-  * @brief Deletes specified task and moves it to terminated state
-  * @note A context switch may occur
+  * @brief Creates a new task using provided static memory
+  * @param func Function pointer to the task entry
+  * @param args Arguments passed to the task function
+  * @param priority Task priority level
+  * @param buffer Pointer to memory buffer to use
+  * @param page_size_in_words Size of provided buffer in 32-bit words
+  * @retval true if task created successfully
+  * @retval false if task creation failed
+  */
+bool task_create_static(TaskFunc_t func, void *args, uint8_t priority,
+                        uint32_t *buffer, size_t page_size_in_words) {
+    task_suspend_all();
+
+    if (!buffer) {
+        task_resume_all();
+        return false;
+    }
+
+    Page_t page = {0};
+    page.policy = PAGE_POLICY_STATIC;
+    page.size = page_size_in_words;
+    page.raw = buffer;
+    memset(page.raw, 0, page_size_in_words * sizeof(uint32_t));
+
+    TCB_t *tcb = tcb_build(&page, func, args, priority);
+
+    if (tcb->TCBNumber == 0) {
+        current_tcb = tcb;
+        list_init(ready_list);
+    } else {
+        list_insert(ready_list, &(tcb->StateListItem));
+    }
+
+    task_resume_all();
+    return true;
+}
+
+/**
+  * @brief Deletes task and moves it to terminated state
   * @param tcb Pointer to task control block to delete
   * @retval None
   */
 void task_delete(TCB_t *tcb) {
     bool switch_required = false;
 
-    OCTOS_ENTER_CRITICAL();
+    task_suspend_all();
 
     if (!tcb || tcb_status(tcb) == TERMINATED) {
-        OCTOS_EXIT_CRITICAL();
+        task_resume_all();
         return;
     }
 
     if (tcb_status(tcb) != RUNNING) { list_remove(&(tcb->StateListItem)); }
     list_insert_end(terminated_list, &(tcb->StateListItem));
+
     switch_required = tcb == current_tcb;
 
-    OCTOS_EXIT_CRITICAL();
+    task_resume_all();
 
     if (switch_required) task_yield();
+}
+
+/**
+  * @brief Release a task and free its resources if necessary
+  * @note The task is removed from the terminated list and its dynamic memory is freed if applicable
+  * @param tcb Pointer to the TCB of the task to be released
+  * @retval None
+  */
+void task_release(TCB_t *tcb) {
+    task_suspend_all();
+
+    if (tcb->StateListItem.Parent != terminated_list) {
+        task_resume_all();
+        return;
+    }
+
+    list_remove(&(tcb->StateListItem));
+    if (tcb->Page.policy == PAGE_POLICY_DYNAMIC) {
+        OCTOS_FREE(tcb->Page.raw);
+        tcb->Page.raw = NULL;
+    }
+
+    task_resume_all();
 }
 
 /*

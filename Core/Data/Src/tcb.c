@@ -16,7 +16,10 @@ static uint32_t tcb_id = 0;
   */
 TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
     TCB_t *tcb = (TCB_t *) page->raw;
-    tcb->Page = page;
+
+    tcb->Page.raw = page->raw;
+    tcb->Page.size = page->size;
+    tcb->Page.policy = page->policy;
 
     uint32_t *stack_top = &(page->raw[page->size - 16]);
     stack_top[15] = (uint32_t) (1U << 24);// PSR
@@ -41,10 +44,3 @@ TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args, uint8_t priority) {
 
     return tcb;
 }
-
-/**
-  * @brief Release resources associated with a Thread Control Block
-  * @param tcb Pointer to the Thread Control Block to release
-  * @retval None
-  */
-void tcb_release(TCB_t *tcb) { page_free(tcb->Page); }

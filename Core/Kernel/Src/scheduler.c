@@ -2,7 +2,7 @@
 
 #include "list.h"
 #include "scheduler.h"
-#include "tcb.h"
+#include "task.h"
 
 extern TCB_t *current_tcb;
 extern List_t *ready_list;
@@ -29,7 +29,7 @@ void scheduler_rr(void) {
     if (terminated_list->Length > 0) {
         ListItem_t *head = list_head(terminated_list);
         list_remove(head);
-        tcb_release(head->Owner);
+        task_release(head->Owner);
     }
 
     /* if we have any task in pending ready list, make it current_tcb instantly */

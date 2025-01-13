@@ -23,6 +23,11 @@ typedef struct Quanta {
     size_t Value;      /*!< Numerical value of the quanta */
 } Quanta_t;
 
+typedef struct Timeout {
+    uint32_t entering_tick;
+    uint32_t overflows;
+} Timeout_t;
+
 extern Quanta_t *kernel_quanta;
 
 /**
@@ -31,7 +36,8 @@ extern Quanta_t *kernel_quanta;
   * @param unit Unit of the input time value (@ref QuantaUnit_t)
   * @retval uint32_t Number of system ticks
   */
-OCTOS_INLINE static inline uint32_t time_to_ticks(uint16_t time, QuantaUnit_t unit) {
+OCTOS_INLINE static inline uint32_t time_to_ticks(uint16_t time,
+                                                  QuantaUnit_t unit) {
     return (time * kernel_quanta->Unit) / (kernel_quanta->Value * unit);
 }
 

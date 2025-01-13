@@ -5,12 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "Kernel/Inc/config.h"
 #include "Kernel/Inc/utils.h"
 #include "attr.h"
 
 #include "stm32f4xx.h"// IWYU pragma: keep
 
-#define OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY 5
 #define OCTOS_DSB() __DSB()
 #define OCTOS_ISB() __ISB()
 #define OCTOS_ASSERT(x)                                                        \

@@ -23,8 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "attr.h"
-#include "kernel.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
+#include "task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,8 +60,7 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-extern volatile uint32_t scheduler_suspended;
-extern volatile uint32_t pended_ticks;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -94,7 +93,7 @@ OCTOS_NAKED void PendSV_Handler(void) {
     /* ------ STEP 2: LOAD THE NEW TASK CONTEXT FROM ITS STACK TO THE CPU
     * REGISTERS, THEN UPDATE current_tcb_pointer ------ */
     __asm("PUSH    {R0,LR}");
-    __asm("BL      scheduler_rr");
+    __asm("BL      task_context_switch");
     __asm("POP     {R0,LR}");
     __asm("LDR     R1, [R0]");
     /* Load the newer tasks TCB to the SP */
@@ -109,10 +108,5 @@ OCTOS_NAKED void PendSV_Handler(void) {
  * @brief This function handles System tick timer.
  */
 void SysTick_Handler(void) {
-    if (scheduler_suspended > 0) {
-        pended_ticks++;
-    } else {
-        kernel_tick_increment();
-        OCTOS_CTX_SWITCH();
-    }
+    if (task_tick_increment()) OCTOS_CTX_SWITCH();
 }

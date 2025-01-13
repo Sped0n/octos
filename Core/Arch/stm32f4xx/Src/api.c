@@ -8,7 +8,9 @@
 
 #include "stm32f4xx.h"// IWYU pragma: keep
 
-extern TCB_t *current_tcb;
+extern TCB_t *volatile current_tcb;
+
+volatile uint32_t critical_nesting = 0;
 
 /**
   * @brief Launches the first task by restoring its context and enabling interrupts

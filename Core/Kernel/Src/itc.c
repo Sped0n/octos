@@ -2,9 +2,9 @@
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "itc.h"
+#include "list.h"
 #include "task.h"
-
-extern TCB_t *current_tcb;
+#include "utils.h"
 
 /**
   * @brief Wakes up first task in waiting list if any exists
@@ -19,20 +19,14 @@ static void try_wake_waiting_task(List_t *event_list) {
 
     TCB_t *tcb = item->Owner;
     item = &(tcb->StateListItem);
-    if (tcb_status(tcb) != SUSPENDED) {
+    if (task_status(tcb) != SUSPENDED) {
         list_item_set_value(item, tcb->Priority);
     }
     list_remove(item);
-    list_insert_end(pending_ready_list, item);
+    task_add_to_ready_list(item->Owner);
 }
 
-/**
-  * @brief Checks if current message queue operation timed out
-  * @retval true if operation timed out, false otherwise
-  */
-OCTOS_INLINE static inline bool is_mqueue_ops_timeout(void) {
-    return current_tcb->EventListItem.Parent != NULL;
-}
+// TODO: add try_wake_waiting_task_from_isr
 
 /**
   * @brief Initializes a message queue
@@ -58,6 +52,8 @@ void msg_queue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size,
   */
 bool msg_queue_send(MsgQueue_t *mqueue, const void *item,
                     uint32_t timeout_ticks) {
+    Timeout_t timeout;
+
     OCTOS_ENTER_CRITICAL();
 
     if (queue_send(&mqueue->Queue, item)) {
@@ -70,18 +66,19 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item,
     if (timeout_ticks == 0) {
         task_suspend(current_tcb);
     } else {
+        task_set_timeout(&timeout);
         task_delay(timeout_ticks);
     }
 
     OCTOS_EXIT_CRITICAL();
 
+    task_yield();
+
     OCTOS_ENTER_CRITICAL();
 
     bool success = false;
 
-    if (is_mqueue_ops_timeout()) {
-        list_remove(&(current_tcb->EventListItem));
-    } else {
+    if (timeout_ticks == 0 || !task_check_timeout(&timeout, timeout_ticks)) {
         success = queue_send(&mqueue->Queue, item);
         if (success) { try_wake_waiting_task(&mqueue->ReceiverList); }
     }
@@ -98,6 +95,8 @@ bool msg_queue_send(MsgQueue_t *mqueue, const void *item,
   * @retval true if message was received successfully, false if timed out
   */
 bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
+    Timeout_t timeout;
+
     OCTOS_ENTER_CRITICAL();
 
     if (queue_recv(&mqueue->Queue, buffer)) {
@@ -110,17 +109,18 @@ bool msg_queue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
     if (timeout_ticks == 0) {
         task_suspend(current_tcb);
     } else {
+        task_set_timeout(&timeout);
         task_delay(timeout_ticks);
     }
 
     OCTOS_EXIT_CRITICAL();
 
+    task_yield();
+
     OCTOS_ENTER_CRITICAL();
     bool success = false;
 
-    if (is_mqueue_ops_timeout()) {
-        list_remove(&(current_tcb->EventListItem));
-    } else {
+    if (timeout_ticks == 0 || !task_check_timeout(&timeout, timeout_ticks)) {
         success = queue_recv(&mqueue->Queue, buffer);
         if (success) try_wake_waiting_task(&mqueue->SenderList);
     }

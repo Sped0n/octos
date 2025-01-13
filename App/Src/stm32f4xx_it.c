@@ -21,7 +21,6 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "scheduler.h"
 #include "stm32f4xx.h"// IWYU pragma: keep
 /* USER CODE END Includes */
 
@@ -72,8 +71,7 @@ void NMI_Handler(void) {
 
     /* USER CODE END NonMaskableInt_IRQn 0 */
     /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-    while (1) {
-    }
+    while (1) {}
     /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 

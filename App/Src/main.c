@@ -10,12 +10,12 @@
 #include "usart.h"
 #include "utils.h"
 
-#define QUEUE_SIZE 20
+#define QUEUE_SIZE 10
 #define ITEM_SIZE sizeof(char)
 
 
-volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0;
-uint32_t task1_buffer[256];
+volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0, tp3 = 0;
+uint32_t task1_buffer[512];
 
 MsgQueue_t queue_test;
 
@@ -26,6 +26,9 @@ void task0(void) {
     while (1) {
         task_delay(time_to_ticks(1, SECONDS));
         BSP_LED_Toggle(LED1);
+        mutex_acquire(&mutex_test);
+        printf("-hello from task0---------\n\r");
+        mutex_release(&mutex_test);
     }
 }
 
@@ -36,8 +39,8 @@ void task1(void) {
 
     BSP_LED_Toggle(LED2);
     while (1) {
-        if (tp1 % 1000 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
-        if (tp1 == 5000) { task_create((TaskFunc_t) &task0, NULL, 2, 256); }
+        if (tp1 % 500 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
+        if (tp1 == 5000) { task_create((TaskFunc_t) &task0, NULL, 1, 512); }
         if (msg_queue_recv(&queue_test, &recv_buffer, 0)) {
             mutex_acquire(&mutex_test);
             printf("%s", &recv_buffer);
@@ -47,22 +50,31 @@ void task1(void) {
     }
 }
 
+
 void task2(void) {
-    const char sentence[] =
-            "---------hello from task1, from task2---------\n\r";
-    BSP_LED_Toggle(LED3);
     while (1) {
-        if (tp2 % 5000 == 0 && tp2 > 0) {
-            BSP_LED_Toggle(LED3);
-            for (size_t i = 0; sentence[i] != '\0'; i++) {
-                if (!msg_queue_send(&queue_test, &sentence[i], 0)) {
-                    mutex_acquire(&mutex_test);
-                    printf("queue send timeout !!!\n\r");
-                    mutex_release(&mutex_test);
-                }
-            }
+        if (tp2 % 3000 == 0 && tp2 > 0) {
+            mutex_acquire(&mutex_test);
+            printf("---------hello from task2---------\n\r");
+            mutex_release(&mutex_test);
         }
         tp2++;
+    }
+}
+
+void task3(void) {
+    const char sentence[] =
+            "---------hello from task1, from task3---------\n\r";
+    BSP_LED_Toggle(LED3);
+    while (1) {
+        if (tp3 == 3000) { task_create((TaskFunc_t) &task2, NULL, 0, 512); }
+        if (tp3 % 5000 == 0 && tp3 > 0) {
+            BSP_LED_Toggle(LED3);
+            for (size_t i = 0; sentence[i] != '\0'; i++) {
+                msg_queue_send(&queue_test, &sentence[i], 0);
+            }
+        }
+        tp3++;
     }
 }
 
@@ -103,11 +115,8 @@ int main(void) {
     uint8_t queue_storage[QUEUE_SIZE * ITEM_SIZE];
     msg_queue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
 
-    // Initialize variables
-    tp0 = tp1 = tp2 = 0;
-
-    task_create_static((TaskFunc_t) &task1, NULL, 2, task1_buffer, 256);
-    task_create((TaskFunc_t) &task2, NULL, 0, 256);
+    task_create_static((TaskFunc_t) &task1, NULL, 0, task1_buffer, 512);
+    task_create((TaskFunc_t) &task3, NULL, 0, 512);
 
     // Launch kernel with 1ms time quantum
     Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};

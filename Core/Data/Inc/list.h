@@ -36,7 +36,7 @@ typedef struct List {
   * @param item Pointer to the ListItem_t structure to initialize
   * @retval None
   */
-OCTOS_INLINE inline void list_item_init(ListItem_t *item) {
+OCTOS_INLINE static inline void list_item_init(ListItem_t *item) {
     item->Parent = NULL;
     item->Value = 0;
 }
@@ -77,7 +77,7 @@ OCTOS_INLINE inline void list_init(List_t *list) {
     list->Length = 0;
 }
 
-OCTOS_INLINE bool list_valid(List_t *list) {
+OCTOS_INLINE static inline bool list_valid(List_t *list) {
     return list->End.Value == UINT32_MAX;
 }
 
@@ -103,6 +103,7 @@ OCTOS_INLINE static inline void list_insert(List_t *list,
     iterator->Next = new_item;
 
     new_item->Parent = list;
+    if (list->Length == 0) list->Current = new_item;
 
     list->Length++;
 }
@@ -126,6 +127,7 @@ OCTOS_INLINE static inline void list_insert_end(List_t *list,
     list->End.Prev = new_item;
 
     new_item->Parent = list;
+    if (list->Length == 0) list->Current = new_item;
 
     list->Length++;
 }

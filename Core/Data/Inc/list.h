@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "attr.h"
@@ -23,8 +24,9 @@ typedef struct ListItem {
   * @brief List structure definition
   */
 typedef struct List {
-    size_t Length;  /*!< Number of items in the list */
-    ListItem_t End; /*!< End marker of the list */
+    size_t Length;       /*!< Number of items in the list */
+    ListItem_t *Current; /*!< Used to walk through the list */
+    ListItem_t End;      /*!< End marker of the list */
 } List_t;
 
 /* ListItem ------------------------------------------------------------------*/
@@ -73,6 +75,10 @@ OCTOS_INLINE inline void list_init(List_t *list) {
     list->End.Prev = &(list->End);
 
     list->Length = 0;
+}
+
+OCTOS_INLINE bool list_valid(List_t *list) {
+    return list->End.Value == UINT32_MAX;
 }
 
 /**
@@ -124,24 +130,29 @@ OCTOS_INLINE static inline void list_insert_end(List_t *list,
     list->Length++;
 }
 
-/**
-  * @brief Removes an item from its parent list
-  * @param item_to_remove Pointer to the ListItem_t to remove
-  * @retval None
-  * @note If the item has no parent list, the function returns without doing anything
+/** 
+  * @brief Remove an item from a list
+  * @note This function removes the specified item from its parent list and updates the list's current pointer
+  * @param item_to_remove Pointer to the list item to be removed
+  * @retval true if the item was successfully removed, false if the item has no parent list
   */
-OCTOS_INLINE static inline void list_remove(ListItem_t *item_to_remove) {
+OCTOS_INLINE static inline bool list_remove(ListItem_t *item_to_remove) {
     OCTOS_DSB();
     OCTOS_ISB();
 
-    if (!item_to_remove->Parent) return;
+    if (!item_to_remove->Parent) return false;
     List_t *list = item_to_remove->Parent;
+
+    list->Current = list->Current->Next == &(list->End)
+                            ? list->Current->Next->Next
+                            : list->Current->Next;
 
     item_to_remove->Prev->Next = item_to_remove->Next;
     item_to_remove->Next->Prev = item_to_remove->Prev;
 
     item_to_remove->Parent = NULL;
     list->Length--;
+    return true;
 }
 
 /**
@@ -162,6 +173,19 @@ OCTOS_INLINE static inline ListItem_t *list_head(List_t *list) {
 OCTOS_INLINE static inline ListItem_t *list_tail(List_t *list) {
     if (list->Length == 0) return NULL;
     return list->End.Prev;
+}
+
+/** 
+  * @brief Get the owner of the next entry in the list
+  * @note This function advances the list's current pointer to the next entry and returns the owner of that entry
+  * @param list Pointer to the list
+  * @retval Pointer to the owner of the next entry in the list
+  */
+OCTOS_INLINE static inline void *list_get_owner_of_next_entry(List_t *list) {
+    list->Current = list->Current->Next == &(list->End)
+                            ? list->Current->Next->Next
+                            : list->Current->Next;
+    return list->Current->Owner;
 }
 
 #endif

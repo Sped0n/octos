@@ -34,6 +34,9 @@ static List_t terminated_list;
 /* zero is reserved for idle task */
 static uint32_t tcb_id = 1;
 
+
+/* Private Helper ------------------------------------------------------------*/
+
 /**
   * @brief Create and initialize a new Thread Control Block
   * @param page Memory page to use for the thread
@@ -74,6 +77,11 @@ static TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args,
     return tcb;
 }
 
+/** 
+  * @brief Perform post-processing after task creation
+  * @param tcb Pointer to the TCB of the newly created task
+  * @retval None
+  */
 static void task_create_postprocess(TCB_t *tcb) {
     if (current_tcb == NULL) {
         for (size_t i = 0; i < OCTOS_MAX_PRIORITIES; i++)
@@ -87,17 +95,31 @@ static void task_create_postprocess(TCB_t *tcb) {
     task_add_to_ready_list(tcb);
 }
 
+/** 
+  * @brief Set the ready priority for a task
+  * @param priority The priority to set
+  * @retval None
+  */
 static void task_set_ready_priority(uint8_t priority) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
     bitmap_set(&top_ready_priority, OCTOS_MAX_PRIORITIES - priority - 1);
 }
 
+/** 
+  * @brief Reset the ready priority for a task
+  * @param priority The priority to reset
+  * @retval None
+  */
 static void task_reset_ready_priority(uint8_t priority) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
     if (ready_list[priority].Length == 0)
         bitmap_reset(&top_ready_priority, OCTOS_MAX_PRIORITIES - priority - 1);
 }
 
+/** 
+  * @brief Select the highest priority task to execute
+  * @retval None
+  */
 static void task_select_highest_priority(void) {
     int32_t highest_priority =
             OCTOS_MAX_PRIORITIES - bitmap_first_one(&top_ready_priority) - 1;
@@ -106,21 +128,7 @@ static void task_select_highest_priority(void) {
     current_tcb = list_get_owner_of_next_entry(&ready_list[highest_priority]);
 }
 
-void task_lists_init(void) {
-    list_init(&pending_ready_list);
-    list_init(&suspended_list);
-    list_init(&terminated_list);
-
-    list_init(&delayed_list_1);
-    list_init(&delayed_list_2);
-    delayed_list = &delayed_list_1;
-    delayed_list_overflow = &delayed_list_2;
-}
-
-void task_add_to_ready_list(TCB_t *tcb) {
-    task_set_ready_priority(tcb->Priority);
-    list_insert_end(&ready_list[tcb->Priority], &(tcb->StateListItem));
-}
+/* Misc ----------------------------------------------------------------------*/
 
 /**
   * @brief Get the current state of a thread
@@ -144,6 +152,11 @@ TaskState_t task_status(TCB_t *tcb) {
         return INVALID;
 }
 
+/** 
+  * @brief Set a timeout for a task
+  * @param timeout Pointer to the timeout structure
+  * @retval None
+  */
 void task_set_timeout(Timeout_t *timeout) {
     OCTOS_ENTER_CRITICAL();
 
@@ -153,6 +166,12 @@ void task_set_timeout(Timeout_t *timeout) {
     OCTOS_EXIT_CRITICAL();
 }
 
+/** 
+  * @brief Check if a timeout has occurred
+  * @param timeout Pointer to the timeout structure
+  * @param ticks_to_delay The number of ticks to delay
+  * @retval True if timeout has occurred, false otherwise
+  */
 bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay) {
     bool is_timeout = false;
 
@@ -170,6 +189,39 @@ bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay) {
 
     return is_timeout;
 }
+
+/* Task List -----------------------------------------------------------------*/
+
+/** 
+  * @brief Initialize task lists
+  * @retval None
+  */
+void task_lists_init(void) {
+    list_init(&pending_ready_list);
+    list_init(&suspended_list);
+    list_init(&terminated_list);
+
+    list_init(&delayed_list_1);
+    list_init(&delayed_list_2);
+    delayed_list = &delayed_list_1;
+    delayed_list_overflow = &delayed_list_2;
+}
+
+/** 
+  * @brief Add a task to the ready list
+  * @note This function will automatically set top priority, when you need to
+  *       insert some task to ready list, do use this function
+  * @note This function is not protected by any critical section or scheduler
+  *       suspension
+  * @param tcb Pointer to the TCB of the task to add
+  * @retval None
+  */
+void task_add_to_ready_list(TCB_t *tcb) {
+    task_set_ready_priority(tcb->Priority);
+    list_insert_end(&ready_list[tcb->Priority], &(tcb->StateListItem));
+}
+
+/* Task Create and Delete ----------------------------------------------------*/
 
 /**
   * @brief Creates a new task with dynamically allocated memory
@@ -279,6 +331,10 @@ void task_release(TCB_t *tcb) {
     if (tcb->Page.policy == PAGE_POLICY_DYNAMIC) OCTOS_FREE(tcb->Page.raw);
 }
 
+/** 
+  * @brief Increment the task tick and handle delayed tasks
+  * @retval True if a context switch is required, false otherwise
+  */
 bool task_tick_increment(void) {
     bool switch_required = false;
 
@@ -328,6 +384,19 @@ bool task_tick_increment(void) {
     return switch_required;
 }
 
+/** 
+  * @brief Perform a context switch to the highest priority task
+  * @retval None
+  */
+void task_context_switch(void) {
+    if (scheduler_suspended > 0) {
+        yield_pending = true;
+    } else {
+        yield_pending = false;
+        task_select_highest_priority();
+    }
+}
+
 /**
  * @brief Safely retrieves the current system tick value
  * @note Uses critical section to prevent race conditions
@@ -351,6 +420,8 @@ uint32_t task_get_tick_from_isr(void) {
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
     return return_tick;
 }
+
+/* Task Basic Operation ------------------------------------------------------*/
 
 /** 
   * @brief Yield the current task to allow other tasks to run
@@ -521,13 +592,4 @@ void task_resume_from_isr(TCB_t *tcb) {
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
     OCTOS_YIELD_FROM_ISR(switch_required);
-}
-
-void task_context_switch(void) {
-    if (scheduler_suspended > 0) {
-        yield_pending = true;
-    } else {
-        yield_pending = false;
-        task_select_highest_priority();
-    }
 }

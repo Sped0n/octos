@@ -28,25 +28,26 @@ typedef enum TaskState {
 
 extern TCB_t *volatile current_tcb;
 
-/* Misc */
+/* Misc ----------------------------------------------------------------------*/
 TaskState_t task_status(TCB_t *tcb);
 void task_set_timeout(Timeout_t *timeout);
 bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay);
-/* Task list */
+/* Task List -----------------------------------------------------------------*/
 void task_lists_init(void);
 void task_add_to_ready_list(TCB_t *tcb);
-/* Task create and delete */
+/* Task Create and Delete ----------------------------------------------------*/
 bool task_create(TaskFunc_t func, void *args, uint8_t priority,
                  size_t page_size_in_words);
 bool task_create_static(TaskFunc_t func, void *args, uint8_t priority,
                         uint32_t *buffer, size_t page_size_in_words);
 void task_delete(TCB_t *tcb);
 void task_release(TCB_t *tcb);
-/* Tick */
+/* Task Core Operation -------------------------------------------------------*/
 bool task_tick_increment(void);
+void task_context_switch(void);
 uint32_t task_get_tick(void);
 uint32_t task_get_tick_from_isr(void);
-/* Ops */
+/* Task Basic Operation ------------------------------------------------------*/
 void task_yield(void);
 void task_yield_from_isr(bool flag);
 void task_suspend_all(void);
@@ -55,8 +56,6 @@ void task_delay(uint32_t ticks_to_delay);
 void task_suspend(TCB_t *tcb);
 void task_resume(TCB_t *tcb);
 void task_resume_from_isr(TCB_t *tcb);
-/* Context switch */
-void task_context_switch(void);
 
 
 /**

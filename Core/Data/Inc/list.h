@@ -77,20 +77,27 @@ OCTOS_INLINE inline void list_init(List_t *list) {
     list->Length = 0;
 }
 
+/** 
+  * @brief Check if a list is valid
+  * @param list Pointer to the list to be checked
+  * @retval True if the list is valid, false otherwise
+  */
 OCTOS_INLINE static inline bool list_valid(List_t *list) {
     return list->End.Value == UINT32_MAX;
 }
 
-/**
-  * @brief Inserts a new item into the list in sorted order
-  * @param list Pointer to the List_t structure
-  * @param new_item Pointer to the new ListItem_t to insert
-  * @retval None
+/** 
+  * @brief Insert an item into a list in sorted order
+  * @param list Pointer to the list where the item will be inserted
+  * @param new_item Pointer to the item to be inserted
+  * @retval True if the insertion is successful, false otherwise
   */
-OCTOS_INLINE static inline void list_insert(List_t *list,
+OCTOS_INLINE static inline bool list_insert(List_t *list,
                                             ListItem_t *new_item) {
     OCTOS_DSB();
     OCTOS_ISB();
+
+    if (new_item->Parent != NULL) return false;
 
     ListItem_t *iterator;
 
@@ -104,20 +111,24 @@ OCTOS_INLINE static inline void list_insert(List_t *list,
 
     new_item->Parent = list;
     if (list->Length == 0) list->Current = new_item;
-
     list->Length++;
+
+    return true;
 }
 
-/**
-  * @brief Inserts a new item at the end of the list
-  * @param list Pointer to the List_t structure
-  * @param new_item Pointer to the new ListItem_t to insert
-  * @retval None
+/** 
+  * @brief Insert an item at the end of a list
+  * @note This is a unordered insertion
+  * @param list Pointer to the list where the item will be inserted
+  * @param new_item Pointer to the item to be inserted
+  * @retval True if the insertion is successful, false otherwise
   */
-OCTOS_INLINE static inline void list_insert_end(List_t *list,
+OCTOS_INLINE static inline bool list_insert_end(List_t *list,
                                                 ListItem_t *new_item) {
     OCTOS_DSB();
     OCTOS_ISB();
+
+    if (new_item->Parent != NULL) return false;
 
     ListItem_t *last = list->End.Prev;
 
@@ -128,8 +139,9 @@ OCTOS_INLINE static inline void list_insert_end(List_t *list,
 
     new_item->Parent = list;
     if (list->Length == 0) list->Current = new_item;
-
     list->Length++;
+
+    return true;
 }
 
 /** 
@@ -142,7 +154,8 @@ OCTOS_INLINE static inline bool list_remove(ListItem_t *item_to_remove) {
     OCTOS_DSB();
     OCTOS_ISB();
 
-    if (!item_to_remove->Parent) return false;
+    if (item_to_remove->Parent == NULL) return false;
+
     List_t *list = item_to_remove->Parent;
 
     list->Current = list->Current->Next == &(list->End)

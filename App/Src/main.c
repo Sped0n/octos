@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "itc.h"
 #include "kernel.h"
 #include "led.h"
 #include "main.h"
+#include "mqueue.h"
 #include "sync.h"
 #include "task.h"
 #include "usart.h"
@@ -26,7 +26,7 @@ void task0(void) {
     while (1) {
         task_delay(time_to_ticks(1, SECONDS));
         BSP_LED_Toggle(LED1);
-        mutex_acquire(&mutex_test);
+        mutex_acquire(&mutex_test, UINT32_MAX);
         printf("-hello from task0---------\n\r");
         mutex_release(&mutex_test);
     }
@@ -40,9 +40,9 @@ void task1(void) {
     BSP_LED_Toggle(LED2);
     while (1) {
         if (tp1 % 500 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
-        if (tp1 == 5000) { task_create((TaskFunc_t) &task0, NULL, 1, 512); }
-        if (msg_queue_recv(&queue_test, &recv_buffer, 0)) {
-            mutex_acquire(&mutex_test);
+        if (tp1 == 501) { task_create((TaskFunc_t) &task0, NULL, 1, 512); }
+        if (mqueue_recv(&queue_test, &recv_buffer, UINT32_MAX)) {
+            mutex_acquire(&mutex_test, UINT32_MAX);
             printf("%s", &recv_buffer);
             if (recv_buffer == '\r') { mutex_release(&mutex_test); }
         }
@@ -54,7 +54,7 @@ void task1(void) {
 void task2(void) {
     while (1) {
         if (tp2 % 3000 == 0 && tp2 > 0) {
-            mutex_acquire(&mutex_test);
+            mutex_acquire(&mutex_test, UINT32_MAX);
             printf("---------hello from task2---------\n\r");
             mutex_release(&mutex_test);
         }
@@ -67,11 +67,11 @@ void task3(void) {
             "---------hello from task1, from task3---------\n\r";
     BSP_LED_Toggle(LED3);
     while (1) {
-        if (tp3 == 3000) { task_create((TaskFunc_t) &task2, NULL, 0, 512); }
+        if (tp3 == 5001) { task_create((TaskFunc_t) &task2, NULL, 0, 512); }
         if (tp3 % 5000 == 0 && tp3 > 0) {
             BSP_LED_Toggle(LED3);
             for (size_t i = 0; sentence[i] != '\0'; i++) {
-                msg_queue_send(&queue_test, &sentence[i], 0);
+                mqueue_send(&queue_test, &sentence[i], UINT32_MAX);
             }
         }
         tp3++;
@@ -113,13 +113,13 @@ int main(void) {
 
     // Initialize queue
     uint8_t queue_storage[QUEUE_SIZE * ITEM_SIZE];
-    msg_queue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
+    mqueue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
 
     task_create_static((TaskFunc_t) &task1, NULL, 0, task1_buffer, 512);
     task_create((TaskFunc_t) &task3, NULL, 0, 512);
 
     // Launch kernel with 1ms time quantum
-    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};
+    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 5};
     kernel_launch(&quanta);
 
     // Should never reach here

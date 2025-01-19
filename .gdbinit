@@ -10,11 +10,8 @@ layout src
 # Move focus to command window
 focus cmd
 
-# Set breakpoint at task_context_switch
-break task_context_switch
-
-# Watch the current_tcb variable
-watch current_tcb
+# Set breakpoint at assert
+break OCTOS_ASSERT_CALLED
 
 # Optional: Some useful settings
 set print pretty on

@@ -27,7 +27,7 @@ bool queue_recv(Queue_t *queue, void *buffer);
 /**
   * @brief Check if queue is full
   * @param queue: Pointer to queue structure
-  * @retval true if queue is full, false otherwise
+  * @return true if queue is full, false otherwise
   */
 OCTOS_INLINE static inline bool queue_is_full(const Queue_t *queue) {
     return queue->Size >= queue->MaxSize;
@@ -36,7 +36,7 @@ OCTOS_INLINE static inline bool queue_is_full(const Queue_t *queue) {
 /**
   * @brief Check if queue is empty
   * @param queue: Pointer to queue structure
-  * @retval true if queue is empty, false otherwise
+  * @return true if queue is empty, false otherwise
   */
 OCTOS_INLINE static inline bool queue_is_empty(const Queue_t *queue) {
     return queue->Size == 0;
@@ -45,7 +45,7 @@ OCTOS_INLINE static inline bool queue_is_empty(const Queue_t *queue) {
 /**
   * @brief Get current number of items in queue
   * @param queue: Pointer to queue structure
-  * @retval Current size of queue
+  * @return Current size of queue
   */
 OCTOS_INLINE static inline size_t queue_size(const Queue_t *queue) {
     return queue->Size;
@@ -54,7 +54,7 @@ OCTOS_INLINE static inline size_t queue_size(const Queue_t *queue) {
 /**
   * @brief Get number of free spaces in queue
   * @param queue: Pointer to queue structure
-  * @retval Number of available spaces
+  * @return Number of available spaces
   */
 OCTOS_INLINE static inline size_t queue_spaces(const Queue_t *queue) {
     return queue->MaxSize - queue->Size;

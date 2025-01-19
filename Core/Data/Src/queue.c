@@ -11,7 +11,7 @@
   * @param buffer: Pointer to memory buffer for queue storage
   * @param item_size: Size of each queue item in bytes
   * @param max_size: Maximum number of items queue can hold
-  * @retval None
+  * @return None
   */
 void queue_init(Queue_t *queue, void *buffer, size_t item_size,
                 size_t max_size) {
@@ -27,7 +27,7 @@ void queue_init(Queue_t *queue, void *buffer, size_t item_size,
   * @brief Send item to queue
   * @param queue: Pointer to queue structure
   * @param item: Pointer to item to be added
-  * @retval true if item was successfully added, false if queue is full
+  * @return true if item was successfully added, false if queue is full
   * @note This function instantly return
   */
 bool queue_send(Queue_t *queue, const void *item) {
@@ -48,7 +48,7 @@ bool queue_send(Queue_t *queue, const void *item) {
   * @brief Receive item from queue
   * @param queue: Pointer to queue structure
   * @param buffer: Buffer to store received item
-  * @retval true if item was successfully received, false if queue is empty
+  * @return true if item was successfully received, false if queue is empty
   * @note This function instantly return
   */
 bool queue_recv(Queue_t *queue, void *buffer) {

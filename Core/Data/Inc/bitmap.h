@@ -20,7 +20,7 @@ void bitmap_init(Bitmap_t *bm, uint32_t *data, size_t size);
 /** 
   * @brief Check if a bitmap is valid
   * @param bm Pointer to the bitmap structure to be checked
-  * @retval true if the bitmap is valid (data is not NULL), false otherwise
+  * @return true if the bitmap is valid (data is not NULL), false otherwise
   */
 OCTOS_INLINE static inline bool bitmap_valid(Bitmap_t *bm) {
     return bm->data != NULL;
@@ -30,7 +30,7 @@ OCTOS_INLINE static inline bool bitmap_valid(Bitmap_t *bm) {
   * @brief Sets a bit at the specified position in the bitmap
   * @param bm Pointer to the bitmap structure
   * @param pos Position of the bit to set (0-based index)
-  * @retval None
+  * @return None
   */
 OCTOS_INLINE static inline void bitmap_set(Bitmap_t *bm, uint32_t pos) {
     uint32_t index = pos / 32;
@@ -42,7 +42,7 @@ OCTOS_INLINE static inline void bitmap_set(Bitmap_t *bm, uint32_t pos) {
   * @brief Clears a bit at the specified position in the bitmap
   * @param bm Pointer to the bitmap structure 
   * @param pos Position of the bit to clear (0-based index)
-  * @retval None
+  * @return None
   */
 OCTOS_INLINE static inline void bitmap_reset(Bitmap_t *bm, uint32_t pos) {
     uint32_t index = pos / 32;

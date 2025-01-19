@@ -16,7 +16,7 @@ volatile uint32_t critical_nesting = 0;
  * @brief Launches the first task by restoring its context and enabling interrupts
  * @note This function is marked as naked to prevent compiler from adding prologue/epilogue
  * @note Function performs stack manipulation to restore saved context and exception frame
- * @retval None
+ * @return None
  */
 OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void) {
     /* Load the SP reg with the stacked SP value */
@@ -44,7 +44,7 @@ OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void) {
  * @brief Configures the Nested Vectored Interrupt Controller (NVIC) priority settings
  * @note Sets the priority grouping to use all bits for preempt priority
  * @note Configures priority for SysTick and PendSV interrupts
- * @retval None
+ * @return None
  */
 void OCTOS_SETUP_INTPRI(void) {
     /* Assign all the priority bits to be preempt priority bits */
@@ -58,7 +58,7 @@ void OCTOS_SETUP_INTPRI(void) {
  * @brief Initializes the SysTick timer with specified time quantum
  * @param quanta Pointer to Quanta structure containing timer configuration
  * @note Configures SysTick for specified time slice scheduling
- * @retval None
+ * @return None
  */
 void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
     /* Reset systick */
@@ -74,7 +74,7 @@ void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
 /**
  * @brief Enables the SysTick timer
  * @note Starts the SysTick counter by setting the ENABLE bit
- * @retval None
+ * @return None
  */
 void OCTOS_ENABLE_SYSTICK(void) { SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk; }
 
@@ -84,6 +84,7 @@ void OCTOS_ENABLE_SYSTICK(void) { SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk; }
  * @param line Line number where assertion failed
  * @note Marked with OCTOS_UNUSED to suppress unused parameter warnings
  * @note Enters an infinite loop to prevent further execution after assertion failure
+ * @return None
  */
 void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file,
                          OCTOS_UNUSED uint64_t line) {
@@ -95,7 +96,7 @@ void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file,
  * @brief Allocate memory in a thread-safe manner
  * @note This function suspends all tasks before allocating memory to ensure thread safety
  * @param wanted_size The size of the memory block to allocate
- * @retval Pointer to the allocated memory block, or NULL if allocation fails
+ * @return Pointer to the allocated memory block, or NULL if allocation fails
  */
 void *OCTOS_MALLOC(size_t wanted_size) {
     void *result;
@@ -113,7 +114,7 @@ void *OCTOS_MALLOC(size_t wanted_size) {
  * @brief Free memory in a thread-safe manner
  * @note This function suspends all tasks before freeing memory to ensure thread safety
  * @param ptr_to_free Pointer to the memory block to free
- * @retval None
+ * @return None
  */
 void OCTOS_FREE(void *ptr_to_free) {
     if (ptr_to_free) {

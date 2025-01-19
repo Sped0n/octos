@@ -13,11 +13,11 @@ extern TCB_t *volatile current_tcb;
 volatile uint32_t critical_nesting = 0;
 
 /**
-  * @brief Launches the first task by restoring its context and enabling interrupts
-  * @note This function is marked as naked to prevent compiler from adding prologue/epilogue
-  * @note Function performs stack manipulation to restore saved context and exception frame
-  * @retval None
-  */
+ * @brief Launches the first task by restoring its context and enabling interrupts
+ * @note This function is marked as naked to prevent compiler from adding prologue/epilogue
+ * @note Function performs stack manipulation to restore saved context and exception frame
+ * @retval None
+ */
 OCTOS_NAKED void OCTOS_SCHED_LAUNCH(void) {
     /* Load the SP reg with the stacked SP value */
     __asm("LDR     SP, %0" ::"m"(current_tcb->StackTop));
@@ -55,11 +55,11 @@ void OCTOS_SETUP_INTPRI(void) {
 }
 
 /**
-  * @brief Initializes the SysTick timer with specified time quantum
-  * @param quanta Pointer to Quanta structure containing timer configuration
-  * @note Configures SysTick for specified time slice scheduling
-  * @retval None
-  */
+ * @brief Initializes the SysTick timer with specified time quantum
+ * @param quanta Pointer to Quanta structure containing timer configuration
+ * @note Configures SysTick for specified time slice scheduling
+ * @retval None
+ */
 void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
     /* Reset systick */
     SysTick->CTRL = 0;
@@ -72,10 +72,10 @@ void OCTOS_SETUP_SYSTICK(Quanta_t *quanta) {
 }
 
 /**
-  * @brief Enables the SysTick timer
-  * @note Starts the SysTick counter by setting the ENABLE bit
-  * @retval None
-  */
+ * @brief Enables the SysTick timer
+ * @note Starts the SysTick counter by setting the ENABLE bit
+ * @retval None
+ */
 void OCTOS_ENABLE_SYSTICK(void) { SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk; }
 
 /**
@@ -92,11 +92,11 @@ void OCTOS_ASSERT_CALLED(OCTOS_UNUSED const char *file,
 }
 
 /**
-  * @brief Allocate memory in a thread-safe manner
-  * @note This function suspends all tasks before allocating memory to ensure thread safety
-  * @param wanted_size The size of the memory block to allocate
-  * @retval Pointer to the allocated memory block, or NULL if allocation fails
-  */
+ * @brief Allocate memory in a thread-safe manner
+ * @note This function suspends all tasks before allocating memory to ensure thread safety
+ * @param wanted_size The size of the memory block to allocate
+ * @retval Pointer to the allocated memory block, or NULL if allocation fails
+ */
 void *OCTOS_MALLOC(size_t wanted_size) {
     void *result;
 
@@ -110,11 +110,11 @@ void *OCTOS_MALLOC(size_t wanted_size) {
 }
 
 /**
-  * @brief Free memory in a thread-safe manner
-  * @note This function suspends all tasks before freeing memory to ensure thread safety
-  * @param ptr_to_free Pointer to the memory block to free
-  * @retval None
-  */
+ * @brief Free memory in a thread-safe manner
+ * @note This function suspends all tasks before freeing memory to ensure thread safety
+ * @param ptr_to_free Pointer to the memory block to free
+ * @retval None
+ */
 void OCTOS_FREE(void *ptr_to_free) {
     if (ptr_to_free) {
         task_suspend_all();

@@ -27,12 +27,12 @@ void *OCTOS_MALLOC(size_t wanted_size);
 void OCTOS_FREE(void *ptr_to_free);
 
 /**
-  * @brief Enter critical section by setting BASEPRI register to mask interrupts
-  * @note Uses BASEPRI register to disable interrupts with priority less than or equal to 
-  *       OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY
-  * @note Priority levels are mapped to bits [7:4] according to Cortex-M4 architecture
-  * @retval None
-  */
+ * @brief Enter critical section by setting BASEPRI register to mask interrupts
+ * @note Uses BASEPRI register to disable interrupts with priority less than or equal to 
+ *       OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY
+ * @note Priority levels are mapped to bits [7:4] according to Cortex-M4 architecture
+ * @return None
+ */
 OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
     // according to
     // * Cortex-M4 Devices Generic User Guide (Page 2-9), bits [31:8] are reserved
@@ -46,10 +46,10 @@ OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
 }
 
 /**
-  * @brief Exit critical section by restoring original BASEPRI value
-  * @note Decrements critical nesting counter and clears BASEPRI when counter reaches 0
-  * @retval None
-  */
+ * @brief Exit critical section by restoring original BASEPRI value
+ * @note Decrements critical nesting counter and clears BASEPRI when counter reaches 0
+ * @return None
+ */
 OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL(void) {
     OCTOS_ASSERT(critical_nesting > 0);
     critical_nesting--;
@@ -57,12 +57,12 @@ OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL(void) {
 }
 
 /**
-  * @brief Set interrupt mask from ISR context by configuring BASEPRI register
-  * @note Uses BASEPRI register to disable interrupts with priority less than or equal to
-  *       OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY
-  * @note Priority levels are mapped to bits [7:4] according to Cortex-M4 architecture  
-  * @retval Original BASEPRI value before masking
-  */
+ * @brief Set interrupt mask from ISR context by configuring BASEPRI register
+ * @note Uses BASEPRI register to disable interrupts with priority less than or equal to
+ *       OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY
+ * @note Priority levels are mapped to bits [7:4] according to Cortex-M4 architecture  
+ * @return Original BASEPRI value before masking
+ */
 OCTOS_INLINE static inline uint32_t OCTOS_ENTER_CRITICAL_FROM_ISR(void) {
     uint32_t original_base_priority = __get_BASEPRI();
     // according to
@@ -77,24 +77,31 @@ OCTOS_INLINE static inline uint32_t OCTOS_ENTER_CRITICAL_FROM_ISR(void) {
 }
 
 /**
-  * @brief Clear interrupt mask from ISR context
-  * @param new_mask_value New BASEPRI value to restore
-  * @retval None
-  */
+ * @brief Clear interrupt mask from ISR context
+ * @param new_mask_value New BASEPRI value to restore
+ * @return None
+ */
 OCTOS_INLINE static inline void
 OCTOS_EXIT_CRITICAL_FROM_ISR(uint32_t new_mask_value) {
     __set_BASEPRI(new_mask_value);
 }
 
 /**
-  * @brief Trigger PendSV exception to perform context switch
-  * @note Sets PENDSVSET bit in ICSR register to trigger PendSV exception
-  * @retval None
-  */
+ * @brief Trigger PendSV exception to perform context switch
+ * @note Sets PENDSVSET bit in ICSR register to trigger PendSV exception
+ * @return None
+ */
 OCTOS_INLINE static inline void OCTOS_CTX_SWITCH(void) {
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
 
+/**
+ * @brief Asserts if the current interrupt priority is invalid
+ * @note This function checks if the current interrupt priority is less than
+ *       the maximum allowed priority for system calls
+ * @param None
+ * @return None
+ */
 OCTOS_INLINE static inline void
 OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID(void) {
     uint32_t isr_number = __get_IPSR();
@@ -102,16 +109,29 @@ OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID(void) {
     OCTOS_ASSERT(current_priority >= OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
 }
 
+/**
+ * @brief Causes a context switch by setting the PendSV exception
+ * @note This function is used to force a context switch, typically when
+ *       changing task priorities.
+ * @param None
+ * @return None
+ */
 OCTOS_INLINE static inline void OCTOS_YIELD(void) {
     SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
     OCTOS_DSB();
     OCTOS_ISB();
 }
 
+/**
+ * @brief Yields from an ISR based on the provided flag
+ * @note This function asserts if the current interrupt priority is invalid
+ *       before setting the PendSV exception.
+ * @param flag Boolean flag to indicate whether a yield should occur
+ * @return None
+ */
 OCTOS_INLINE static inline void OCTOS_YIELD_FROM_ISR(bool flag) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
     if (flag) SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 }
-
 
 #endif

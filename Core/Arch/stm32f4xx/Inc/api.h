@@ -51,6 +51,7 @@ OCTOS_INLINE static inline void OCTOS_ENTER_CRITICAL(void) {
   * @retval None
   */
 OCTOS_INLINE static inline void OCTOS_EXIT_CRITICAL(void) {
+    OCTOS_ASSERT(critical_nesting > 0);
     critical_nesting--;
     if (critical_nesting == 0) { __set_BASEPRI(0); }
 }

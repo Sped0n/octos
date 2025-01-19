@@ -50,7 +50,7 @@ void OCTOS_SETUP_INTPRI(void) {
     /* Assign all the priority bits to be preempt priority bits */
     NVIC_SetPriorityGrouping(0x00000003U);
     /* Set priority for interrupts (Max 0, Min 15) */
-    NVIC_SetPriority(SysTick_IRQn, OCTOS_MAX_SYSCALL_INTERRUPT_PRIORITY);
+    NVIC_SetPriority(SysTick_IRQn, 15);
     NVIC_SetPriority(PendSV_IRQn, 15);
 }
 

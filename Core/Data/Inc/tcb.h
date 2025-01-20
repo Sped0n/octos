@@ -8,8 +8,8 @@
 #include "page.h"
 
 /**
-  * @brief Task Control Block structure definition
-  */
+ * @brief Task Control Block structure definition
+ */
 typedef struct TCB {
     uint32_t *StackTop;       /*!< Pointer to the top of task's stack */
     Page_t Page;              /*!< Memory page allocated for this task */

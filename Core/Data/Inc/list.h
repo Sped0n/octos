@@ -10,8 +10,8 @@
 #include "attr.h"
 
 /**
-  * @brief List item structure definition
-  */
+ * @brief List item structure definition
+ */
 typedef struct ListItem {
     uint32_t Value;        /*!< Value used for sorting */
     struct ListItem *Next; /*!< Pointer to next item in list */
@@ -21,8 +21,8 @@ typedef struct ListItem {
 } ListItem_t;
 
 /**
-  * @brief List structure definition
-  */
+ * @brief List structure definition
+ */
 typedef struct List {
     size_t Length;       /*!< Number of items in the list */
     ListItem_t *Current; /*!< Used to walk through the list */
@@ -32,31 +32,31 @@ typedef struct List {
 /* ListItem ------------------------------------------------------------------*/
 
 /**
-  * @brief Initializes a list item
-  * @param item Pointer to the ListItem_t structure to initialize
-  * @return None
-  */
+ * @brief Initializes a list item
+ * @param item Pointer to the ListItem_t structure to initialize
+ * @return None
+ */
 OCTOS_INLINE static inline void list_item_init(ListItem_t *item) {
     item->Parent = NULL;
     item->Value = 0;
 }
 
 /**
-  * @brief Sets the value of a list item
-  * @param item Pointer to the ListItem_t structure
-  * @param value The value to set
-  * @return None
-  */
+ * @brief Sets the value of a list item
+ * @param item Pointer to the ListItem_t structure
+ * @param value The value to set
+ * @return None
+ */
 OCTOS_INLINE static inline void list_item_set_value(ListItem_t *item,
                                                     uint32_t value) {
     item->Value = value;
 }
 
 /**
-  * @brief Gets the value of a list item
-  * @param item Pointer to the ListItem_t structure
-  * @return The value stored in the list item
-  */
+ * @brief Gets the value of a list item
+ * @param item Pointer to the ListItem_t structure
+ * @return The value stored in the list item
+ */
 OCTOS_INLINE static inline uint32_t list_item_get_value(ListItem_t *item) {
     return item->Value;
 }
@@ -64,10 +64,10 @@ OCTOS_INLINE static inline uint32_t list_item_get_value(ListItem_t *item) {
 /* List ----------------------------------------------------------------------*/
 
 /**
-  * @brief Initializes a list
-  * @param list Pointer to the List_t structure to initialize
-  * @return None
-  */
+ * @brief Initializes a list
+ * @param list Pointer to the List_t structure to initialize
+ * @return None
+ */
 OCTOS_INLINE inline void list_init(List_t *list) {
     list->End.Value = UINT32_MAX;
 
@@ -78,20 +78,20 @@ OCTOS_INLINE inline void list_init(List_t *list) {
 }
 
 /** 
-  * @brief Check if a list is valid
-  * @param list Pointer to the list to be checked
-  * @return True if the list is valid, false otherwise
-  */
+ * @brief Check if a list is valid
+ * @param list Pointer to the list to be checked
+ * @return True if the list is valid, false otherwise
+ */
 OCTOS_INLINE static inline bool list_valid(List_t *list) {
     return list->End.Value == UINT32_MAX;
 }
 
 /** 
-  * @brief Insert an item into a list in sorted order
-  * @param list Pointer to the list where the item will be inserted
-  * @param new_item Pointer to the item to be inserted
-  * @return True if the insertion is successful, false otherwise
-  */
+ * @brief Insert an item into a list in sorted order
+ * @param list Pointer to the list where the item will be inserted
+ * @param new_item Pointer to the item to be inserted
+ * @return True if the insertion is successful, false otherwise
+ */
 OCTOS_INLINE static inline bool list_insert(List_t *list,
                                             ListItem_t *new_item) {
     OCTOS_DSB();
@@ -117,12 +117,12 @@ OCTOS_INLINE static inline bool list_insert(List_t *list,
 }
 
 /** 
-  * @brief Insert an item at the end of a list
-  * @note This is a unordered insertion
-  * @param list Pointer to the list where the item will be inserted
-  * @param new_item Pointer to the item to be inserted
-  * @return True if the insertion is successful, false otherwise
-  */
+ * @brief Insert an item at the end of a list
+ * @note This is a unordered insertion
+ * @param list Pointer to the list where the item will be inserted
+ * @param new_item Pointer to the item to be inserted
+ * @return True if the insertion is successful, false otherwise
+ */
 OCTOS_INLINE static inline bool list_insert_end(List_t *list,
                                                 ListItem_t *new_item) {
     OCTOS_DSB();
@@ -145,11 +145,11 @@ OCTOS_INLINE static inline bool list_insert_end(List_t *list,
 }
 
 /** 
-  * @brief Remove an item from a list
-  * @note This function removes the specified item from its parent list and updates the list's current pointer
-  * @param item_to_remove Pointer to the list item to be removed
-  * @return true if the item was successfully removed, false if the item has no parent list
-  */
+ * @brief Remove an item from a list
+ * @note This function removes the specified item from its parent list and updates the list's current pointer
+ * @param item_to_remove Pointer to the list item to be removed
+ * @return true if the item was successfully removed, false if the item has no parent list
+ */
 OCTOS_INLINE static inline bool list_remove(ListItem_t *item_to_remove) {
     OCTOS_DSB();
     OCTOS_ISB();
@@ -171,10 +171,10 @@ OCTOS_INLINE static inline bool list_remove(ListItem_t *item_to_remove) {
 }
 
 /**
-  * @brief Gets the first item in the list
-  * @param list Pointer to the List_t structure
-  * @return Pointer to the first ListItem_t in the list, or NULL if the list is empty
-  */
+ * @brief Gets the first item in the list
+ * @param list Pointer to the List_t structure
+ * @return Pointer to the first ListItem_t in the list, or NULL if the list is empty
+ */
 OCTOS_INLINE static inline ListItem_t *list_head(List_t *list) {
     if (list->Length == 0) return NULL;
     return list->End.Next;
@@ -191,11 +191,11 @@ OCTOS_INLINE static inline ListItem_t *list_tail(List_t *list) {
 }
 
 /** 
-  * @brief Get the owner of the next entry in the list
-  * @note This function advances the list's current pointer to the next entry and returns the owner of that entry
-  * @param list Pointer to the list
-  * @return Pointer to the owner of the next entry in the list
-  */
+ * @brief Get the owner of the next entry in the list
+ * @note This function advances the list's current pointer to the next entry and returns the owner of that entry
+ * @param list Pointer to the list
+ * @return Pointer to the owner of the next entry in the list
+ */
 OCTOS_INLINE static inline void *list_get_owner_of_next_entry(List_t *list) {
     list->Current = list->Current->Next == &(list->End)
                             ? list->Current->Next->Next

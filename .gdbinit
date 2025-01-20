@@ -141,8 +141,10 @@ file ./build/octos.elf
 # Connect to OpenOCD's GDB server
 target extended-remote :3333
 
-# Set up the source code layout
+# Set up the layout
 layout src
+layout asm
+layout next
 
 # Move focus to command window
 focus cmd

@@ -284,7 +284,7 @@ bool task_remove_from_delayed_list(TCB_t *tcb) {
     if (!item_need_to_reset_value && parent != &suspended_list) return false;
 
     /* Remove tcb's StateListItem from its parent */
-    list_remove(item);
+    if (list_remove(item)) task_reset_ready_priority(current_tcb->Priority);
 
     /* Reset tcb's StateListItem value from wake tick to priority */
     TCB_t *const owner = item->Owner;

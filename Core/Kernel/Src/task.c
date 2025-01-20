@@ -163,7 +163,7 @@ TaskState_t task_status(TCB_t *tcb) {
         if (tcb->EventListItem.Parent) return BLOCKED;
         else
             return SUSPENDED;
-    } else if (parent != NULL)
+    } else if (parent == &ready_list[tcb->Priority])
         return READY;
     else
         return INVALID;

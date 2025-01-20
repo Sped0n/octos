@@ -93,6 +93,7 @@ static void task_create_postprocess(TCB_t *tcb) {
     }
 
     task_add_to_ready_list(tcb);
+    current_number_of_tasks++;
 }
 
 /** 
@@ -360,7 +361,6 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority,
 
     task_suspend_all();
     task_create_postprocess(tcb);
-    current_number_of_tasks++;
     task_resume_all();
 
     return true;

@@ -35,17 +35,25 @@ void task0(void) {
 // main.c
 
 void task1(void) {
-    char recv_buffer;
+    char recv_buffer[50];
 
+    uint32_t i = 0;
     BSP_LED_Toggle(LED2);
     while (1) {
         if (tp1 % 500 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
         if (tp1 == 501) { task_create((TaskFunc_t) &task0, NULL, 1, 512); }
-        if (mqueue_recv(&queue_test, &recv_buffer, UINT32_MAX)) {
-            mutex_acquire(&mutex_test, UINT32_MAX);
-            printf("%s", &recv_buffer);
-            if (recv_buffer == '\r') { mutex_release(&mutex_test); }
+        if (mqueue_recv(&queue_test, &recv_buffer[i], 3)) {
+            if (recv_buffer[i] == '\r') {
+                recv_buffer[i + 1] = '\0';
+                i = 0;
+                mutex_acquire(&mutex_test, UINT32_MAX);
+                printf("%s", recv_buffer);
+                mutex_release(&mutex_test);
+            } else {
+                i++;
+            }
         }
+
         tp1++;
     }
 }
@@ -68,7 +76,7 @@ void task3(void) {
     BSP_LED_Toggle(LED3);
     while (1) {
         if (tp3 == 5001) { task_create((TaskFunc_t) &task2, NULL, 0, 512); }
-        if (tp3 % 5000 == 0 && tp3 > 0) {
+        if (tp3 % 3000 == 0 && tp3 > 0) {
             BSP_LED_Toggle(LED3);
             for (size_t i = 0; sentence[i] != '\0'; i++) {
                 mqueue_send(&queue_test, &sentence[i], UINT32_MAX);

@@ -17,7 +17,8 @@ typedef struct TCB {
     ListItem_t EventListItem; /*!< List item for event waiting lists */
     uint8_t RootPriority;     /*!< Original priority of the thread */
     uint8_t Priority;         /*!< Current priority of the thread */
-    char Name[10];            /*< Task name, max length 10 */
+    uint8_t MutexHeld;        /*!< Current number of mutexs held */
+    char Name[13];            /*< Task name, max length 13 */
     uint32_t TCBNumber;       /*!< Unique identifier for the thread */
 } TCB_t;
 

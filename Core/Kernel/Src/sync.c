@@ -242,29 +242,24 @@ void mutex_init(Mutex_t *mutex) {
 }
 
 /**
- * @brief Acquires a mutex
+ * @brief Acquire a mutex with a specified timeout
+ * @note This function blocks the current task if the mutex is already 
+ *       owned by another task
+ * @note Will perform priority inheritance if needed
  * @param mutex Pointer to the mutex to be acquired
- * @param timeout_ticks Maximum time to wait for the mutex
- * @return True if the mutex is acquired, false otherwise
+ * @param timeout_ticks Timeout value in ticks, 0 for no wait, UINT32_MAX
+ *        for indefinite wait
+ * @return True if the mutex was acquired, false otherwise
  */
 bool mutex_acquire(Mutex_t *mutex, uint32_t timeout_ticks) {
     Timeout_t timeout;
     bool timeout_set = false;
-
-    OCTOS_ENTER_CRITICAL();
-
-    TCB_t *const tcb = task_get_current();
-
-    OCTOS_EXIT_CRITICAL();
+    bool inheritance_occured = false;
 
     while (true) {
         OCTOS_ENTER_CRITICAL();
-
-        if (mutex->Owner == tcb) {
-            OCTOS_EXIT_CRITICAL();
-            return true;
-        } else if (mutex->Owner == NULL) {
-            mutex->Owner = tcb;
+        if (mutex->Owner == NULL) {
+            mutex->Owner = task_mutex_held_increment();
             OCTOS_EXIT_CRITICAL();
             return true;
         }
@@ -298,11 +293,26 @@ bool mutex_acquire(Mutex_t *mutex, uint32_t timeout_ticks) {
             task_check_timeout(&timeout, timeout_ticks)) {
             sync_unlock(core);
             task_resume_all();
+
+            if (inheritance_occured) {
+                OCTOS_ENTER_CRITICAL();
+                const uint8_t highest_priority_of_waiting_tasks =
+                        list_item_get_value(list_tail(&(core->BlockedList)));
+                task_deinherit_priority_after_timeout(
+                        mutex->Owner, highest_priority_of_waiting_tasks);
+                OCTOS_EXIT_CRITICAL();
+            }
+
             return false;
         }
 
         /* Timeout has not expired */
-        if (mutex->Owner != NULL) {
+        TCB_t *const owner = mutex->Owner;
+        if (owner != NULL) {
+            OCTOS_ENTER_CRITICAL();
+            inheritance_occured = task_inherit_priority(owner);
+            OCTOS_EXIT_CRITICAL();
+
             task_add_current_to_event_list(&(core->BlockedList), timeout_ticks);
             sync_unlock(core);
             if (!task_resume_all()) OCTOS_YIELD();
@@ -314,88 +324,33 @@ bool mutex_acquire(Mutex_t *mutex, uint32_t timeout_ticks) {
 }
 
 /**
- * @brief Releases a mutex
+ * @brief Release a mutex
+ * @note This function should be called when a task is done with the mutex
  * @param mutex Pointer to the mutex to be released
- * @return True if the mutex is released, false otherwise
+ * @return True if a context switch is required, false otherwise
  */
 bool mutex_release(Mutex_t *mutex) {
     bool switch_required = false;
 
     OCTOS_ENTER_CRITICAL();
 
-    TCB_t *const tcb = task_get_current();
-
-    if (mutex->Owner != tcb) {
+    if (!task_mutex_held_decrement(mutex->Owner)) {
         OCTOS_EXIT_CRITICAL();
         return false;
     }
 
+    switch_required |= task_deinherit_priority(mutex->Owner);
     mutex->Owner = NULL;
 
     List_t *const blocked_list = &(mutex->Core.BlockedList);
     if (blocked_list->Length > 0) {
-        switch_required =
+        switch_required |=
                 task_remove_highest_priority_from_event_list(blocked_list);
     }
 
     OCTOS_EXIT_CRITICAL();
 
     if (switch_required) OCTOS_YIELD();
-
-    return true;
-}
-
-/**
- * @brief Acquires a mutex from an ISR
- * @param mutex Pointer to the mutex to be acquired
- * @return True if the mutex is acquired, false otherwise
- */
-bool mutex_acquire_from_isr(Mutex_t *mutex) {
-    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-
-    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
-
-    if (mutex->Owner != NULL) {
-        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
-        return false;
-    }
-    mutex->Owner = task_get_current();
-
-    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
-
-    return true;
-}
-
-/**
- * @brief Releases a mutex from an ISR
- * @param mutex Pointer to the mutex to be released
- * @param switch_required Pointer to a boolean indicating if a context switch is required
- * @return True if the mutex is released, false otherwise
- */
-bool mutex_release_from_isr(Mutex_t *mutex, bool *const switch_required) {
-    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
-
-    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
-
-    if (mutex->Owner != current_tcb) {
-        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
-        return false;
-    }
-
-    mutex->Owner = NULL;
-
-    SyncCore_t *const core = &(mutex->Core);
-    const int8_t lock = core->Lock;
-    if (core->Lock == syncUNLOCKED) {
-        const bool higher_priority_woken =
-                task_remove_highest_priority_from_event_list(
-                        &(core->BlockedList));
-        if (switch_required != NULL) *switch_required = higher_priority_woken;
-    } else {
-        sync_lock_increment(core, lock);
-    }
-
-    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
     return true;
 }

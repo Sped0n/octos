@@ -44,7 +44,5 @@ void sema_release_from_isr(Sema_t *sema, bool *const switch_required);
 void mutex_init(Mutex_t *mutex);
 bool mutex_acquire(Mutex_t *mutex, uint32_t timeout_ticks);
 bool mutex_release(Mutex_t *mutex);
-bool mutex_acquire_from_isr(Mutex_t *mutex);
-bool mutex_release_from_isr(Mutex_t *mutex, bool *const switch_required);
 
 #endif

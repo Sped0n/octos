@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "attr.h"
 #include "tcb.h"
 
 /**
@@ -25,8 +24,6 @@ typedef enum TaskState {
     TERMINATED, /*!< Thread has terminated */
     INVALID     /*!< Invalid */
 } TaskState_t;
-
-extern TCB_t *volatile current_tcb;
 
 /* Misc ----------------------------------------------------------------------*/
 TaskState_t task_status(TCB_t *tcb);
@@ -52,6 +49,12 @@ bool task_tick_increment(void);
 void task_context_switch(void);
 uint32_t task_get_tick(void);
 uint32_t task_get_tick_from_isr(void);
+TCB_t *task_mutex_held_increment(void);
+bool task_mutex_held_decrement(TCB_t *mutex_owner);
+bool task_inherit_priority(TCB_t *mutex_owner);
+bool task_deinherit_priority(TCB_t *mutex_owner);
+void task_deinherit_priority_after_timeout(
+        TCB_t *mutex_owner, uint8_t highest_priority_of_waiting_tasks);
 /* Task Basic Operation ------------------------------------------------------*/
 void task_yield(void);
 void task_yield_from_isr(bool flag);
@@ -62,12 +65,5 @@ void task_abort_delay(TCB_t *tcb);
 void task_suspend(TCB_t *tcb);
 void task_resume(TCB_t *tcb);
 void task_resume_from_isr(TCB_t *tcb);
-
-
-/**
-  * @brief Get the current running task's TCB
-  * @return Pointer to the current task's TCB structure
-  */
-OCTOS_INLINE static inline TCB_t *task_get_current(void) { return current_tcb; }
 
 #endif

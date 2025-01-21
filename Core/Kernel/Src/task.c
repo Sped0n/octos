@@ -65,6 +65,7 @@ static TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args,
     tcb->StackTop = stack_top;
 
     tcb->TCBNumber = tcb_id++;
+    tcb->MutexHeld = 0;
     tcb->RootPriority = priority;
     tcb->Priority = priority;
     list_item_init(&(tcb->StateListItem));
@@ -320,6 +321,8 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
     ListItem_t *item = list_tail(list);
     list_remove(item);
     TCB_t *const owner = item->Owner;
+    if (list_item_get_value(item) != owner->Priority)
+        list_item_set_value(item, owner->Priority);
 
     switch_required = task_remove_from_delayed_list(owner);
     yield_pending |= switch_required;
@@ -527,7 +530,8 @@ uint32_t task_get_tick(void) {
 }
 
 /**
- * @brief Safely retrieves the current system tick value from an Interrupt Service Routine (ISR)
+ * @brief Safely retrieves the current system tick value from an
+ *        Interrupt Service Routine (ISR)
  * @note Uses ISR-specific critical section handling
  * @return Current system tick value
  */
@@ -536,6 +540,137 @@ uint32_t task_get_tick_from_isr(void) {
     uint32_t return_tick = current_tick;
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
     return return_tick;
+}
+
+/**
+ * @brief Increment the mutex held count for the current task
+ * @note This function should be called when a task acquires
+ *       a mutex
+ * @param None
+ * @return Pointer to the TCB of the current task
+ */
+TCB_t *task_mutex_held_increment(void) {
+    TCB_t *const tcb = current_tcb;
+    if (tcb != NULL) { tcb->MutexHeld++; }
+    return tcb;
+}
+
+/**
+ * @brief Decrement the mutex held count for the specified task
+ * @note This function should be called when a task releases a mutex
+ * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @return True if the operation was successful, false otherwise
+ */
+bool task_mutex_held_decrement(TCB_t *mutex_owner) {
+    if (mutex_owner != current_tcb) return false;
+    mutex_owner->MutexHeld--;
+    return true;
+}
+
+/**
+ * @brief Inherit the priority of the current task to the mutex owner
+ * @note This function is used to prevent priority inversion
+ * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @return True if priority inheritance occurred, false otherwise
+ */
+bool task_inherit_priority(TCB_t *mutex_owner) {
+    bool inheritance_occured = false;
+
+    if (!mutex_owner) return inheritance_occured;
+
+    if (mutex_owner->Priority < current_tcb->Priority) {
+        if (task_status(mutex_owner) == READY) {
+            /* If a task status is ready, it means 
+             *
+             * 1. It is not in any event list, so we can safely modify 
+             *    the EventListItem value
+             * 2. It is okay to remove StateListItem from its parent,
+             *    because the parent is not delayed or suspended
+             *    list 
+             */
+            if (list_remove(&(mutex_owner->StateListItem)))
+                task_reset_ready_priority(mutex_owner->Priority);
+
+            mutex_owner->Priority = current_tcb->Priority;
+
+            list_item_set_value(&(mutex_owner->EventListItem),
+                                mutex_owner->Priority);
+
+            task_add_to_ready_list(mutex_owner);
+        } else {
+            mutex_owner->Priority = current_tcb->Priority;
+        }
+    } else if (mutex_owner->RootPriority < current_tcb->Priority) {
+        inheritance_occured = true;
+    }
+
+    return inheritance_occured;
+}
+
+/**
+ * @brief De-inherit the priority of the current task from the mutex owner
+ * @note This function is used to restore the original priority of the task
+ * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @return True if a context switch is required, false otherwise
+ */
+bool task_deinherit_priority(TCB_t *mutex_owner) {
+    bool switch_required = false;
+
+    if (!mutex_owner) return switch_required;
+
+    OCTOS_ASSERT(mutex_owner == current_tcb);
+
+    if (mutex_owner->Priority != mutex_owner->RootPriority &&
+        mutex_owner->MutexHeld == 0) {
+        if (list_remove(&(mutex_owner->StateListItem)))
+            task_reset_ready_priority(mutex_owner->Priority);
+
+        mutex_owner->Priority = mutex_owner->RootPriority;
+
+        list_item_set_value(&(mutex_owner->EventListItem),
+                            mutex_owner->Priority);
+
+        task_add_to_ready_list(mutex_owner);
+        switch_required = true;
+        yield_pending = true;
+    }
+
+    return switch_required;
+}
+
+/**
+ * @brief De-inherit the priority of the current task from the mutex owner
+ *        after a timeout
+ * @note This function is used to restore the original priority of the
+ *       task after a timeout
+ * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @param highest_priority_of_waiting_tasks The highest priority of tasks
+ *        waiting for the mutex
+ * @return None
+ */
+void task_deinherit_priority_after_timeout(
+        TCB_t *mutex_owner, uint8_t highest_priority_of_waiting_tasks) {
+    if (!mutex_owner) return;
+
+    OCTOS_ASSERT(mutex_owner == current_tcb);
+
+    uint8_t priority_deinherit_to =
+            highest_priority_of_waiting_tasks > mutex_owner->RootPriority
+                    ? highest_priority_of_waiting_tasks
+                    : mutex_owner->RootPriority;
+
+    if (mutex_owner->Priority != priority_deinherit_to &&
+        mutex_owner->MutexHeld == 0) {
+        if (list_remove(&(mutex_owner->StateListItem)))
+            task_reset_ready_priority(mutex_owner->Priority);
+
+        mutex_owner->Priority = priority_deinherit_to;
+
+        list_item_set_value(&(mutex_owner->EventListItem),
+                            mutex_owner->Priority);
+
+        task_add_to_ready_list(mutex_owner);
+    }
 }
 
 /* Task Basic Operation ------------------------------------------------------*/

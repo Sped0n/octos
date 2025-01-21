@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "attr.h"
 #include "list.h"
 #include "queue.h"
 
@@ -29,5 +30,17 @@ bool mqueue_send_from_isr(MsgQueue_t *mqueue, const void *item,
                           bool *const switch_required);
 bool mqueue_recv_from_isr(MsgQueue_t *mqueue, void *buffer,
                           bool *const switch_required);
+
+OCTOS_INLINE static inline size_t mqueue_size(MsgQueue_t *mqueue) {
+    return queue_size(&(mqueue->Queue));
+}
+
+OCTOS_INLINE static inline bool mqueue_is_empty(MsgQueue_t *mqueue) {
+    return queue_is_empty(&(mqueue->Queue));
+}
+
+OCTOS_INLINE static inline bool mqueue_is_full(MsgQueue_t *mqueue) {
+    return queue_is_full(&(mqueue->Queue));
+}
 
 #endif

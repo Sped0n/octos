@@ -156,6 +156,8 @@ static void reset_next_task_unblock_tick(void) {
 TaskState_t task_status(TCB_t *tcb) {
     List_t *const parent = tcb->StateListItem.Parent;
     if (tcb == current_tcb) return RUNNING;
+    else if (parent == &ready_list[tcb->Priority])
+        return READY;
     else if (parent == &terminated_list)
         return TERMINATED;
     else if (parent == delayed_list || parent == delayed_list_overflow)
@@ -164,9 +166,7 @@ TaskState_t task_status(TCB_t *tcb) {
         if (tcb->EventListItem.Parent) return BLOCKED;
         else
             return SUSPENDED;
-    } else if (parent == &ready_list[tcb->Priority])
-        return READY;
-    else
+    } else
         return INVALID;
 }
 

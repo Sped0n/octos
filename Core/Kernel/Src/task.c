@@ -356,10 +356,10 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
  * @retval true Task created successfully
  * @retval false Task creation failed (e.g., memory allocation failure)
  */
-bool task_create(TaskFunc_t func, void *args, const char *name,
-                 uint8_t priority, size_t page_size_in_words) {
+bool task_create(TaskFunc_t func, void *const args, const char *name,
+                 uint8_t priority, size_t page_size_in_words,
+                 TCB_t *const handle) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
-
 
     Page_t page = {0};
     page.policy = PAGE_POLICY_DYNAMIC;
@@ -374,6 +374,8 @@ bool task_create(TaskFunc_t func, void *args, const char *name,
     task_suspend_all();
     task_create_postprocess(tcb);
     task_resume_all();
+
+    if (handle != NULL) *handle = *tcb;
 
     return true;
 }
@@ -392,15 +394,10 @@ bool task_create(TaskFunc_t func, void *args, const char *name,
  */
 bool task_create_static(TaskFunc_t func, void *args, const char *name,
                         uint8_t priority, uint32_t *buffer,
-                        size_t page_size_in_words) {
+                        size_t page_size_in_words, TCB_t *const handle) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
-    task_suspend_all();
-
-    if (!buffer) {
-        task_resume_all();
-        return false;
-    }
+    if (!buffer) return false;
 
     Page_t page = {0};
     page.policy = PAGE_POLICY_STATIC;
@@ -409,9 +406,13 @@ bool task_create_static(TaskFunc_t func, void *args, const char *name,
     memset(page.raw, 0, page_size_in_words * sizeof(uint32_t));
 
     TCB_t *tcb = tcb_build(&page, func, args, name, priority);
-    task_create_postprocess(tcb);
 
+    task_suspend_all();
+    task_create_postprocess(tcb);
     task_resume_all();
+
+    if (handle != NULL) *handle = *tcb;
+
     return true;
 }
 

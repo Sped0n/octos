@@ -82,10 +82,11 @@ void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait);
 bool task_remove_highest_priority_from_event_list(List_t *list);
 /* Task Create and Delete ----------------------------------------------------*/
 bool task_create(TaskFunc_t func, void *args, const char *name,
-                 uint8_t priority, size_t page_size_in_words);
+                 uint8_t priority, size_t page_size_in_words,
+                 TCB_t *const handle);
 bool task_create_static(TaskFunc_t func, void *args, const char *name,
                         uint8_t priority, uint32_t *buffer,
-                        size_t page_size_in_words);
+                        size_t page_size_in_words, TCB_t *const handle);
 void task_delete(TCB_t *tcb);
 void task_release(TCB_t *tcb);
 /* Task Core Operation -------------------------------------------------------*/

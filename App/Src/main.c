@@ -42,7 +42,7 @@ void task1(void) {
     while (1) {
         if (tp1 % 500 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
         if (tp1 == 501) {
-            task_create((TaskFunc_t) &task0, NULL, "Task 0", 1, 512);
+            task_create((TaskFunc_t) &task0, NULL, "Task 0", 1, 512, NULL);
         }
         if (mqueue_recv(&queue_test, &recv_buffer[i], 3)) {
             if (recv_buffer[i] == '\r') {
@@ -78,7 +78,7 @@ void task3(void) {
     BSP_LED_Toggle(LED3);
     while (1) {
         if (tp3 == 5001) {
-            task_create((TaskFunc_t) &task2, NULL, "Task 2", 0, 512);
+            task_create((TaskFunc_t) &task2, NULL, "Task 2", 0, 512, NULL);
         }
         if (tp3 % 3000 == 0 && tp3 > 0) {
             BSP_LED_Toggle(LED3);
@@ -128,8 +128,8 @@ int main(void) {
     mqueue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
 
     task_create_static((TaskFunc_t) &task1, NULL, "Task 1", 0, task1_buffer,
-                       512);
-    task_create((TaskFunc_t) &task3, NULL, "Task 3", 0, 512);
+                       512, NULL);
+    task_create((TaskFunc_t) &task3, NULL, "Task 3", 0, 512, NULL);
 
     // Launch kernel with 1ms time quantum
     Quanta_t quanta = {.Unit = MILISECONDS, .Value = 5};

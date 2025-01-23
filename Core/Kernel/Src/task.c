@@ -8,7 +8,6 @@
 #include "list.h"
 #include "page.h"
 #include "task.h"
-#include "tcb.h"
 #include "utils.h"
 
 TCB_t *volatile current_tcb = NULL;
@@ -139,7 +138,7 @@ static void task_select_highest_priority(void) {
  *       based on the first element in the delayed list
  * @return None
  */
-static void reset_next_task_unblock_tick(void) {
+static void task_reset_next_unblock_tick(void) {
     if (delayed_list->Length > 0)
         next_task_unblock_tick = list_head(delayed_list)->Value;
     else
@@ -266,7 +265,7 @@ void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
         } else {
             // Add to normal delayed list
             list_insert(delayed_list, item);
-            reset_next_task_unblock_tick();
+            task_reset_next_unblock_tick();
         }
     }
 }
@@ -279,19 +278,16 @@ void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
 bool task_remove_from_delayed_list(TCB_t *tcb) {
     ListItem_t *const item = &(tcb->StateListItem);
     List_t *const parent = item->Parent;
-    bool item_need_to_reset_value =
-            parent == delayed_list || parent == delayed_list_overflow;
+    bool is_from_delayed_list = parent == delayed_list;
 
-    if (!item_need_to_reset_value && parent != &suspended_list) return false;
+    if (!is_from_delayed_list && parent != delayed_list_overflow &&
+        parent != &suspended_list)
+        return false;
 
-    /* Remove tcb's StateListItem from its parent */
-    if (list_remove(item)) task_reset_ready_priority(current_tcb->Priority);
+    if (list_remove(item) && is_from_delayed_list)
+        task_reset_next_unblock_tick();
 
-    /* Reset tcb's StateListItem value from wake tick to priority */
-    TCB_t *const owner = item->Owner;
-    if (item_need_to_reset_value) list_item_set_value(item, owner->Priority);
-
-    return owner->Priority > current_tcb->Priority;
+    return tcb->Priority > current_tcb->Priority;
 }
 
 /**
@@ -468,7 +464,7 @@ bool task_tick_increment(void) {
             temp = delayed_list;
             delayed_list = delayed_list_overflow;
             delayed_list_overflow = temp;
-            reset_next_task_unblock_tick();
+            task_reset_next_unblock_tick();
         }
 
         /* Wake delayed task if needed */
@@ -835,12 +831,16 @@ void task_suspend(TCB_t *tcb) {
      * suspended list */
     if (list_remove(&(tcb->StateListItem))) {
         task_reset_ready_priority(tcb->Priority);
-        reset_next_task_unblock_tick();
+        task_reset_next_unblock_tick();
     }
     list_insert_end(&suspended_list, &(tcb->StateListItem));
 
     /* Remove task from event list (if possible) */
     list_remove(&(tcb->EventListItem));
+
+    /* The task was blocked to wait for a notification, but is
+     * now suspended, so no notification was received. */
+    if (tcb->NotifyState == PENDING) tcb->NotifyState = IDLE;
 
     switch_required = tcb == current_tcb;
     if (switch_required && scheduler_suspended > 0) {
@@ -918,4 +918,177 @@ void task_resume_from_isr(TCB_t *tcb) {
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 
     OCTOS_YIELD_FROM_ISR(switch_required);
+}
+
+/**
+ * @brief Notify a task with a value and a specific action
+ * @note If the task is pending, it will be moved to the ready list
+ * @param tcb Pointer to the TCB of the task to notify
+ * @param value The value to notify the task with
+ * @param action The action to perform on the notification value
+ * @retval true Notification was successful
+ * @retval false Notification failed (e.g., TrySet on a received state)
+ */
+bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action) {
+    bool success = true;
+    bool switch_required = false;
+
+    /* Modification on NotifyState and NotifiedValue need critical
+     * section */
+    OCTOS_ENTER_CRITICAL();
+
+    TaskNotifyState_t original_state = tcb->NotifyState;
+    tcb->NotifyState = RECEIVED;
+
+    switch (action) {
+        case BitwiseOr:
+            tcb->NotifiedValue |= value;
+            break;
+        case Increment:
+            tcb->NotifiedValue++;
+            break;
+        case OverwriteSet:
+            tcb->NotifiedValue = value;
+            break;
+        case TrySet:
+            if (original_state != RECEIVED) tcb->NotifiedValue = value;
+            else
+                success = false;
+            break;
+        case NoAction:
+            break;
+    }
+
+    /* Why wrap here with critical section?
+     *
+     * Because ready_list modification is even okay in scheduler suspension
+     * with critical section */
+    if (original_state == PENDING) {
+        OCTOS_ASSERT(tcb->EventListItem.Parent == NULL);
+        switch_required = task_remove_from_delayed_list(tcb);
+        task_add_to_ready_list(tcb);
+    }
+
+    OCTOS_EXIT_CRITICAL();
+
+    if (switch_required) OCTOS_YIELD();
+
+    return success;
+}
+
+/**
+ * @brief Notify a task with a value and a specific action from an ISR
+ * @note If the task is pending, it will be moved to the ready list
+ * @param tcb Pointer to the TCB of the task to notify
+ * @param value The value to notify the task with
+ * @param action The action to perform on the notification value
+ * @param switch_required Pointer to a boolean indicating if a context switch is required
+ * @retval true Notification was successful
+ * @retval false Notification failed (e.g., TrySet on a received state)
+ */
+bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
+                          bool *const switch_required) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+    bool success = true;
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    TaskNotifyState_t original_state = tcb->NotifyState;
+    tcb->NotifyState = RECEIVED;
+
+    switch (action) {
+        case BitwiseOr:
+            tcb->NotifiedValue |= value;
+            break;
+        case Increment:
+            tcb->NotifiedValue++;
+            break;
+        case OverwriteSet:
+            tcb->NotifiedValue = value;
+            break;
+        case TrySet:
+            if (original_state != RECEIVED) tcb->NotifiedValue = value;
+            else
+                success = false;
+            break;
+        case NoAction:
+            break;
+    }
+
+    if (original_state == PENDING) {
+        OCTOS_ASSERT(tcb->EventListItem.Parent == NULL);
+        if (scheduler_suspended == 0) {
+            *switch_required = task_remove_from_delayed_list(tcb);
+            task_add_to_ready_list(tcb);
+        } else {
+            *switch_required = tcb->Priority > current_tcb->Priority;
+            list_insert_end(&pending_ready_list, &(tcb->EventListItem));
+        }
+        yield_pending |= *switch_required;
+    }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+
+    return success;
+}
+
+/**
+ * @brief Wait for a task notification with optional timeout
+ * @note Clears specified bits on entry and exit
+ * @param bits_to_clear_on_entry Bits to clear in the notification value
+ *        on entry
+ * @param bits_to_clear_on_exit Bits to clear in the notification value
+ *        on exit
+ * @param buffer Pointer to store the notification value (can be NULL)
+ * @param timeout_ticks Timeout in ticks (0 for no timeout)
+ * @retval true Notification was received successfully
+ * @retval false Notification was not received (e.g., timeout)
+ */
+bool task_nofity_wait(uint32_t bits_to_clear_on_entry,
+                      uint32_t bits_to_clear_on_exit, uint32_t *buffer,
+                      uint32_t timeout_ticks) {
+    bool success = false;
+    bool should_block = false;
+
+    if (timeout_ticks > 0) {
+        task_suspend_all();
+
+        /* Modification on NotifyState and NotifiedValue need critical
+         * section */
+        OCTOS_ENTER_CRITICAL();
+        if (current_tcb->NotifyState != RECEIVED) {
+            OCTOS_ASSERT(current_tcb->NotifyState == IDLE);
+            current_tcb->NotifiedValue &= ~bits_to_clear_on_entry;
+            current_tcb->NotifyState = PENDING;
+            should_block = false;
+        }
+        OCTOS_EXIT_CRITICAL();
+
+        /* No EventListItem modification here, so it's safe to proceed
+         * with scheduler suspension */
+        if (should_block)
+            task_remove_and_add_current_to_delayed_list(timeout_ticks);
+
+        bool already_yielded = task_resume_all();
+
+        if (!already_yielded && should_block) OCTOS_YIELD();
+    }
+
+    /* Modification on NotifyState and NotifiedValue need critical
+     * section */
+    OCTOS_ENTER_CRITICAL();
+    if (buffer != NULL) *buffer = current_tcb->NotifiedValue;
+
+    if (current_tcb->NotifyState != RECEIVED) {
+        success = false;
+    } else {
+        current_tcb->NotifiedValue &= ~bits_to_clear_on_exit;
+        success = true;
+    }
+
+    current_tcb->NotifyState = IDLE;
+
+    OCTOS_EXIT_CRITICAL();
+
+    return success;
 }

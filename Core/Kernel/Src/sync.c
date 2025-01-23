@@ -4,7 +4,6 @@
 #include "list.h"
 #include "sync.h"
 #include "task.h"
-#include "tcb.h"
 
 /**
  * @brief Initializes a synchronization core

@@ -5,7 +5,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "tcb.h"
+#include "attr.h"
+#include "list.h"
+#include "page.h"
 
 /**
   * @brief Function pointer type for tasks that can be executed by the scheduler
@@ -16,7 +18,7 @@ typedef void (*TaskFunc_t)(void *args);
 /**
   * @brief Thread states enumeration
   */
-typedef enum TaskState {
+typedef enum OCTOS_PACKED TaskState {
     READY,      /*!< Thread is ready to run */
     RUNNING,    /*!< Thread is currently running */
     BLOCKED,    /*!< Thread is blocked (sleeping or waiting for resource) */
@@ -24,6 +26,44 @@ typedef enum TaskState {
     TERMINATED, /*!< Thread has terminated */
     INVALID     /*!< Invalid */
 } TaskState_t;
+
+/**
+ * @brief Task notification state enumeration
+ */
+typedef enum OCTOS_PACKED TaskNotifyState {
+    IDLE,    /*!< Task is idle and not waiting for a notification */
+    PENDING, /*!< Task is pending and waiting for a notification */
+    RECEIVED /*!< Task has received a notification */
+} TaskNotifyState_t;
+
+/**
+ * @brief Task notification action enumeration
+ */
+typedef enum OCTOS_PACKED TaskNotifyAction {
+    NoAction,  /*!< No action is taken on the notification value */
+    BitwiseOr, /*!< Perform a bitwise OR operation on the notification value */
+    Increment, /*!< Increment the notification value */
+    OverwriteSet, /*!< Overwrite the notification value */
+    TrySet /*!< Attempt to set the notification value if not already received */
+} TaskNotifyAction_t;
+
+/**
+ * @brief Task Control Block structure definition
+ */
+typedef struct TCB {
+    uint32_t *StackTop;       /*!< Pointer to the top of task's stack */
+    Page_t Page;              /*!< Memory page allocated for this task */
+    ListItem_t StateListItem; /*!< List item for thread state lists */
+    ListItem_t EventListItem; /*!< List item for event waiting lists */
+    uint8_t RootPriority;     /*!< Original priority of the thread */
+    uint8_t Priority;         /*!< Current priority of the thread */
+    uint8_t MutexHeld;        /*!< Current number of mutexes held */
+    char Name[12];            /*!< Task name, max length 12 */
+    TaskNotifyState_t
+            NotifyState;    /*!< Current notification state of the task */
+    uint32_t NotifiedValue; /*!< Value associated with the notification */
+    uint32_t TCBNumber;     /*!< Unique identifier for the thread */
+} TCB_t;
 
 /* Misc ----------------------------------------------------------------------*/
 TaskState_t task_status(TCB_t *tcb);

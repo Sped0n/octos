@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "list.h"
-#include "tcb.h"
+#include "task.h"
 
 #define syncUNLOCKED ((int8_t) -1)
 #define syncLOCKED_UNMODIFIED ((int8_t) 0)

@@ -37,20 +37,30 @@ static List_t terminated_list;
 /* Private Helper ------------------------------------------------------------*/
 
 /**
- * @brief Create and initialize a new Thread Control Block
- * @param page Memory page to use for the thread
- * @param func Function pointer to the thread's task
- * @param args Arguments to pass to the thread's task
- * @param priority Initial priority for the thread
- * @return TCB_t* Pointer to the created Thread Control Block
+ * @brief Build a Task Control Block (TCB) for a task
+ * @note This function initializes the TCB and sets up the task's stack
+ * @param page Pointer to the memory page allocated for the task
+ * @param func Pointer to the task function
+ * @param args Pointer to the arguments passed to the task function
+ * @param name Name of the task (can be NULL)
+ * @param priority Priority of the task
+ * @return Pointer to the initialized TCB
  */
 static TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args,
-                        uint8_t priority) {
+                        const char *name, uint8_t priority) {
     TCB_t *tcb = (TCB_t *) page->raw;
 
     tcb->Page.raw = page->raw;
     tcb->Page.size = page->size;
     tcb->Page.policy = page->policy;
+
+    if (name != NULL) {
+        for (size_t i = 0; i < TCB_NAME_MAX_LENGTH; i++) {
+            tcb->Name[i] = name[i];
+            if (name[i] == '\0') break;
+        }
+        tcb->Name[TCB_NAME_MAX_LENGTH - 1] = '\0';
+    }
 
     uint32_t *stack_top = &(page->raw[page->size - 16]);
     stack_top[15] = (uint32_t) (1U << 24);// PSR
@@ -336,15 +346,18 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
 /* Task Create and Delete ----------------------------------------------------*/
 
 /**
- * @brief Creates a new task with dynamically allocated memory
- * @param func Function pointer to the task entry
- * @param args Arguments passed to the task function
- * @param priority Task priority level
- * @param page_size_in_words Size of memory needed in 32-bit words
- * @return True if task created successfully, false otherwise
+ * @brief Create a new task with dynamic memory allocation
+ * @note The task is created in a suspended state and must be resumed manually
+ * @param func Pointer to the task function
+ * @param args Pointer to the arguments passed to the task function
+ * @param name Name of the task (can be NULL)
+ * @param priority Priority of the task
+ * @param page_size_in_words Size of the task's stack in words
+ * @retval true Task created successfully
+ * @retval false Task creation failed (e.g., memory allocation failure)
  */
-bool task_create(TaskFunc_t func, void *args, uint8_t priority,
-                 size_t page_size_in_words) {
+bool task_create(TaskFunc_t func, void *args, const char *name,
+                 uint8_t priority, size_t page_size_in_words) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
 
@@ -356,7 +369,7 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority,
     if (!page.raw) return false;
     memset(page.raw, 0, page_size_in_words * sizeof(uint32_t));
 
-    TCB_t *tcb = tcb_build(&page, func, args, priority);
+    TCB_t *tcb = tcb_build(&page, func, args, name, priority);
 
     task_suspend_all();
     task_create_postprocess(tcb);
@@ -366,16 +379,20 @@ bool task_create(TaskFunc_t func, void *args, uint8_t priority,
 }
 
 /**
- * @brief Creates a new task using provided static memory
- * @param func Function pointer to the task entry
- * @param args Arguments passed to the task function
- * @param priority Task priority level
- * @param buffer Pointer to memory buffer to use
- * @param page_size_in_words Size of provided buffer in 32-bit words
- * @return True if task created successfully, false otherwise
+ * @brief Create a new task with static memory allocation
+ * @note The task is created in a suspended state and must be resumed manually
+ * @param func Pointer to the task function
+ * @param args Pointer to the arguments passed to the task function
+ * @param name Name of the task (can be NULL)
+ * @param priority Priority of the task
+ * @param buffer Pointer to the pre-allocated memory buffer for the task's stack
+ * @param page_size_in_words Size of the task's stack in words
+ * @retval true Task created successfully
+ * @retval false Task creation failed (e.g., invalid buffer pointer)
  */
-bool task_create_static(TaskFunc_t func, void *args, uint8_t priority,
-                        uint32_t *buffer, size_t page_size_in_words) {
+bool task_create_static(TaskFunc_t func, void *args, const char *name,
+                        uint8_t priority, uint32_t *buffer,
+                        size_t page_size_in_words) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
     task_suspend_all();
@@ -391,7 +408,7 @@ bool task_create_static(TaskFunc_t func, void *args, uint8_t priority,
     page.raw = buffer;
     memset(page.raw, 0, page_size_in_words * sizeof(uint32_t));
 
-    TCB_t *tcb = tcb_build(&page, func, args, priority);
+    TCB_t *tcb = tcb_build(&page, func, args, name, priority);
     task_create_postprocess(tcb);
 
     task_resume_all();

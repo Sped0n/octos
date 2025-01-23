@@ -41,7 +41,9 @@ void task1(void) {
     BSP_LED_Toggle(LED2);
     while (1) {
         if (tp1 % 500 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
-        if (tp1 == 501) { task_create((TaskFunc_t) &task0, NULL, 1, 512); }
+        if (tp1 == 501) {
+            task_create((TaskFunc_t) &task0, NULL, "Task 0", 1, 512);
+        }
         if (mqueue_recv(&queue_test, &recv_buffer[i], 3)) {
             if (recv_buffer[i] == '\r') {
                 recv_buffer[i + 1] = '\0';
@@ -75,7 +77,9 @@ void task3(void) {
             "---------hello from task1, from task3---------\n\r";
     BSP_LED_Toggle(LED3);
     while (1) {
-        if (tp3 == 5001) { task_create((TaskFunc_t) &task2, NULL, 0, 512); }
+        if (tp3 == 5001) {
+            task_create((TaskFunc_t) &task2, NULL, "Task 2", 0, 512);
+        }
         if (tp3 % 3000 == 0 && tp3 > 0) {
             BSP_LED_Toggle(LED3);
             for (size_t i = 0; sentence[i] != '\0'; i++) {
@@ -123,8 +127,9 @@ int main(void) {
     uint8_t queue_storage[QUEUE_SIZE * ITEM_SIZE];
     mqueue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
 
-    task_create_static((TaskFunc_t) &task1, NULL, 0, task1_buffer, 512);
-    task_create((TaskFunc_t) &task3, NULL, 0, 512);
+    task_create_static((TaskFunc_t) &task1, NULL, "Task 1", 0, task1_buffer,
+                       512);
+    task_create((TaskFunc_t) &task3, NULL, "Task 3", 0, 512);
 
     // Launch kernel with 1ms time quantum
     Quanta_t quanta = {.Unit = MILISECONDS, .Value = 5};

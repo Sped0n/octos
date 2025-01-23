@@ -44,8 +44,8 @@ define otasks
     set $tcb = (TCB_t*)current_tcb
     
     printf "\n=== OCTOS Task Details ===\n"
-    printf "ID\tPriority\tStack Top\tState|Event\n"
-    printf "-------------------------------------------------------------------------------\n"
+    printf "ID\tName\tPriority\tStack Top\tState|Event\n"
+    printf "---------------------------------------------------------------------------------------\n"
     
     define _print_task_state
         if $arg0 == current_tcb
@@ -53,24 +53,12 @@ define otasks
             printf "\n"
         else
             output $arg0->StateListItem.Parent
-            printf "\n\t\t\t\t\t"
+            printf "\n\t\t\t\t\t\t"
             output $arg0->EventListItem.Parent
             printf "\n"
         end
     end
 
-    define _print_list
-        set $item = $arg0->End->Next
-        set $j = 0
-        while $j < $arg0->Length
-            set $t = (TCB_t*)($item->Owner)
-            printf "%d\t%d\t\t", $t->TCBNumber, $t->Priority
-            printf "%p\t", $t->StackTop
-            _print_task_state $t
-            set $item = $item->Next
-            set $j = $j + 1
-        end
-    end
     
     set $max_priorities = sizeof(ready_list)/sizeof(ready_list[0])
     
@@ -80,7 +68,7 @@ define otasks
         set $j = 0
         while $j < ready_list[$i].Length
             set $t = (TCB_t*)($item->Owner)
-            printf "%d\t%d\t\t", $t->TCBNumber, $t->Priority
+            printf "%d\t%s\t%d\t\t", $t->TCBNumber, $t->Name, $t->Priority
             printf "%p\t", $t->StackTop
             _print_task_state $t
             set $item = $item->Next
@@ -93,7 +81,7 @@ define otasks
     set $j = 0
     while $j < delayed_list->Length
         set $t = (TCB_t*)($item->Owner)
-        printf "%d\t%d\t\t", $t->TCBNumber, $t->Priority
+        printf "%d\t%s\t%d\t\t", $t->TCBNumber, $t->Name, $t->Priority
         printf "%p\t", $t->StackTop
         _print_task_state $t
         set $item = $item->Next
@@ -104,7 +92,7 @@ define otasks
     set $j = 0
     while $j < delayed_list_overflow->Length
         set $t = (TCB_t*)($item->Owner)
-        printf "%d\t%d\t\t", $t->TCBNumber, $t->Priority
+        printf "%d\t%s\t%d\t\t", $t->TCBNumber, $t->Name, $t->Priority
         printf "%p\t", $t->StackTop
         _print_task_state $t
         set $item = $item->Next
@@ -115,7 +103,7 @@ define otasks
     set $j = 0
     while $j < suspended_list.Length
         set $t = (TCB_t*)($item->Owner)
-        printf "%d\t%d\t\t", $t->TCBNumber, $t->Priority
+        printf "%d\t%s\t%d\t\t", $t->TCBNumber, $t->Name, $t->Priority
         printf "%p\t", $t->StackTop
         _print_task_state $t
         set $item = $item->Next

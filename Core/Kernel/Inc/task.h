@@ -9,6 +9,9 @@
 #include "list.h"
 #include "page.h"
 
+/* For zero struct padding */
+#define TCB_NAME_MAX_LENGTH 12
+
 /**
   * @brief Function pointer type for tasks that can be executed by the scheduler
   * @param args Pointer to the task's arguments
@@ -51,14 +54,14 @@ typedef enum OCTOS_PACKED TaskNotifyAction {
  * @brief Task Control Block structure definition
  */
 typedef struct TCB {
-    uint32_t *StackTop;       /*!< Pointer to the top of task's stack */
-    Page_t Page;              /*!< Memory page allocated for this task */
-    ListItem_t StateListItem; /*!< List item for thread state lists */
-    ListItem_t EventListItem; /*!< List item for event waiting lists */
-    uint8_t RootPriority;     /*!< Original priority of the thread */
-    uint8_t Priority;         /*!< Current priority of the thread */
-    uint8_t MutexHeld;        /*!< Current number of mutexes held */
-    char Name[12];            /*!< Task name, max length 12 */
+    uint32_t *StackTop;             /*!< Pointer to the top of task's stack */
+    Page_t Page;                    /*!< Memory page allocated for this task */
+    ListItem_t StateListItem;       /*!< List item for thread state lists */
+    ListItem_t EventListItem;       /*!< List item for event waiting lists */
+    uint8_t RootPriority;           /*!< Original priority of the thread */
+    uint8_t Priority;               /*!< Current priority of the thread */
+    uint8_t MutexHeld;              /*!< Current number of mutexes held */
+    char Name[TCB_NAME_MAX_LENGTH]; /*!< Task name */
     TaskNotifyState_t
             NotifyState;    /*!< Current notification state of the task */
     uint32_t NotifiedValue; /*!< Value associated with the notification */
@@ -78,10 +81,11 @@ bool task_remove_from_delayed_list(TCB_t *tcb);
 void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait);
 bool task_remove_highest_priority_from_event_list(List_t *list);
 /* Task Create and Delete ----------------------------------------------------*/
-bool task_create(TaskFunc_t func, void *args, uint8_t priority,
-                 size_t page_size_in_words);
-bool task_create_static(TaskFunc_t func, void *args, uint8_t priority,
-                        uint32_t *buffer, size_t page_size_in_words);
+bool task_create(TaskFunc_t func, void *args, const char *name,
+                 uint8_t priority, size_t page_size_in_words);
+bool task_create_static(TaskFunc_t func, void *args, const char *name,
+                        uint8_t priority, uint32_t *buffer,
+                        size_t page_size_in_words);
 void task_delete(TCB_t *tcb);
 void task_release(TCB_t *tcb);
 /* Task Core Operation -------------------------------------------------------*/

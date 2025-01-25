@@ -826,41 +826,49 @@ void task_abort_delay(TCB_t *tcb) {
     task_resume_all();
 }
 
-/**
- * @brief Suspend a task from executing
- * @note The task will be moved to the suspended list and a context switch may occur
- * @param tcb Pointer to the TCB of the task to be suspended
+/** 
+ * @brief Suspend a task
+ * @note If the task to suspend is the current task, a yield will occur
+ * @param tcb Pointer to the TCB of the task to be suspended. If NULL, the
+ *            current task will be suspended
  * @return None
  */
 void task_suspend(TCB_t *tcb) {
     bool switch_required = false;
+    TCB_t *task_to_suspend = NULL;
 
     /* ISR can modify suspended_list, so we use critical section 
      * instead of scheduler suspension */
     OCTOS_ENTER_CRITICAL();
 
-    const TaskState_t status = task_status(tcb);
-    if (status != READY && status != RUNNING) {
-        OCTOS_EXIT_CRITICAL();
-        return;
+    if (tcb == NULL) {
+        task_to_suspend = current_tcb;
+    } else {
+        const TaskState_t status = task_status(tcb);
+        if (status != READY && status != RUNNING) {
+            OCTOS_EXIT_CRITICAL();
+            return;
+        }
+        task_to_suspend = tcb;
     }
 
     /* Remove task from ready/delayed list and insert it into
      * suspended list */
-    if (list_remove(&(tcb->StateListItem))) {
-        task_reset_ready_priority(tcb->Priority);
+    if (list_remove(&(task_to_suspend->StateListItem))) {
+        task_reset_ready_priority(task_to_suspend->Priority);
         task_reset_next_unblock_tick();
     }
-    list_insert_end(&suspended_list, &(tcb->StateListItem));
+    list_insert_end(&suspended_list, &(task_to_suspend->StateListItem));
 
     /* Remove task from event list (if possible) */
-    list_remove(&(tcb->EventListItem));
+    list_remove(&(task_to_suspend->EventListItem));
 
     /* The task was blocked to wait for a notification, but is
      * now suspended, so no notification was received. */
-    if (tcb->NotifyState == PENDING) tcb->NotifyState = IDLE;
+    if (task_to_suspend->NotifyState == PENDING)
+        task_to_suspend->NotifyState = IDLE;
 
-    switch_required = tcb == current_tcb;
+    switch_required = task_to_suspend == current_tcb;
     if (switch_required && scheduler_suspended > 0) {
         yield_pending = true;
         switch_required = false;

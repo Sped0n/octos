@@ -357,8 +357,7 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
  * @retval false Task creation failed (e.g., memory allocation failure)
  */
 bool task_create(TaskFunc_t func, void *const args, const char *name,
-                 uint8_t priority, size_t page_size_in_words,
-                 TCB_t *const handle) {
+                 uint8_t priority, size_t page_size_in_words, TCB_t **handle) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
     Page_t page = {0};
@@ -375,7 +374,7 @@ bool task_create(TaskFunc_t func, void *const args, const char *name,
     task_create_postprocess(tcb);
     task_resume_all();
 
-    if (handle != NULL) *handle = *tcb;
+    if (handle != NULL) *handle = tcb;
 
     return true;
 }
@@ -394,7 +393,7 @@ bool task_create(TaskFunc_t func, void *const args, const char *name,
  */
 bool task_create_static(TaskFunc_t func, void *args, const char *name,
                         uint8_t priority, uint32_t *buffer,
-                        size_t page_size_in_words, TCB_t *const handle) {
+                        size_t page_size_in_words, TCB_t **handle) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
     if (!buffer) return false;
@@ -411,7 +410,7 @@ bool task_create_static(TaskFunc_t func, void *args, const char *name,
     task_create_postprocess(tcb);
     task_resume_all();
 
-    if (handle != NULL) *handle = *tcb;
+    if (handle != NULL) *handle = tcb;
 
     return true;
 }
@@ -1088,7 +1087,7 @@ bool task_notify_wait(uint32_t bits_to_clear_on_entry,
             OCTOS_ASSERT(current_tcb->NotifyState == IDLE);
             current_tcb->NotifiedValue &= ~bits_to_clear_on_entry;
             current_tcb->NotifyState = PENDING;
-            should_block = false;
+            should_block = true;
         }
         OCTOS_EXIT_CRITICAL();
 

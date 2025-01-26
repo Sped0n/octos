@@ -1,140 +1,93 @@
-#include <stdint.h>
-#include <stdio.h>
-
+#include "main.h"
 #include "kernel.h"
 #include "led.h"
-#include "main.h"
-#include "mqueue.h"
-#include "sync.h"
 #include "task.h"
-#include "usart.h"
+#include "usart3_dma.h"
 #include "utils.h"
+#include <stdint.h>
 
-#define QUEUE_SIZE 10
-#define ITEM_SIZE sizeof(char)
+TCB_t *usart_dma_rx_thread_handle;
 
+void counter_thread(void) {
+    volatile uint32_t cnt = 1;
+    while (1) { cnt++; }
+}
 
-volatile uint64_t tp0 = 0, tp1 = 0, tp2 = 0, tp3 = 0;
-uint32_t task1_buffer[512];
-
-MsgQueue_t queue_test;
-
-Mutex_t mutex_test;
-
-void task0(void) {
+void led1_thread(void) {
     BSP_LED_Toggle(LED1);
     while (1) {
         task_delay(time_to_ticks(1, SECONDS));
         BSP_LED_Toggle(LED1);
-        mutex_acquire(&mutex_test, UINT32_MAX);
-        printf("-hello from task0---------\n\r");
-        mutex_release(&mutex_test);
     }
 }
 
-// main.c
-
-void task1(void) {
-    char recv_buffer[50];
-
-    uint32_t i = 0;
+void led2_thread(void) {
     BSP_LED_Toggle(LED2);
     while (1) {
-        if (tp1 % 500 == 0 && tp1 > 0) { BSP_LED_Toggle(LED2); }
-        if (tp1 == 501) {
-            task_create((TaskFunc_t) &task0, NULL, "Task 0", 1, 512, NULL);
-        }
-        if (mqueue_recv(&queue_test, &recv_buffer[i], 3)) {
-            if (recv_buffer[i] == '\r') {
-                recv_buffer[i + 1] = '\0';
-                i = 0;
-                mutex_acquire(&mutex_test, UINT32_MAX);
-                printf("%s", recv_buffer);
-                mutex_release(&mutex_test);
-            } else {
-                i++;
-            }
-        }
-
-        tp1++;
+        task_delay(time_to_ticks(2, SECONDS));
+        BSP_LED_Toggle(LED2);
     }
 }
 
-
-void task2(void) {
-    while (1) {
-        if (tp2 % 3000 == 0 && tp2 > 0) {
-            mutex_acquire(&mutex_test, UINT32_MAX);
-            printf("---------hello from task2---------\n\r");
-            mutex_release(&mutex_test);
-        }
-        tp2++;
-    }
-}
-
-void task3(void) {
-    const char sentence[] =
-            "---------hello from task1, from task3---------\n\r";
+void led3_thread(void) {
     BSP_LED_Toggle(LED3);
     while (1) {
-        if (tp3 == 5001) {
-            task_create((TaskFunc_t) &task2, NULL, "Task 2", 0, 512, NULL);
-        }
-        if (tp3 % 3000 == 0 && tp3 > 0) {
-            BSP_LED_Toggle(LED3);
-            for (size_t i = 0; sentence[i] != '\0'; i++) {
-                mqueue_send(&queue_test, &sentence[i], UINT32_MAX);
-            }
-        }
-        tp3++;
+        task_delay(time_to_ticks(500, MILISECONDS));
+        BSP_LED_Toggle(LED3);
     }
 }
 
-void USART3_Init(void) {
-    EXT_GPIO_TypeDef usart3_tx = {.Port = GPIOD,
-                                  .Pin = LL_GPIO_PIN_8,
-                                  .Alternate = (7U << GPIO_AFRH_AFSEL8_Pos)};
-    EXT_GPIO_TypeDef usart3_rx = {.Port = GPIOD,
-                                  .Pin = LL_GPIO_PIN_9,
-                                  .Alternate = (7U << GPIO_AFRH_AFSEL9_Pos)};
-    USART_Config_t config = {.USARTx = USART3,
-                             .TX = &usart3_tx,
-                             .RX = &usart3_rx,
-                             .BaudRate = 115200};
-    BSP_USART_Init(&config);
-    BSP_USART_Enable(config.USARTx);
-}
+void usart_dma_rx_thread(void) {
+    uint32_t buffer;
+    usart3_send_string("USART DMA example: DMA HT & TC + USART IDLE LINE IRQ + "
+                       "RTOS processing\r\n");
+    usart3_send_string("Start sending data to STM32\r\n");
 
-int __io_putchar(int ch) {
-    BSP_USART_SendByte(USART3, ch & 0xFF);
-    return ch;
+    while (1) {
+        task_notify_wait(0, UINT32_MAX, &buffer, UINT32_MAX);
+        for (uint32_t i = buffer; i > 0; i--) usart3_dma_rx_check();
+    }
 }
 
 int main(void) {
-    // Initialize system
-    SystemInit();
-
-    // Initialize peripherals
-    USART3_Init();
+    usart3_dma_init();
     BSP_LED_Init(LED1);
     BSP_LED_Init(LED2);
     BSP_LED_Init(LED3);
 
-    // Initialize mutex
-    mutex_init(&mutex_test);
+    task_create((TaskFunc_t) &usart_dma_rx_thread, NULL, "UART DMA RX", 2, 512,
+                &usart_dma_rx_thread_handle);
+    task_create((TaskFunc_t) &led1_thread, NULL, "LED 1", 1, 256, NULL);
+    task_create((TaskFunc_t) &led2_thread, NULL, "LED 2", 1, 256, NULL);
+    task_create((TaskFunc_t) &led3_thread, NULL, "LED 3", 1, 256, NULL);
+    task_create((TaskFunc_t) &counter_thread, NULL, "CNT", 0, 256, NULL);
 
-    // Initialize queue
-    uint8_t queue_storage[QUEUE_SIZE * ITEM_SIZE];
-    mqueue_init(&queue_test, queue_storage, ITEM_SIZE, QUEUE_SIZE);
-
-    task_create_static((TaskFunc_t) &task1, NULL, "Task 1", 0, task1_buffer,
-                       512, NULL);
-    task_create((TaskFunc_t) &task3, NULL, "Task 3", 0, 512, NULL);
-
-    // Launch kernel with 1ms time quantum
     Quanta_t quanta = {.Unit = MILISECONDS, .Value = 5};
     kernel_launch(&quanta);
+}
 
-    // Should never reach here
-    while (1);
+void DMA1_Stream1_IRQHandler(void) {
+    bool switch_required = false;
+
+    if (usart3_dma_rx_check_ht()) {
+        task_notify_from_isr(usart_dma_rx_thread_handle, 0, Increment,
+                             &switch_required);
+    }
+    if (usart3_dma_rx_check_tc()) {
+        task_notify_from_isr(usart_dma_rx_thread_handle, 0, Increment,
+                             &switch_required);
+    }
+
+    task_yield_from_isr(switch_required);
+}
+
+void USART3_IRQHandler(void) {
+    bool switch_required = false;
+
+    if (usart3_dma_rx_check_idle()) {
+        task_notify_from_isr(usart_dma_rx_thread_handle, 0, Increment,
+                             &switch_required);
+    }
+
+    task_yield_from_isr(switch_required);
 }

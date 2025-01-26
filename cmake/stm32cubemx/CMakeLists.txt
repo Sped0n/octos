@@ -44,6 +44,8 @@ target_sources(stm32cubemx INTERFACE
     ../../App/startup_stm32f429xx.s
     ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_gpio.c
     ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usart.c
+    ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_dma.c
+    ../../Libs/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_rcc.c
     ${DRIVER_SOURCES}
     ${KERNEL_SOURCES}
     ../../Core/Arch/stm32f4xx/Src/isr.c

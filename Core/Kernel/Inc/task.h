@@ -110,5 +110,11 @@ void task_abort_delay(TCB_t *tcb);
 void task_suspend(TCB_t *tcb);
 void task_resume(TCB_t *tcb);
 void task_resume_from_isr(TCB_t *tcb);
+bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action);
+bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
+                          bool *const switch_required);
+bool task_notify_wait(uint32_t bits_to_clear_on_entry,
+                      uint32_t bits_to_clear_on_exit, uint32_t *buffer,
+                      uint32_t timeout_ticks);
 
 #endif

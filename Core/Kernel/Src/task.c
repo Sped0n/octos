@@ -881,7 +881,8 @@ void task_suspend(TCB_t *tcb) {
 
 /** 
  * @brief Resume a suspended task
- * @note If the resumed task has a higher priority than the current task, a yield will occur
+ * @note If the resumed task has a higher priority than the current task, a
+ *       yield will occur
  * @param tcb Pointer to the TCB of the task to be resumed
  * @return None
  */
@@ -914,7 +915,8 @@ void task_resume(TCB_t *tcb) {
 
 /** 
  * @brief Resume a suspended task from an ISR context
- * @note If the resumed task has a higher priority than the current task, a yield will occur
+ * @note If the resumed task has a higher priority than the current task, a
+ *       yield will occur
  * @param tcb Pointer to the TCB of the task to be resumed
  * @return None
  */
@@ -1070,7 +1072,7 @@ bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
  * @retval true Notification was received successfully
  * @retval false Notification was not received (e.g., timeout)
  */
-bool task_nofity_wait(uint32_t bits_to_clear_on_entry,
+bool task_notify_wait(uint32_t bits_to_clear_on_entry,
                       uint32_t bits_to_clear_on_exit, uint32_t *buffer,
                       uint32_t timeout_ticks) {
     bool success = false;

@@ -68,49 +68,57 @@ typedef struct TCB {
     uint32_t TCBNumber;     /*!< Unique identifier for the thread */
 } TCB_t;
 
+/**
+ * @brief Task Handle
+ */
+typedef TCB_t *TaskHandle_t;
+
 /* Misc ----------------------------------------------------------------------*/
-TaskState_t task_status(TCB_t *tcb);
+TaskState_t task_status(TaskHandle_t handle);
 void task_set_timeout(Timeout_t *timeout);
 bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay);
 uint8_t task_get_number_of_tasks(void);
 /* Task List -----------------------------------------------------------------*/
 void task_lists_init(void);
-void task_add_to_ready_list(TCB_t *tcb);
+void task_add_to_ready_list(TaskHandle_t handle);
 void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay);
-bool task_remove_from_delayed_list(TCB_t *tcb);
+bool task_remove_from_delayed_list(TaskHandle_t handle);
 void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait);
 bool task_remove_highest_priority_from_event_list(List_t *list);
 /* Task Create and Delete ----------------------------------------------------*/
-bool task_create(TaskFunc_t func, void *args, const char *name,
-                 uint8_t priority, size_t page_size_in_words, TCB_t **handle);
+bool task_create(TaskFunc_t func, void *const args, const char *name,
+                 uint8_t priority, size_t page_size_in_words,
+                 TaskHandle_t *handle);
 bool task_create_static(TaskFunc_t func, void *args, const char *name,
                         uint8_t priority, uint32_t *buffer,
-                        size_t page_size_in_words, TCB_t **handle);
-void task_delete(TCB_t *tcb);
-void task_release(TCB_t *tcb);
+                        size_t page_size_in_words, TaskHandle_t *handle);
+void task_delete(TaskHandle_t handle);
+void task_release(TaskHandle_t handle);
 /* Task Core Operation -------------------------------------------------------*/
 bool task_tick_increment(void);
 void task_context_switch(void);
 uint32_t task_get_tick(void);
 uint32_t task_get_tick_from_isr(void);
 TCB_t *task_mutex_held_increment(void);
-bool task_mutex_held_decrement(TCB_t *mutex_owner);
-bool task_inherit_priority(TCB_t *mutex_owner);
-bool task_deinherit_priority(TCB_t *mutex_owner);
+bool task_mutex_held_decrement(TaskHandle_t mutex_owner);
+bool task_inherit_priority(TaskHandle_t mutex_owner);
+bool task_deinherit_priority(TaskHandle_t mutex_owner);
 void task_deinherit_priority_after_timeout(
-        TCB_t *mutex_owner, uint8_t highest_priority_of_waiting_tasks);
+        TaskHandle_t mutex_owner, uint8_t highest_priority_of_waiting_tasks);
 /* Task Basic Operation ------------------------------------------------------*/
 void task_yield(void);
 void task_yield_from_isr(bool flag);
 void task_suspend_all(void);
 bool task_resume_all(void);
 void task_delay(uint32_t ticks_to_delay);
-void task_abort_delay(TCB_t *tcb);
-void task_suspend(TCB_t *tcb);
-void task_resume(TCB_t *tcb);
-void task_resume_from_isr(TCB_t *tcb);
-bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action);
-bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
+void task_abort_delay(TaskHandle_t handle);
+void task_suspend(TaskHandle_t handle);
+void task_resume(TaskHandle_t handle);
+void task_resume_from_isr(TaskHandle_t handle);
+bool task_notify(TaskHandle_t handle, uint32_t value,
+                 TaskNotifyAction_t action);
+bool task_notify_from_isr(TaskHandle_t handle, uint32_t value,
+                          TaskNotifyAction_t action,
                           bool *const switch_required);
 bool task_notify_wait(uint32_t bits_to_clear_on_entry,
                       uint32_t bits_to_clear_on_exit, uint32_t *buffer,

@@ -30,8 +30,8 @@ typedef struct Sema {
  * @brief Mutex structure definition
  */
 typedef struct Mutex {
-    TCB_t *Owner;    /*!< Pointer to the task that owns the mutex */
-    SyncCore_t Core; /*!< Synchronization core */
+    TaskHandle_t Owner; /*!< Pointer to the task that owns the mutex */
+    SyncCore_t Core;    /*!< Synchronization core */
 } Mutex_t;
 
 /* Semaphore -----------------------------------------------------------------*/

@@ -159,20 +159,20 @@ static void task_reset_next_unblock_tick(void) {
 
 /**
  * @brief Get the current state of a thread
- * @param tcb Pointer to the Thread Control Block
- * @return ThreadState_t Current state of the thread
+ * @param handle Pointer to the Thread Control Block
+ * @return Current state of the thread
  */
-TaskState_t task_status(TCB_t *tcb) {
-    List_t *const parent = tcb->StateListItem.Parent;
-    if (tcb == current_tcb) return RUNNING;
-    else if (parent == &ready_list[tcb->Priority])
+TaskState_t task_status(TaskHandle_t handle) {
+    List_t *const parent = handle->StateListItem.Parent;
+    if (handle == current_tcb) return RUNNING;
+    else if (parent == &ready_list[handle->Priority])
         return READY;
     else if (parent == &terminated_list)
         return TERMINATED;
     else if (parent == delayed_list || parent == delayed_list_overflow)
         return BLOCKED;
     else if (parent == &suspended_list) {
-        if (tcb->EventListItem.Parent) return BLOCKED;
+        if (handle->EventListItem.Parent) return BLOCKED;
         else
             return SUSPENDED;
     } else
@@ -197,7 +197,8 @@ void task_set_timeout(Timeout_t *timeout) {
  * @brief Check if a timeout has occurred
  * @param timeout Pointer to the timeout structure
  * @param ticks_to_delay The number of ticks to delay
- * @return True if timeout has occurred, false otherwise
+ * @retval true Timeout has expired
+ * @retval false Timeout has not expired
  */
 bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay) {
     bool is_timeout = false;
@@ -246,18 +247,21 @@ void task_lists_init(void) {
  *       insert some task to ready list, do use this function
  * @note This function is not protected by any critical section or scheduler
  *       suspension
- * @param tcb Pointer to the TCB of the task to add
+ * @param handle Pointer to the TCB of the task to add
  * @return None
  */
-void task_add_to_ready_list(TCB_t *tcb) {
-    task_set_ready_priority(tcb->Priority);
-    list_insert_end(&ready_list[tcb->Priority], &(tcb->StateListItem));
+void task_add_to_ready_list(TaskHandle_t handle) {
+    const uint8_t priority = handle->Priority;
+    task_set_ready_priority(priority);
+    list_insert_end(&ready_list[priority], &(handle->StateListItem));
 }
 
 /**
- * @brief Remove the current task from its current state and add it to the delayed list
- * @param ticks_to_delay The number of ticks to delay before the task is ready to run again
- * @note If ticks_to_delay is UINT32_MAX, the task is moved to the suspended list
+ * @brief Remove the current task from its current state and add it to the
+ *        delayed list
+ * @param ticks_to_delay 
+ *      The number of ticks to delay before the task is ready to run again
+ * @note If ticks_to_delay is UINT32_MAX, the task would be suspended
  * @return None
  */
 void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
@@ -283,10 +287,11 @@ void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
 /**
  * @brief Remove a task from the delayed list
  * @param tcb Pointer to the TCB of the task to be removed
- * @return True if the removed task has a higher priority than the current task, false otherwise
+ * @retval true if the removed task has a higher priority than the current task
+ * @retval false otherwise
  */
-bool task_remove_from_delayed_list(TCB_t *tcb) {
-    ListItem_t *const item = &(tcb->StateListItem);
+bool task_remove_from_delayed_list(TaskHandle_t handle) {
+    ListItem_t *const item = &(handle->StateListItem);
     List_t *const parent = item->Parent;
     bool is_from_delayed_list = parent == delayed_list;
 
@@ -297,7 +302,7 @@ bool task_remove_from_delayed_list(TCB_t *tcb) {
     if (list_remove(item) && is_from_delayed_list)
         task_reset_next_unblock_tick();
 
-    return tcb->Priority > current_tcb->Priority;
+    return handle->Priority > current_tcb->Priority;
 }
 
 /**
@@ -317,7 +322,8 @@ void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait) {
 /**
  * @brief Remove the highest priority task from an event list
  * @param list The event list to remove the task from
- * @return True if the removed task has a higher priority than the current task, false otherwise
+ * @retval true if the removed task has a higher priority than the current task
+ * @retval false otherwise
  */
 bool task_remove_highest_priority_from_event_list(List_t *list) {
     if (list->Length == 0) return false;
@@ -347,17 +353,18 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
 
 /**
  * @brief Create a new task with dynamic memory allocation
- * @note The task is created in a suspended state and must be resumed manually
  * @param func Pointer to the task function
  * @param args Pointer to the arguments passed to the task function
- * @param name Name of the task (can be NULL)
- * @param priority Priority of the task
- * @param page_size_in_words Size of the task's stack in words
- * @retval true Task created successfully
- * @retval false Task creation failed (e.g., memory allocation failure)
+ * @param name Name of the task (for debugging purposes)
+ * @param priority Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
+ * @param page_size_in_words Size of the task stack in words
+ * @param handle Pointer to store the task handle (can be NULL if not needed)
+ * @retval true if the task was created successfully
+ * @retval false if the task creation failed
  */
 bool task_create(TaskFunc_t func, void *const args, const char *name,
-                 uint8_t priority, size_t page_size_in_words, TCB_t **handle) {
+                 uint8_t priority, size_t page_size_in_words,
+                 TaskHandle_t *handle) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
     Page_t page = {0};
@@ -381,19 +388,19 @@ bool task_create(TaskFunc_t func, void *const args, const char *name,
 
 /**
  * @brief Create a new task with static memory allocation
- * @note The task is created in a suspended state and must be resumed manually
  * @param func Pointer to the task function
  * @param args Pointer to the arguments passed to the task function
- * @param name Name of the task (can be NULL)
- * @param priority Priority of the task
- * @param buffer Pointer to the pre-allocated memory buffer for the task's stack
- * @param page_size_in_words Size of the task's stack in words
- * @retval true Task created successfully
- * @retval false Task creation failed (e.g., invalid buffer pointer)
+ * @param name Name of the task (for debugging purposes)
+ * @param priority Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
+ * @param buffer Pointer to the pre-allocated stack buffer
+ * @param page_size_in_words Size of the task stack in words
+ * @param handle Pointer to store the task handle (can be NULL if not needed)
+ * @retval true if the task was created successfully
+ * @retval false if the task creation failed
  */
 bool task_create_static(TaskFunc_t func, void *args, const char *name,
                         uint8_t priority, uint32_t *buffer,
-                        size_t page_size_in_words, TCB_t **handle) {
+                        size_t page_size_in_words, TaskHandle_t *handle) {
     OCTOS_ASSERT(priority < OCTOS_MAX_PRIORITIES);
 
     if (!buffer) return false;
@@ -417,25 +424,25 @@ bool task_create_static(TaskFunc_t func, void *args, const char *name,
 
 /**
  * @brief Deletes task and moves it to terminated state
- * @param tcb Pointer to task control block to delete
+ * @param handle Pointer to task control block to delete
  * @return None
  */
-void task_delete(TCB_t *tcb) {
+void task_delete(TaskHandle_t handle) {
     bool switch_required = false;
 
     OCTOS_ENTER_CRITICAL();
 
-    if (!tcb || task_status(tcb) == TERMINATED) {
+    if (!handle || task_status(handle) == TERMINATED) {
         OCTOS_EXIT_CRITICAL();
         return;
     }
 
-    if (list_remove(&(tcb->StateListItem)))
-        task_reset_ready_priority(tcb->Priority);
+    ListItem_t *const item = &(handle->StateListItem);
+    if (list_remove(item)) task_reset_ready_priority(handle->Priority);
 
-    switch_required = tcb == current_tcb;
+    switch_required = handle == current_tcb;
 
-    list_insert_end(&terminated_list, &(tcb->StateListItem));
+    list_insert_end(&terminated_list, item);
     current_number_of_tasks--;
 
     OCTOS_EXIT_CRITICAL();
@@ -444,26 +451,29 @@ void task_delete(TCB_t *tcb) {
         OCTOS_ASSERT(scheduler_suspended == 0);
         OCTOS_YIELD();
     } else
-        task_release(tcb);
+        task_release(handle);
 }
 
 /**
  * @brief Release a task and free its resources if necessary
- * @note The task is removed from the terminated list and its dynamic memory is freed if applicable
- * @param tcb Pointer to the TCB of the task to be released
+ * @note The task is removed from the terminated list and its dynamic memory
+ *       is freed if applicable
+ * @param handle Pointer to the TCB of the task to be released
  * @return None
  */
-void task_release(TCB_t *tcb) {
-    OCTOS_ASSERT(tcb->StateListItem.Parent == &terminated_list);
-    list_remove(&(tcb->StateListItem));
-    if (tcb->Page.policy == PAGE_POLICY_DYNAMIC) OCTOS_FREE(tcb->Page.raw);
+void task_release(TaskHandle_t handle) {
+    OCTOS_ASSERT(handle->StateListItem.Parent == &terminated_list);
+    list_remove(&(handle->StateListItem));
+    if (handle->Page.policy == PAGE_POLICY_DYNAMIC)
+        OCTOS_FREE(handle->Page.raw);
 }
 
 /* Task Core Operation -------------------------------------------------------*/
 
 /** 
  * @brief Increment the task tick and handle delayed tasks
- * @return True if a context switch is required, false otherwise
+ * @retval true if a context switch is required
+ * @retval false if context switch is not required
  */
 bool task_tick_increment(void) {
     bool switch_required = false;
@@ -562,19 +572,19 @@ uint32_t task_get_tick_from_isr(void) {
  * @param None
  * @return Pointer to the TCB of the current task
  */
-TCB_t *task_mutex_held_increment(void) {
-    TCB_t *const tcb = current_tcb;
-    if (tcb != NULL) { tcb->MutexHeld++; }
-    return tcb;
+TaskHandle_t task_mutex_held_increment(void) {
+    if (current_tcb != NULL) current_tcb->MutexHeld++;
+    return current_tcb;
 }
 
 /**
  * @brief Decrement the mutex held count for the specified task
  * @note This function should be called when a task releases a mutex
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @return True if the operation was successful, false otherwise
+ * @retval true if the operation was successful
+ * @retval false if current_tcb is not the mutex owner
  */
-bool task_mutex_held_decrement(TCB_t *mutex_owner) {
+bool task_mutex_held_decrement(TaskHandle_t mutex_owner) {
     if (mutex_owner != current_tcb) return false;
     mutex_owner->MutexHeld--;
     return true;
@@ -584,9 +594,10 @@ bool task_mutex_held_decrement(TCB_t *mutex_owner) {
  * @brief Inherit the priority of the current task to the mutex owner
  * @note This function is used to prevent priority inversion
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @return True if priority inheritance occurred, false otherwise
+ * @retval true if priority inheritance occurred
+ * @retval false if priority inheritance has not occurred
  */
-bool task_inherit_priority(TCB_t *mutex_owner) {
+bool task_inherit_priority(TaskHandle_t mutex_owner) {
     bool inheritance_occured = false;
 
     if (!mutex_owner) return inheritance_occured;
@@ -624,9 +635,10 @@ bool task_inherit_priority(TCB_t *mutex_owner) {
  * @brief De-inherit the priority of the current task from the mutex owner
  * @note This function is used to restore the original priority of the task
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @return True if a context switch is required, false otherwise
+ * @retval true if a context switch is required
+ * @retval false if context switch is not required
  */
-bool task_deinherit_priority(TCB_t *mutex_owner) {
+bool task_deinherit_priority(TaskHandle_t mutex_owner) {
     bool switch_required = false;
 
     if (!mutex_owner) return switch_required;
@@ -657,12 +669,12 @@ bool task_deinherit_priority(TCB_t *mutex_owner) {
  * @note This function is used to restore the original priority of the
  *       task after a timeout
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @param highest_priority_of_waiting_tasks The highest priority of tasks
- *        waiting for the mutex
+ * @param highest_priority_of_waiting_tasks 
+ *      The highest priority of tasks waiting for the mutex
  * @return None
  */
 void task_deinherit_priority_after_timeout(
-        TCB_t *mutex_owner, uint8_t highest_priority_of_waiting_tasks) {
+        TaskHandle_t mutex_owner, uint8_t highest_priority_of_waiting_tasks) {
     if (!mutex_owner) return;
 
     OCTOS_ASSERT(mutex_owner == current_tcb);
@@ -690,7 +702,8 @@ void task_deinherit_priority_after_timeout(
 
 /** 
  * @brief Yield the current task to allow other tasks to run
- * @note If the scheduler is suspended, the yield will be pending until the scheduler is resumed
+ * @note If the scheduler is suspended, the yield will be pending until
+ *       the scheduler is resumed
  * @return None
  */
 void task_yield(void) {
@@ -705,7 +718,8 @@ void task_yield(void) {
 
 /** 
  * @brief Yield the current task from an ISR context
- * @note If the scheduler is suspended, the yield will be pending until the scheduler is resumed
+ * @note If the scheduler is suspended, the yield will be pending until
+ *       the scheduler is resumed
  * @param flag Indicates whether a yield is required
  * @return None
  */
@@ -732,7 +746,8 @@ void task_suspend_all(void) {
 
 /** 
  * @brief Resume the scheduler and process any pending ticks
- * @note This function decrements the scheduler suspension counter and processes any pending ticks
+ * @note This function decrements the scheduler suspension counter and
+ *       processes any pending ticks
  * @return None
  */
 bool task_resume_all(void) {
@@ -800,26 +815,26 @@ void task_delay(uint32_t ticks_to_delay) {
 
 /**
  * @brief Abort the delay of a task
- * @param tcb Pointer to the TCB of the task to abort the delay
+ * @param handle Pointer to the TCB of the task to abort the delay
  * @return None
  */
-void task_abort_delay(TCB_t *tcb) {
+void task_abort_delay(TaskHandle_t handle) {
     /* ISR cannot modify delayed_list, so we use scheduler suspension here */
     task_suspend_all();
 
-    List_t *const parent = tcb->StateListItem.Parent;
+    List_t *const parent = handle->StateListItem.Parent;
     if (parent == delayed_list || parent == delayed_list_overflow) {
         /* When scheduler is suspended, ISR cannot modify StateListItem, so
          * it is safe to proceed without critical section */
-        yield_pending |= task_remove_from_delayed_list(tcb);
+        yield_pending |= task_remove_from_delayed_list(handle);
 
         /* If possible, remove task from its event list, critical section
          * is needed beacause ISR might modify EventListItem */
         OCTOS_ENTER_CRITICAL();
-        list_remove(&(tcb->EventListItem));
+        list_remove(&(handle->EventListItem));
         OCTOS_EXIT_CRITICAL();
 
-        task_add_to_ready_list(tcb);
+        task_add_to_ready_list(handle);
     }
 
     task_resume_all();
@@ -828,11 +843,12 @@ void task_abort_delay(TCB_t *tcb) {
 /** 
  * @brief Suspend a task
  * @note If the task to suspend is the current task, a yield will occur
- * @param tcb Pointer to the TCB of the task to be suspended. If NULL, the
- *            current task will be suspended
+ * @param handle 
+ *      Pointer to the TCB of the task to be suspended. If NULL, the current
+ *      task will be suspended
  * @return None
  */
-void task_suspend(TCB_t *tcb) {
+void task_suspend(TaskHandle_t handle) {
     bool switch_required = false;
     TCB_t *task_to_suspend = NULL;
 
@@ -840,24 +856,25 @@ void task_suspend(TCB_t *tcb) {
      * instead of scheduler suspension */
     OCTOS_ENTER_CRITICAL();
 
-    if (tcb == NULL) {
+    if (handle == NULL) {
         task_to_suspend = current_tcb;
     } else {
-        const TaskState_t status = task_status(tcb);
+        const TaskState_t status = task_status(handle);
         if (status != READY && status != RUNNING) {
             OCTOS_EXIT_CRITICAL();
             return;
         }
-        task_to_suspend = tcb;
+        task_to_suspend = handle;
     }
 
     /* Remove task from ready/delayed list and insert it into
      * suspended list */
-    if (list_remove(&(task_to_suspend->StateListItem))) {
+    ListItem_t *const item = &(task_to_suspend->StateListItem);
+    if (list_remove(item)) {
         task_reset_ready_priority(task_to_suspend->Priority);
         task_reset_next_unblock_tick();
     }
-    list_insert_end(&suspended_list, &(task_to_suspend->StateListItem));
+    list_insert_end(&suspended_list, item);
 
     /* Remove task from event list (if possible) */
     list_remove(&(task_to_suspend->EventListItem));
@@ -882,25 +899,25 @@ void task_suspend(TCB_t *tcb) {
  * @brief Resume a suspended task
  * @note If the resumed task has a higher priority than the current task, a
  *       yield will occur
- * @param tcb Pointer to the TCB of the task to be resumed
+ * @param handle Pointer to the TCB of the task to be resumed
  * @return None
  */
-void task_resume(TCB_t *tcb) {
+void task_resume(TaskHandle_t handle) {
     bool switch_required = false;
 
     /* ISR can modify suspended_list, so we use critical section 
      * instead of scheduler suspension */
     OCTOS_ENTER_CRITICAL();
 
-    if (task_status(tcb) != SUSPENDED) {
+    if (task_status(handle) != SUSPENDED) {
         OCTOS_EXIT_CRITICAL();
         return;
     }
 
     /* No need to consider scheduler suspend, because ISR cannot 
      * modify StateListItem, and we are in a critical section */
-    switch_required = task_remove_from_delayed_list(tcb);
-    task_add_to_ready_list(tcb);
+    switch_required = task_remove_from_delayed_list(handle);
+    task_add_to_ready_list(handle);
 
     if (switch_required && scheduler_suspended > 0) {
         yield_pending = true;
@@ -916,10 +933,10 @@ void task_resume(TCB_t *tcb) {
  * @brief Resume a suspended task from an ISR context
  * @note If the resumed task has a higher priority than the current task, a
  *       yield will occur
- * @param tcb Pointer to the TCB of the task to be resumed
+ * @param handle Pointer to the TCB of the task to be resumed
  * @return None
  */
-void task_resume_from_isr(TCB_t *tcb) {
+void task_resume_from_isr(TaskHandle_t handle) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
     bool switch_required = false;
@@ -928,18 +945,18 @@ void task_resume_from_isr(TCB_t *tcb) {
      * instead of scheduler suspension */
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
-    if (task_status(tcb) != SUSPENDED) {
+    if (task_status(handle) != SUSPENDED) {
         OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
         return;
     }
 
     if (scheduler_suspended == 0) {
-        switch_required = task_remove_from_delayed_list(tcb);
-        task_add_to_ready_list(tcb);
+        switch_required = task_remove_from_delayed_list(handle);
+        task_add_to_ready_list(handle);
     } else {
         /* No need to set yield_pending here, task_resume_all will do it
          * for us while resuming the scheduler */
-        list_insert_end(&pending_ready_list, &(tcb->EventListItem));
+        list_insert_end(&pending_ready_list, &(handle->EventListItem));
     }
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
@@ -950,13 +967,14 @@ void task_resume_from_isr(TCB_t *tcb) {
 /**
  * @brief Notify a task with a value and a specific action
  * @note If the task is pending, it will be moved to the ready list
- * @param tcb Pointer to the TCB of the task to notify
+ * @param handle Pointer to the TCB of the task to notify
  * @param value The value to notify the task with
  * @param action The action to perform on the notification value
  * @retval true Notification was successful
  * @retval false Notification failed (e.g., TrySet on a received state)
  */
-bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action) {
+bool task_notify(TaskHandle_t handle, uint32_t value,
+                 TaskNotifyAction_t action) {
     bool success = true;
     bool switch_required = false;
 
@@ -964,21 +982,21 @@ bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action) {
      * section */
     OCTOS_ENTER_CRITICAL();
 
-    TaskNotifyState_t original_state = tcb->NotifyState;
-    tcb->NotifyState = RECEIVED;
+    TaskNotifyState_t original_state = handle->NotifyState;
+    handle->NotifyState = RECEIVED;
 
     switch (action) {
         case BitwiseOr:
-            tcb->NotifiedValue |= value;
+            handle->NotifiedValue |= value;
             break;
         case Increment:
-            tcb->NotifiedValue++;
+            handle->NotifiedValue++;
             break;
         case OverwriteSet:
-            tcb->NotifiedValue = value;
+            handle->NotifiedValue = value;
             break;
         case TrySet:
-            if (original_state != RECEIVED) tcb->NotifiedValue = value;
+            if (original_state != RECEIVED) handle->NotifiedValue = value;
             else
                 success = false;
             break;
@@ -991,9 +1009,9 @@ bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action) {
      * Because ready_list modification is even okay in scheduler suspension
      * with critical section */
     if (original_state == PENDING) {
-        OCTOS_ASSERT(tcb->EventListItem.Parent == NULL);
-        switch_required = task_remove_from_delayed_list(tcb);
-        task_add_to_ready_list(tcb);
+        OCTOS_ASSERT(handle->EventListItem.Parent == NULL);
+        switch_required = task_remove_from_delayed_list(handle);
+        task_add_to_ready_list(handle);
     }
 
     OCTOS_EXIT_CRITICAL();
@@ -1006,35 +1024,37 @@ bool task_notify(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action) {
 /**
  * @brief Notify a task with a value and a specific action from an ISR
  * @note If the task is pending, it will be moved to the ready list
- * @param tcb Pointer to the TCB of the task to notify
+ * @param handle Pointer to the TCB of the task to notify
  * @param value The value to notify the task with
  * @param action The action to perform on the notification value
- * @param switch_required Pointer to a boolean indicating if a context switch is required
+ * @param switch_required 
+ *      Pointer to a boolean indicating if a context switch is required
  * @retval true Notification was successful
  * @retval false Notification failed (e.g., TrySet on a received state)
  */
-bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
+bool task_notify_from_isr(TaskHandle_t handle, uint32_t value,
+                          TaskNotifyAction_t action,
                           bool *const switch_required) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
     bool success = true;
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
-    TaskNotifyState_t original_state = tcb->NotifyState;
-    tcb->NotifyState = RECEIVED;
+    TaskNotifyState_t original_state = handle->NotifyState;
+    handle->NotifyState = RECEIVED;
 
     switch (action) {
         case BitwiseOr:
-            tcb->NotifiedValue |= value;
+            handle->NotifiedValue |= value;
             break;
         case Increment:
-            tcb->NotifiedValue++;
+            handle->NotifiedValue++;
             break;
         case OverwriteSet:
-            tcb->NotifiedValue = value;
+            handle->NotifiedValue = value;
             break;
         case TrySet:
-            if (original_state != RECEIVED) tcb->NotifiedValue = value;
+            if (original_state != RECEIVED) handle->NotifiedValue = value;
             else
                 success = false;
             break;
@@ -1043,13 +1063,13 @@ bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
     }
 
     if (original_state == PENDING) {
-        OCTOS_ASSERT(tcb->EventListItem.Parent == NULL);
+        OCTOS_ASSERT(handle->EventListItem.Parent == NULL);
         if (scheduler_suspended == 0) {
-            *switch_required = task_remove_from_delayed_list(tcb);
-            task_add_to_ready_list(tcb);
+            *switch_required = task_remove_from_delayed_list(handle);
+            task_add_to_ready_list(handle);
         } else {
-            *switch_required = tcb->Priority > current_tcb->Priority;
-            list_insert_end(&pending_ready_list, &(tcb->EventListItem));
+            *switch_required = handle->Priority > current_tcb->Priority;
+            list_insert_end(&pending_ready_list, &(handle->EventListItem));
         }
         yield_pending |= *switch_required;
     }
@@ -1062,10 +1082,10 @@ bool task_notify_from_isr(TCB_t *tcb, uint32_t value, TaskNotifyAction_t action,
 /**
  * @brief Wait for a task notification with optional timeout
  * @note Clears specified bits on entry and exit
- * @param bits_to_clear_on_entry Bits to clear in the notification value
- *        on entry
- * @param bits_to_clear_on_exit Bits to clear in the notification value
- *        on exit
+ * @param bits_to_clear_on_entry 
+ *      Bits to clear in the notification value on entry
+ * @param bits_to_clear_on_exit 
+ *      Bits to clear in the notification value on exit
  * @param buffer Pointer to store the notification value (can be NULL)
  * @param timeout_ticks Timeout in ticks (0 for no timeout)
  * @retval true Notification was received successfully

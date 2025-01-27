@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "Arch/stm32f4xx/Inc/api.h"
 #include "bitmap.h"
@@ -220,10 +221,97 @@ bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay) {
 
 /**
  * @brief Get the number of tasks currently running
+ * @note This function is not protected by critical section
  * @return The number of tasks
  */
 uint8_t task_get_number_of_tasks(void) { return current_number_of_tasks; }
 
+/**
+ * @brief Get information about a task
+ * @note This function would enter would enter critical section
+ * @param handle Pointer to the task's TCB
+ * @param info Pointer to TaskInfo_t struct to store the information
+ * @retval true Information was retrieved successfully
+ * @retval false Task status is INVALID
+ */
+bool task_get_info(TaskHandle_t handle, TaskInfo_t *info) {
+    if (!handle || !info) return false;
+
+    OCTOS_ENTER_CRITICAL();
+
+    info->status = task_status(handle);
+    if (info->status == INVALID) {
+        OCTOS_EXIT_CRITICAL();
+        return false;
+    }
+
+    strncpy(info->name, handle->Name, TCB_NAME_MAX_LENGTH);
+    info->name[TCB_NAME_MAX_LENGTH - 1] = '\0';
+
+    info->priority = handle->Priority;
+
+    OCTOS_EXIT_CRITICAL();
+    return true;
+}
+
+/**
+ * @brief Write task list information to a buffer
+ * @note This function would enter would enter critical section
+ * @param buffer Pointer to the buffer to write the information
+ * @note Format: "Name\t\tState\tPrio\n"
+ *               "IDLE\t\tR\t0\n"
+ *               "Task1\t\tC\t1\n"
+ *               ...
+ * @return None
+ */
+void task_info_list(char *buffer) {
+    if (!buffer) return;
+
+    const char status_char[] = {'R', 'C', 'B', 'S', 'T', 'I'};
+
+    int offset = sprintf(buffer, "Name\t\tState\tPrio\n");
+
+    OCTOS_ENTER_CRITICAL();
+
+    for (uint8_t prio = 0; prio < OCTOS_MAX_PRIORITIES; prio++) {
+        List_t *const list = &ready_list[prio];
+        ListItem_t *item = list_head(list);
+
+        for (size_t i = list->Length; i > 0; i--) {
+            TCB_t *tcb = item->Owner;
+            TaskInfo_t info;
+
+            if (task_get_info(tcb, &info)) {
+                offset += sprintf(buffer + offset, "%s\t\t%c\t%d\n", info.name,
+                                  status_char[info.status], info.priority);
+            }
+
+            item = item->Next;
+        }
+    }
+
+    List_t *special_lists[] = {delayed_list, delayed_list_overflow,
+                               &suspended_list, &terminated_list};
+    for (size_t i = sizeof(special_lists) / sizeof(special_lists[0]); i > 0;
+         i--) {
+        List_t *const list = special_lists[i - 1];
+        ListItem_t *item = list_head(list);
+
+        for (size_t i = list->Length; i > 0; i--) {
+            TCB_t *const tcb = item->Owner;
+            TaskInfo_t info;
+
+            if (task_get_info(tcb, &info)) {
+                offset += sprintf(buffer + offset, "%s\t%c\t%d\n", info.name,
+                                  status_char[info.status], info.priority);
+            }
+
+            item = item->Next;
+        }
+    }
+
+    OCTOS_EXIT_CRITICAL();
+}
 /* Task List -----------------------------------------------------------------*/
 
 /** 
@@ -287,8 +375,8 @@ void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
 /**
  * @brief Remove a task from the delayed list
  * @param tcb Pointer to the TCB of the task to be removed
- * @retval true if the removed task has a higher priority than the current task
- * @retval false otherwise
+ * @retval true Removed task has a higher priority than the current task
+ * @retval false Otherwise
  */
 bool task_remove_from_delayed_list(TaskHandle_t handle) {
     ListItem_t *const item = &(handle->StateListItem);
@@ -306,9 +394,11 @@ bool task_remove_from_delayed_list(TaskHandle_t handle) {
 }
 
 /**
- * @brief Add the current task to an event list and delay it for a specified number of ticks
+ * @brief Add the current task to an event list and delay it for a
+ *        specified number of ticks
  * @param list The event list to add the task to
- * @param ticks_to_wait The number of ticks to wait before the task is ready to run again
+ * @param ticks_to_wait 
+ *      The number of ticks to wait before the task is ready to run again
  * @return None
  */
 void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait) {
@@ -322,8 +412,8 @@ void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait) {
 /**
  * @brief Remove the highest priority task from an event list
  * @param list The event list to remove the task from
- * @retval true if the removed task has a higher priority than the current task
- * @retval false otherwise
+ * @retval true Removed task has a higher priority than the current task
+ * @retval false Otherwise
  */
 bool task_remove_highest_priority_from_event_list(List_t *list) {
     if (list->Length == 0) return false;
@@ -359,8 +449,8 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
  * @param priority Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
  * @param page_size_in_words Size of the task stack in words
  * @param handle Pointer to store the task handle (can be NULL if not needed)
- * @retval true if the task was created successfully
- * @retval false if the task creation failed
+ * @retval true Task was created successfully
+ * @retval false Task creation failed
  */
 bool task_create(TaskFunc_t func, void *const args, const char *name,
                  uint8_t priority, size_t page_size_in_words,
@@ -395,8 +485,8 @@ bool task_create(TaskFunc_t func, void *const args, const char *name,
  * @param buffer Pointer to the pre-allocated stack buffer
  * @param page_size_in_words Size of the task stack in words
  * @param handle Pointer to store the task handle (can be NULL if not needed)
- * @retval true if the task was created successfully
- * @retval false if the task creation failed
+ * @retval true Task was created successfully
+ * @retval false Task creation failed
  */
 bool task_create_static(TaskFunc_t func, void *args, const char *name,
                         uint8_t priority, uint32_t *buffer,
@@ -472,8 +562,8 @@ void task_release(TaskHandle_t handle) {
 
 /** 
  * @brief Increment the task tick and handle delayed tasks
- * @retval true if a context switch is required
- * @retval false if context switch is not required
+ * @retval true Context switch is required
+ * @retval false Context switch is not required
  */
 bool task_tick_increment(void) {
     bool switch_required = false;
@@ -581,8 +671,8 @@ TaskHandle_t task_mutex_held_increment(void) {
  * @brief Decrement the mutex held count for the specified task
  * @note This function should be called when a task releases a mutex
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @retval true if the operation was successful
- * @retval false if current_tcb is not the mutex owner
+ * @retval true The operation was successful
+ * @retval false Current task is not the mutex owner
  */
 bool task_mutex_held_decrement(TaskHandle_t mutex_owner) {
     if (mutex_owner != current_tcb) return false;
@@ -594,8 +684,8 @@ bool task_mutex_held_decrement(TaskHandle_t mutex_owner) {
  * @brief Inherit the priority of the current task to the mutex owner
  * @note This function is used to prevent priority inversion
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @retval true if priority inheritance occurred
- * @retval false if priority inheritance has not occurred
+ * @retval true Priority inheritance occurred
+ * @retval false Priority inheritance has not occurred
  */
 bool task_inherit_priority(TaskHandle_t mutex_owner) {
     bool inheritance_occured = false;
@@ -635,8 +725,8 @@ bool task_inherit_priority(TaskHandle_t mutex_owner) {
  * @brief De-inherit the priority of the current task from the mutex owner
  * @note This function is used to restore the original priority of the task
  * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @retval true if a context switch is required
- * @retval false if context switch is not required
+ * @retval true Context switch is required
+ * @retval false Context switch is not required
  */
 bool task_deinherit_priority(TaskHandle_t mutex_owner) {
     bool switch_required = false;

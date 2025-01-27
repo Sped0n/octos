@@ -73,11 +73,22 @@ typedef struct TCB {
  */
 typedef TCB_t *TaskHandle_t;
 
+/**
+ * @brief Task Info
+ */
+typedef struct {
+    char name[TCB_NAME_MAX_LENGTH]; /*!< Task name */
+    uint8_t priority;               /*!< Task priority */
+    TaskState_t status;             /*!< Task status */
+} TaskInfo_t;
+
 /* Misc ----------------------------------------------------------------------*/
 TaskState_t task_status(TaskHandle_t handle);
 void task_set_timeout(Timeout_t *timeout);
 bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay);
 uint8_t task_get_number_of_tasks(void);
+bool task_get_info(TaskHandle_t handle, TaskInfo_t *info);
+void task_info_list(char *buffer);
 /* Task List -----------------------------------------------------------------*/
 void task_lists_init(void);
 void task_add_to_ready_list(TaskHandle_t handle);

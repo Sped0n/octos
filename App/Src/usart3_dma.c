@@ -10,13 +10,19 @@
 #define UART_DMA_RX_BUFFER_SIZE 64
 
 static uint8_t usart_rx_dma_buffer[UART_DMA_RX_BUFFER_SIZE];
+static void (*usart3_dma_recv_func)(const void *data, size_t len) = NULL;
 
 /** 
- * @brief Initialize USART3 with DMA for RX and TX
- * @note This function configures GPIO, DMA, and USART settings for USART3
+ * @brief Initialize USART3 with DMA for receiving data
+ * @note This function also sets up the necessary interrupts and assigns a
+ *       callback function for data reception
+ * @param recv_func 
+ *      Pointer to the callback function that will be called when
+ *      data is received
  * @return None
  */
-void usart3_dma_init(void) {
+void usart3_dma_init(void (*recv_func)(const void *data, size_t len));
+void usart3_dma_init(void (*recv_func)(const void *data, size_t len)) {
     /* Enable clocks */
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
@@ -76,6 +82,9 @@ void usart3_dma_init(void) {
     /* Enable USART and DMA */
     LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_1);
     LL_USART_Enable(USART3);
+
+    /* Receive function */
+    if (recv_func != NULL) usart3_dma_recv_func = recv_func;
 }
 
 /** 
@@ -90,47 +99,49 @@ void usart3_dma_rx_check(void) {
 
     /* Calculate current position in buffer and check for new data available */
     pos = UART_DMA_RX_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_STREAM_1);
-    if (pos != old_pos) {    /* Check change in received data */
-        if (pos > old_pos) { /* Current position is over previous one */
-            /*
-             * Processing is done in "linear" mode.
-             *
-             * Application processing is fast with single data block,
-             * length is simply calculated by subtracting pointers
-             *
-             * [   0   ]
-             * [   1   ] <- old_pos |------------------------------------|
-             * [   2   ]            |                                    |
-             * [   3   ]            | Single block (len = pos - old_pos) |
-             * [   4   ]            |                                    |
-             * [   5   ]            |------------------------------------|
-             * [   6   ] <- pos
-             * [   7   ]
-             * [ N - 1 ]
-             */
-            usart3_dma_process_data(&usart_rx_dma_buffer[old_pos],
-                                    pos - old_pos);
-        } else {
-            /*
-             * Processing is done in "overflow" mode..
-             *
-             * Application must process data twice,
-             * since there are 2 linear memory blocks to handle
-             *
-             * [   0   ]            |---------------------------------|
-             * [   1   ]            | Second block (len = pos)        |
-             * [   2   ]            |---------------------------------|
-             * [   3   ] <- pos
-             * [   4   ] <- old_pos |---------------------------------|
-             * [   5   ]            |                                 |
-             * [   6   ]            | First block (len = N - old_pos) |
-             * [   7   ]            |                                 |
-             * [ N - 1 ]            |---------------------------------|
-             */
-            usart3_dma_process_data(&usart_rx_dma_buffer[old_pos],
-                                    UART_DMA_RX_BUFFER_SIZE - old_pos);
-            if (pos > 0) {
-                usart3_dma_process_data(&usart_rx_dma_buffer[0], pos);
+    if (pos != old_pos) { /* Check change in received data */
+        if (usart3_dma_recv_func != NULL) {
+            if (pos > old_pos) { /* Current position is over previous one */
+                /*
+                 * Processing is done in "linear" mode.
+                 *
+                 * Application processing is fast with single data block,
+                 * length is simply calculated by subtracting pointers
+                 *
+                 * [   0   ]
+                 * [   1   ] <- old_pos |------------------------------------|
+                 * [   2   ]            |                                    |
+                 * [   3   ]            | Single block (len = pos - old_pos) |
+                 * [   4   ]            |                                    |
+                 * [   5   ]            |------------------------------------|
+                 * [   6   ] <- pos
+                 * [   7   ]
+                 * [ N - 1 ]
+                 */
+                usart3_dma_recv_func(&usart_rx_dma_buffer[old_pos],
+                                     pos - old_pos);
+            } else {
+                /*
+                 * Processing is done in "overflow" mode..
+                 *
+                 * Application must process data twice,
+                 * since there are 2 linear memory blocks to handle
+                 *
+                 * [   0   ]            |---------------------------------|
+                 * [   1   ]            | Second block (len = pos)        |
+                 * [   2   ]            |---------------------------------|
+                 * [   3   ] <- pos
+                 * [   4   ] <- old_pos |---------------------------------|
+                 * [   5   ]            |                                 |
+                 * [   6   ]            | First block (len = N - old_pos) |
+                 * [   7   ]            |                                 |
+                 * [ N - 1 ]            |---------------------------------|
+                 */
+                usart3_dma_recv_func(&usart_rx_dma_buffer[old_pos],
+                                     UART_DMA_RX_BUFFER_SIZE - old_pos);
+                if (pos > 0) {
+                    usart3_dma_recv_func(&usart_rx_dma_buffer[0], pos);
+                }
             }
         }
         old_pos = pos; /* Save current position as old for next transfers */

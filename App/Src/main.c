@@ -50,7 +50,7 @@ void usart_dma_rx_thread(void) {
 }
 
 int main(void) {
-    usart3_dma_init();
+    usart3_dma_init(&usart3_dma_process_data);
     BSP_LED_Init(LED1);
     BSP_LED_Init(LED2);
     BSP_LED_Init(LED3);

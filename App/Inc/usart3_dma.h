@@ -10,7 +10,7 @@
 #include "stm32f4xx_ll_dma.h"
 #include "stm32f4xx_ll_usart.h"
 
-void usart3_dma_init(void);
+void usart3_dma_init(void (*recv_func)(const void *data, size_t len));
 void usart3_dma_rx_check(void);
 void usart3_send_string(const char *str);
 

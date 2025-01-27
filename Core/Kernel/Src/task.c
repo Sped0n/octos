@@ -269,7 +269,7 @@ void task_info_list(char *buffer) {
 
     const char status_char[] = {'R', 'C', 'B', 'S', 'T', 'I'};
 
-    int offset = sprintf(buffer, "Name\t\tState\tPrio\n");
+    int offset = sprintf(buffer, "Name\t\tState\tPrio\n\r");
 
     OCTOS_ENTER_CRITICAL();
 
@@ -282,8 +282,9 @@ void task_info_list(char *buffer) {
             TaskInfo_t info;
 
             if (task_get_info(tcb, &info)) {
-                offset += sprintf(buffer + offset, "%s\t\t%c\t%d\n", info.name,
-                                  status_char[info.status], info.priority);
+                offset +=
+                        sprintf(buffer + offset, "%-11s\t%c\t%d\n\r", info.name,
+                                status_char[info.status], info.priority);
             }
 
             item = item->Next;
@@ -302,8 +303,9 @@ void task_info_list(char *buffer) {
             TaskInfo_t info;
 
             if (task_get_info(tcb, &info)) {
-                offset += sprintf(buffer + offset, "%s\t%c\t%d\n", info.name,
-                                  status_char[info.status], info.priority);
+                offset +=
+                        sprintf(buffer + offset, "%-11s\t%c\t%d\n\r", info.name,
+                                status_char[info.status], info.priority);
             }
 
             item = item->Next;

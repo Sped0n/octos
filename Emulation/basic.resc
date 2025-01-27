@@ -1,0 +1,25 @@
+:name: OCTOS_Renode
+:description: N/A
+
+# Replace to your path
+$name?="OCTOS Renode"
+$add_on_repl?=$CWD/emulation/add_on.repl
+$bin_path?=$CWD/build/octos.elf
+
+# Create Machine & Load config
+mach create $name
+machine LoadPlatformDescription @platforms/cpus/stm32f429.repl
+machine LoadPlatformDescription $add_on_repl
+
+# Enable GDB
+machine StartGdbServer 3333
+
+macro reset
+"""
+    sysbus LoadELF $bin_path
+"""
+
+runMacro $reset
+logLevel -1 gpioPortB.LD
+emulation CreateUartPtyTerminal "term" "/tmp/octos_renode"
+connector Connect sysbus.usart3 term

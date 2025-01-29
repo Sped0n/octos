@@ -4,6 +4,7 @@
 #include "led.h"
 #include "mqueue.h"
 #include "shell.h"
+#include "sync.h"
 #include "task.h"
 #include "usart3_dma.h"
 #include <stdint.h>
@@ -16,13 +17,18 @@ static int help_func(int argc, char **argv);
 static int ping_func(int argc, char **argv);
 static int list_func(int argc, char **argv);
 
-TCB_t *usart_dma_rx_thread_handle;
+TaskHandle_t usart_dma_rx_thread_handle;
+TaskHandle_t pong1_thread_handle;
 Shell_t shell;
 ShellCommand_t commands[] = {{.name = "help", .handler = &help_func},
                              {.name = "ping", .handler = &ping_func},
                              {.name = "list", .handler = &list_func}};
 MsgQueue_t usart3_rx_queue;
 uint8_t usart3_rx_queue_storage[QUEUE_SIZE];
+Mutex_t shell_print_mutex;
+Barrier_t pong_barrier;
+MsgQueue_t pong_queue;
+uint8_t pong_queue_storage[QUEUE_SIZE];
 
 
 /* Simple LED Threads --------------------------------------------------------*/
@@ -69,30 +75,93 @@ void usart_dma_rx_thread(void) {
     }
 }
 
+/* Pong Threads --------------------------------------------------------------*/
+
+void pong1_thread(void) {
+    const char msg[] = "pong111111111111111111111111111111\r\n";
+    while (1) {
+        task_notify_wait(0, 0, NULL, UINT32_MAX);
+        barrier_wait(&pong_barrier, UINT32_MAX);
+        mutex_acquire(&shell_print_mutex, UINT32_MAX);
+        for (size_t i = 0; msg[i] != '\0'; i++) {
+            mqueue_send(&pong_queue, &msg[i], UINT32_MAX);
+        }
+        mutex_release(&shell_print_mutex);
+    }
+}
+
+void pong2_thread(void) {
+    const char msg[] = "pong222222222222222222222222222222\r\n";
+    while (1) {
+        barrier_wait(&pong_barrier, UINT32_MAX);
+        mutex_acquire(&shell_print_mutex, UINT32_MAX);
+        for (size_t i = 0; msg[i] != '\0'; i++) {
+            mqueue_send(&pong_queue, &msg[i], UINT32_MAX);
+        }
+        mutex_release(&shell_print_mutex);
+    }
+}
+
+void pong3_thread(void) {
+    const char msg[] = "pong333333333333333333333333333333333\r\n";
+    while (1) {
+        barrier_wait(&pong_barrier, UINT32_MAX);
+        mutex_acquire(&shell_print_mutex, UINT32_MAX);
+        for (size_t i = 0; msg[i] != '\0'; i++) {
+            mqueue_send(&pong_queue, &msg[i], UINT32_MAX);
+        }
+        mutex_release(&shell_print_mutex);
+    }
+}
+
 /* Shell Threads -------------------------------------------------------------*/
 
 int help_func(OCTOS_UNUSED int argc, OCTOS_UNUSED char **argv) {
+    mutex_acquire(&shell_print_mutex, UINT32_MAX);
     shell.print("help func\r\n");
+    mutex_release(&shell_print_mutex);
     return 0;
 }
 
 int ping_func(int argc, char **argv) {
+    char buffer[50];
+    buffer[1] = '\0';
     if (argc > 1) {
         if (strcmp(argv[1], "--help") == 0) {
+            mutex_acquire(&shell_print_mutex, UINT32_MAX);
             shell.print("ping help\r\n");
+            mutex_release(&shell_print_mutex);
         } else {
             return 1;
         }
     } else {
-        shell.print("pong\r\n");
+        task_notify(pong1_thread_handle, 0, NoAction);
+        size_t i = 0;
+        size_t pong_cnt = 0;
+        while (1) {
+            mqueue_recv(&pong_queue, &buffer[i], UINT32_MAX);
+            if (buffer[i] == '\n') {
+                buffer[i + 1] = '\0';
+                i = 0;
+                shell.print(buffer);
+                pong_cnt++;
+                if (pong_cnt == 3) { break; }
+                continue;
+            }
+            i++;
+        }
     }
     return 0;
 }
 
 int list_func(OCTOS_UNUSED int argc, OCTOS_UNUSED char **argv) {
-    char *buffer = OCTOS_MALLOC(256 * sizeof(char));
+    char *buffer = OCTOS_MALLOC(512 * sizeof(char));
     task_info_list(buffer);
+
+    mutex_acquire(&shell_print_mutex, UINT32_MAX);
     shell.print(buffer);
+    mutex_release(&shell_print_mutex);
+
     OCTOS_FREE(buffer);
     return 0;
 }
@@ -112,6 +181,9 @@ void shell_thread(void) {
 
 int main(void) {
     mqueue_init(&usart3_rx_queue, usart3_rx_queue_storage, 1, QUEUE_SIZE);
+    mqueue_init(&pong_queue, pong_queue_storage, 1, QUEUE_SIZE);
+    mutex_init(&shell_print_mutex);
+    barrier_init(&pong_barrier, 3);
     usart3_dma_init(&shell_process_char_wrapper);
     BSP_LED_Init(LED1);
     BSP_LED_Init(LED2);
@@ -123,6 +195,10 @@ int main(void) {
     task_create((TaskFunc_t) &led1_thread, NULL, "LED 1", 1, 256, NULL);
     task_create((TaskFunc_t) &led2_thread, NULL, "LED 2", 1, 256, NULL);
     task_create((TaskFunc_t) &led3_thread, NULL, "LED 3", 0, 256, NULL);
+    task_create((TaskFunc_t) &pong1_thread, NULL, "PONG 1", 1, 256,
+                &pong1_thread_handle);
+    task_create((TaskFunc_t) &pong2_thread, NULL, "PONG 2", 1, 256, NULL);
+    task_create((TaskFunc_t) &pong3_thread, NULL, "PONG 3", 1, 256, NULL);
 
     Quanta_t quanta = {.Unit = MILISECONDS, .Value = 5};
     kernel_launch(&quanta);

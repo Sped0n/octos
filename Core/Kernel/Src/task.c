@@ -358,6 +358,8 @@ void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
     ListItem_t *const item = &(current_tcb->StateListItem);
     if (list_remove(item)) task_reset_ready_priority(current_tcb->Priority);
 
+    yield_pending |= true;
+
     if (ticks_to_delay == UINT32_MAX) {
         list_insert_end(&suspended_list, item);
     } else {
@@ -409,6 +411,7 @@ void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait) {
 
     list_insert(list, &(current_tcb->EventListItem));
     task_remove_and_add_current_to_delayed_list(ticks_to_wait);
+    yield_pending |= true;
 }
 
 /**
@@ -873,11 +876,12 @@ bool task_resume_all(void) {
         pended_ticks--;
     }
 
-    already_yielded = yield_pending;
-
     OCTOS_EXIT_CRITICAL();
 
-    if (already_yielded) OCTOS_YIELD();
+    if (yield_pending) {
+        OCTOS_YIELD();
+        already_yielded = true;
+    }
 
     return already_yielded;
 }

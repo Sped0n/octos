@@ -58,7 +58,7 @@ OCTOS_INLINE static inline void sync_lock_increment(SyncCore_t *core,
  * @param core Pointer to the synchronization core to be unlocked
  * @return None
  */
-static void sync_unlock(SyncCore_t *core) {
+OCTOS_INLINE static inline void sync_unlock(SyncCore_t *core) {
     OCTOS_ENTER_CRITICAL();
 
     int8_t lock = core->Lock;
@@ -99,12 +99,10 @@ bool sema_acquire(Sema_t *sema, uint32_t timeout_ticks) {
     Timeout_t timeout;
     bool timeout_set = false;
 
-    OCTOS_ENTER_CRITICAL();
-    sema->Count--;
-    OCTOS_EXIT_CRITICAL();
-
     while (true) {
         OCTOS_ENTER_CRITICAL();
+
+        if (!timeout_set) sema->Count--;
 
         if (sema->Count >= 0) {
             OCTOS_EXIT_CRITICAL();
@@ -352,4 +350,232 @@ bool mutex_release(Mutex_t *mutex) {
     if (switch_required) OCTOS_YIELD();
 
     return true;
+}
+
+/* Condtion ------------------------------------------------------------------*/
+
+/**
+ * @brief Initialize a condition variable
+ * @param cond Pointer to the condition variable to initialize
+ * @return None
+ */
+void cond_init(Cond_t *cond) { sync_core_init(&(cond->Core)); }
+
+/**
+ * @brief Wait on a condition variable
+ * @note If the timeout expires, the function returns false
+ * @param cond Pointer to the condition variable
+ * @param timeout_ticks Timeout in ticks (UINT32_MAX for indefinite wait)
+ * @retval true Condition was signaled
+ * @retval false Timeout expired
+ */
+bool cond_wait(Cond_t *cond, uint32_t timeout_ticks) {
+    Timeout_t timeout;
+    bool timeout_set = false;
+
+    while (true) {
+        OCTOS_ENTER_CRITICAL();
+
+        if (timeout_ticks == 0) {
+            OCTOS_EXIT_CRITICAL();
+            return false;
+        } else if (!timeout_set) {
+            /* timeout_ticks == UINT32_MAX means to wait indefinitely */
+            if (timeout_ticks != UINT32_MAX) task_set_timeout(&timeout);
+            timeout_set = true;
+        } else {
+            OCTOS_EXIT_CRITICAL();
+            return true;
+        }
+
+        OCTOS_EXIT_CRITICAL();
+
+        task_suspend_all();
+        SyncCore_t *const core = &(cond->Core);
+        /* Lock the queue so ISR cannot modify EventListItem */
+        sync_lock(core);
+        /* Timeout has expired */
+        if (timeout_ticks != UINT32_MAX &&
+            task_check_timeout(&timeout, timeout_ticks)) {
+            sync_unlock(core);
+            task_resume_all();
+            return false;
+        }
+
+        /* Timeout has not expired */
+        task_add_current_to_event_list(&(core->BlockedList), timeout_ticks);
+        sync_unlock(core);
+        if (!task_resume_all()) OCTOS_YIELD();
+    }
+}
+
+/**
+ * @brief Notify one task waiting on the condition variable
+ * @param cond Pointer to the condition variable
+ * @return None
+ */
+void cond_notify(Cond_t *cond) {
+    bool switch_required = false;
+
+    OCTOS_ENTER_CRITICAL();
+
+    List_t *const blocked_list = &(cond->Core.BlockedList);
+    if (blocked_list->Length > 0) {
+        switch_required |=
+                task_remove_highest_priority_from_event_list(blocked_list);
+    }
+
+    OCTOS_EXIT_CRITICAL();
+
+    if (switch_required) OCTOS_YIELD();
+}
+
+/**
+ * @brief Notify all tasks waiting on the condition variable
+ * @param cond Pointer to the condition variable
+ * @return None
+ */
+void cond_notify_all(Cond_t *cond) {
+    bool switch_required = false;
+
+    OCTOS_ENTER_CRITICAL();
+
+    List_t *const blocked_list = &(cond->Core.BlockedList);
+    while (blocked_list->Length > 0) {
+        switch_required |=
+                task_remove_highest_priority_from_event_list(blocked_list);
+    }
+
+    OCTOS_EXIT_CRITICAL();
+
+    if (switch_required) OCTOS_YIELD();
+}
+
+/**
+ * @brief Notify one task waiting on the condition variable from an ISR
+ * @param cond Pointer to the condition variable
+ * @param switch_required Pointer to a boolean indicating if a context switch is required
+ * @return None
+ */
+void cond_notify_from_isr(Cond_t *cond, bool *const switch_required) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    SyncCore_t *const core = &(cond->Core);
+    List_t *const blocked_list = &(core->BlockedList);
+    if (blocked_list->Length == 0) {
+        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+        return;
+    }
+
+    const int8_t lock = core->Lock;
+    if (core->Lock == syncUNLOCKED) {
+        const bool higher_priority_woken =
+                task_remove_highest_priority_from_event_list(blocked_list);
+        if (switch_required != NULL) *switch_required = higher_priority_woken;
+    } else {
+        sync_lock_increment(core, lock);
+    }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+}
+
+/**
+ * @brief Notify all tasks waiting on the condition variable from an ISR
+ * @param cond Pointer to the condition variable
+ * @param switch_required 
+ *      Pointer to a boolean indicating if a context switch is required
+ * @return None
+ */
+void cond_notify_all_from_isr(Cond_t *cond, bool *const switch_required) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    SyncCore_t *const core = &(cond->Core);
+    List_t *const blocked_list = &(core->BlockedList);
+    if (blocked_list->Length == 0) {
+        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+        return;
+    }
+
+    const int8_t lock = core->Lock;
+    if (core->Lock == syncUNLOCKED) {
+        bool higher_priority_woken = false;
+        for (size_t i = blocked_list->Length; i > 0; i--) {
+            higher_priority_woken |=
+                    task_remove_highest_priority_from_event_list(blocked_list);
+        }
+        if (switch_required != NULL) *switch_required = higher_priority_woken;
+    } else {
+        for (size_t i = blocked_list->Length; i > 0; i--) {
+            sync_lock_increment(core, lock);
+        }
+    }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+}
+
+
+/* Barrier -------------------------------------------------------------------*/
+
+/**
+ * @brief Initialize a barrier
+ * @param barrier Pointer to the barrier to initialize
+ * @param parties Number of parties required to release the barrier
+ * @return None
+ */
+void barrier_init(Barrier_t *barrier, uint32_t parties) {
+    barrier->Parties = parties;
+    barrier->Count = 0;
+    cond_init(&(barrier->Cond));
+}
+
+/**
+ * @brief Wait at the barrier
+ * @note If the timeout expires, the function returns false
+ * @param barrier Pointer to the barrier
+ * @param timeout_ticks Timeout in ticks (UINT32_MAX for indefinite wait)
+ * @retval true Barrier was released
+ * @retval false Timeout expired
+ */
+bool barrier_wait(Barrier_t *barrier, uint32_t timeout_ticks) {
+    /* Use critical section here for speed */
+    OCTOS_ENTER_CRITICAL();
+
+    barrier->Count++;
+    if (barrier->Count == barrier->Parties) {
+        cond_notify_all(&barrier->Cond);
+        barrier->Count = 0;
+        OCTOS_EXIT_CRITICAL();
+        return true;
+    }
+
+    OCTOS_EXIT_CRITICAL();
+
+    if (cond_wait(&(barrier->Cond), timeout_ticks)) {
+        return true;
+    } else {
+        /* Use critical section here for speed */
+        OCTOS_ENTER_CRITICAL();
+        barrier->Count--;
+        OCTOS_EXIT_CRITICAL();
+        return false;
+    }
+}
+
+/**
+ * @brief Reset the barrier
+ * @param barrier Pointer to the barrier
+ * @return None
+ */
+void barrier_reset(Barrier_t *barrier) {
+    /* Use critical section here for speed */
+    OCTOS_ENTER_CRITICAL();
+
+    cond_notify_all(&barrier->Cond);
+    barrier->Count = 0;
+
+    OCTOS_EXIT_CRITICAL();
 }

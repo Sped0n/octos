@@ -1,34 +1,32 @@
-#include "main.h"
-#include "Arch/stm32f4xx/Inc/api.h"
-#include "kernel.h"
-#include "led.h"
-#include "mqueue.h"
-#include "shell.h"
-#include "sync.h"
-#include "task.h"
-#include "usart3_dma.h"
 #include <stdint.h>
 #include <string.h>
 
+#include "kernel.h"
+#include "led.h"
+#include "main.h"
+#include "shell.h"
+#include "sync.h"
+#include "usart3_dma.h"
+
 #define QUEUE_SIZE 10
-#define ITEM_SIZE sizeof(char)
 
 static int help_func(int argc, char **argv);
 static int ping_func(int argc, char **argv);
 static int list_func(int argc, char **argv);
 
-TaskHandle_t usart_dma_rx_thread_handle;
-TaskHandle_t pong1_thread_handle;
-Shell_t shell;
-ShellCommand_t commands[] = {{.name = "help", .handler = &help_func},
-                             {.name = "ping", .handler = &ping_func},
-                             {.name = "list", .handler = &list_func}};
-MsgQueue_t usart3_rx_queue;
-uint8_t usart3_rx_queue_storage[QUEUE_SIZE];
-Mutex_t shell_print_mutex;
-Barrier_t pong_barrier;
-MsgQueue_t pong_queue;
-uint8_t pong_queue_storage[QUEUE_SIZE];
+static TaskHandle_t usart_dma_rx_thread_handle;
+static TaskHandle_t pong0_thread_handle;
+static Shell_t shell;
+static ShellCommand_t commands[] = {{.name = "help", .handler = &help_func},
+                                    {.name = "ping", .handler = &ping_func},
+                                    {.name = "list", .handler = &list_func}};
+static MsgQueue_t usart3_rx_queue;
+static uint8_t usart3_rx_queue_storage[QUEUE_SIZE];
+static Mutex_t shell_print_mutex;
+static Barrier_t pong_barrier;
+static MsgQueue_t pong_queue;
+static uint8_t pong_queue_storage[QUEUE_SIZE];
+static Event_t pong0_event;
 
 
 /* Simple LED Threads --------------------------------------------------------*/
@@ -77,10 +75,25 @@ void usart_dma_rx_thread(void) {
 
 /* Pong Threads --------------------------------------------------------------*/
 
+void pong0_thread(void) {
+    const char msg[] = "pong0000000000000000000000000000000\r\n";
+    while (1) {
+        task_notify_wait(0, 0, NULL, UINT32_MAX);
+        event_set(&pong0_event);
+        barrier_wait(&pong_barrier, UINT32_MAX);
+        mutex_acquire(&shell_print_mutex, UINT32_MAX);
+        for (size_t i = 0; msg[i] != '\0'; i++) {
+            mqueue_send(&pong_queue, &msg[i], UINT32_MAX);
+        }
+        mutex_release(&shell_print_mutex);
+    }
+}
+
 void pong1_thread(void) {
     const char msg[] = "pong111111111111111111111111111111\r\n";
     while (1) {
-        task_notify_wait(0, 0, NULL, UINT32_MAX);
+        event_wait(&pong0_event, UINT32_MAX);
+        event_clear(&pong0_event);
         barrier_wait(&pong_barrier, UINT32_MAX);
         mutex_acquire(&shell_print_mutex, UINT32_MAX);
         for (size_t i = 0; msg[i] != '\0'; i++) {
@@ -135,7 +148,7 @@ int ping_func(int argc, char **argv) {
             return 1;
         }
     } else {
-        task_notify(pong1_thread_handle, 0, NoAction);
+        task_notify(pong0_thread_handle, 0, NoAction);
         size_t i = 0;
         size_t pong_cnt = 0;
         while (1) {
@@ -145,7 +158,7 @@ int ping_func(int argc, char **argv) {
                 i = 0;
                 shell.print(buffer);
                 pong_cnt++;
-                if (pong_cnt == 3) { break; }
+                if (pong_cnt == 4) { break; }
                 continue;
             }
             i++;
@@ -183,24 +196,26 @@ int main(void) {
     mqueue_init(&usart3_rx_queue, usart3_rx_queue_storage, 1, QUEUE_SIZE);
     mqueue_init(&pong_queue, pong_queue_storage, 1, QUEUE_SIZE);
     mutex_init(&shell_print_mutex);
-    barrier_init(&pong_barrier, 3);
+    event_init(&pong0_event);
+    barrier_init(&pong_barrier, 4);
     usart3_dma_init(&shell_process_char_wrapper);
     BSP_LED_Init(LED1);
     BSP_LED_Init(LED2);
     BSP_LED_Init(LED3);
 
-    task_create((TaskFunc_t) &usart_dma_rx_thread, NULL, "UART DMA RX", 3, 512,
+    task_create((TaskFunc_t) &usart_dma_rx_thread, NULL, "UART DMA RX", 4, 512,
                 &usart_dma_rx_thread_handle);
-    task_create((TaskFunc_t) &shell_thread, NULL, "SHELL", 2, 512, NULL);
+    task_create((TaskFunc_t) &shell_thread, NULL, "SHELL", 3, 512, NULL);
     task_create((TaskFunc_t) &led1_thread, NULL, "LED 1", 1, 256, NULL);
     task_create((TaskFunc_t) &led2_thread, NULL, "LED 2", 1, 256, NULL);
     task_create((TaskFunc_t) &led3_thread, NULL, "LED 3", 0, 256, NULL);
-    task_create((TaskFunc_t) &pong1_thread, NULL, "PONG 1", 1, 256,
-                &pong1_thread_handle);
-    task_create((TaskFunc_t) &pong2_thread, NULL, "PONG 2", 1, 256, NULL);
-    task_create((TaskFunc_t) &pong3_thread, NULL, "PONG 3", 1, 256, NULL);
+    task_create((TaskFunc_t) &pong0_thread, NULL, "PONG 0", 1, 256,
+                &pong0_thread_handle);
+    task_create((TaskFunc_t) &pong1_thread, NULL, "PONG 1", 1, 256, NULL);
+    task_create((TaskFunc_t) &pong2_thread, NULL, "PONG 2", 2, 256, NULL);
+    task_create((TaskFunc_t) &pong3_thread, NULL, "PONG 3", 2, 256, NULL);
 
-    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 5};
+    Quanta_t quanta = {.Unit = MILISECONDS, .Value = 1};
     kernel_launch(&quanta);
 }
 

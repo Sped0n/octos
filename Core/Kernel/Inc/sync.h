@@ -47,7 +47,7 @@ typedef struct Cond {
 typedef struct Barrier {
     uint16_t Parties; /*!< Number of parties required to release the barrier */
     uint16_t Count;   /*!< Current count of parties waiting at the barrier */
-    Cond_t Cond;      /*!< Condition variable used for synchronization */
+    SyncCore_t Core;  /*!< Condition variable used for synchronization */
 } Barrier_t;
 
 /**
@@ -79,6 +79,7 @@ void cond_notify_all_from_isr(Cond_t *cond, bool *const switch_required);
 void barrier_init(Barrier_t *barrier, uint32_t parties);
 bool barrier_wait(Barrier_t *barrier, uint32_t timeout_ticks);
 void barrier_reset(Barrier_t *barrier);
+void barrier_reset_from_isr(Barrier_t *barrier, bool *const switch_required);
 /* Event ---------------------------------------------------------------------*/
 void event_init(Event_t *event);
 bool event_is_set(Event_t *event);

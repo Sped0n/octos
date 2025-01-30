@@ -529,7 +529,7 @@ void cond_notify_all_from_isr(Cond_t *cond, bool *const switch_required) {
 void barrier_init(Barrier_t *barrier, uint32_t parties) {
     barrier->Parties = parties;
     barrier->Count = 0;
-    cond_init(&(barrier->Cond));
+    sync_core_init(&(barrier->Core));
 }
 
 /**
@@ -541,27 +541,66 @@ void barrier_init(Barrier_t *barrier, uint32_t parties) {
  * @retval false Timeout expired
  */
 bool barrier_wait(Barrier_t *barrier, uint32_t timeout_ticks) {
-    /* Use critical section here for speed */
     OCTOS_ENTER_CRITICAL();
 
     barrier->Count++;
     if (barrier->Count == barrier->Parties) {
-        cond_notify_all(&barrier->Cond);
+        bool switch_required = false;
+        List_t *const blocked_list = &(barrier->Core.BlockedList);
+        while (blocked_list->Length > 0) {
+            switch_required |=
+                    task_remove_highest_priority_from_event_list(blocked_list);
+        }
         barrier->Count = 0;
         OCTOS_EXIT_CRITICAL();
+
+        if (switch_required) OCTOS_YIELD();
         return true;
     }
 
     OCTOS_EXIT_CRITICAL();
 
-    if (cond_wait(&(barrier->Cond), timeout_ticks)) {
-        return true;
-    } else {
-        /* Use critical section here for speed */
+    Timeout_t timeout;
+    bool timeout_set = false;
+
+    while (true) {
         OCTOS_ENTER_CRITICAL();
-        barrier->Count--;
+
+        if (timeout_ticks == 0) {
+            OCTOS_EXIT_CRITICAL();
+            return false;
+        } else if (!timeout_set) {
+            /* timeout_ticks == UINT32_MAX means to wait indefinitely */
+            if (timeout_ticks != UINT32_MAX) task_set_timeout(&timeout);
+            timeout_set = true;
+        } else {
+            OCTOS_EXIT_CRITICAL();
+            return true;
+        }
+
         OCTOS_EXIT_CRITICAL();
-        return false;
+
+        task_suspend_all();
+        SyncCore_t *const core = &(barrier->Core);
+        /* Lock the queue so ISR cannot modify EventListItem */
+        sync_lock(core);
+        /* Timeout has expired */
+        if (timeout_ticks != UINT32_MAX &&
+            task_check_timeout(&timeout, timeout_ticks)) {
+            sync_unlock(core);
+            task_resume_all();
+            return false;
+        }
+
+        /* Timeout has not expired */
+        if (barrier->Count != barrier->Parties) {
+            task_add_current_to_event_list(&(core->BlockedList), timeout_ticks);
+            sync_unlock(core);
+            if (!task_resume_all()) OCTOS_YIELD();
+        } else {
+            sync_unlock(core);
+            task_resume_all();
+        }
     }
 }
 
@@ -571,13 +610,63 @@ bool barrier_wait(Barrier_t *barrier, uint32_t timeout_ticks) {
  * @return None
  */
 void barrier_reset(Barrier_t *barrier) {
-    /* Use critical section here for speed */
+    bool switch_required = false;
+
     OCTOS_ENTER_CRITICAL();
 
-    cond_notify_all(&barrier->Cond);
+    List_t *const blocked_list = &(barrier->Core.BlockedList);
+    while (blocked_list->Length > 0) {
+        switch_required |=
+                task_remove_highest_priority_from_event_list(blocked_list);
+    }
     barrier->Count = 0;
 
     OCTOS_EXIT_CRITICAL();
+
+    if (switch_required) OCTOS_YIELD();
+}
+
+/** 
+ * @brief Reset a barrier from an ISR context
+ * @note This function is used to reset a barrier and unblock all tasks
+ *       waiting on it. 
+ *       If the barrier is unlocked, tasks are moved to the ready list.
+ *       If the barrier is locked, the lock count is incremented for
+ *       each blocked task.
+ * @param barrier Pointer to the barrier to be reset
+ * @param switch_required 
+ *      Pointer to a boolean that indicates if a context switch is required
+ * @return None
+ */
+void barrier_reset_from_isr(Barrier_t *barrier, bool *const switch_required) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    SyncCore_t *const core = &(barrier->Core);
+    List_t *const blocked_list = &(core->BlockedList);
+    if (blocked_list->Length == 0) {
+        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+        return;
+    }
+
+    const int8_t lock = core->Lock;
+    if (core->Lock == syncUNLOCKED) {
+        bool higher_priority_woken = false;
+        while (blocked_list->Length > 0) {
+            higher_priority_woken |=
+                    task_remove_highest_priority_from_event_list(blocked_list);
+        }
+        if (switch_required != NULL) *switch_required = higher_priority_woken;
+    } else {
+        for (size_t i = blocked_list->Length; i > 0; i--) {
+            sync_lock_increment(core, lock);
+        }
+    }
+
+    barrier->Count = 0;
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 }
 
 /* Event ---------------------------------------------------------------------*/

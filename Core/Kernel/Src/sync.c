@@ -7,7 +7,7 @@
 
 /**
  * @brief Initializes a synchronization core
- * @param core Pointer to the synchronization core to be initialized
+ * @param core: Pointer to the synchronization core to be initialized
  * @return None
  */
 OCTOS_INLINE static inline void sync_core_init(SyncCore_t *core) {
@@ -18,7 +18,7 @@ OCTOS_INLINE static inline void sync_core_init(SyncCore_t *core) {
 /**
  * @brief Locks a synchronization core
  * @note Must call within scheduler suspension
- * @param core Pointer to the synchronization core to be locked
+ * @param core: Pointer to the synchronization core to be locked
  * @return None
  */
 OCTOS_INLINE static inline void sync_lock(SyncCore_t *core) {
@@ -31,8 +31,8 @@ OCTOS_INLINE static inline void sync_lock(SyncCore_t *core) {
 
 /**
  * @brief Increments the lock counter of a synchronization core
- * @param core Pointer to the synchronization core
- * @param lock Lock value to be incremented
+ * @param core: Pointer to the synchronization core
+ * @param lock: Lock value to be incremented
  * @return None
  */
 OCTOS_INLINE static inline void sync_lock_increment(SyncCore_t *core,
@@ -55,7 +55,7 @@ OCTOS_INLINE static inline void sync_lock_increment(SyncCore_t *core,
 /**
  * @brief Unlocks a synchronization core
  * @note Must call within scheduler suspension
- * @param core Pointer to the synchronization core to be unlocked
+ * @param core: Pointer to the synchronization core to be unlocked
  * @return None
  */
 OCTOS_INLINE static inline void sync_unlock(SyncCore_t *core) {
@@ -78,9 +78,11 @@ OCTOS_INLINE static inline void sync_unlock(SyncCore_t *core) {
 
 /** 
  * @brief Notify a single task waiting on a synchronization core
- * @note If a higher priority task is woken, the switch_required flag will be set
- * @param core Pointer to the synchronization core
- * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @note If a higher priority task is woken, the switch_required
+ *       flag will be set
+ * @param core: Pointer to the synchronization core
+ * @param switch_required: 
+ *      Pointer to a boolean flag indicating if a context switch is required
  * @return None
  */
 OCTOS_INLINE static inline void sync_notify(SyncCore_t *core,
@@ -97,9 +99,11 @@ OCTOS_INLINE static inline void sync_notify(SyncCore_t *core,
 
 /** 
  * @brief Notify all tasks waiting on a synchronization core
- * @note If a higher priority task is woken, the switch_required flag will be set
- * @param core Pointer to the synchronization core
- * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @note If a higher priority task is woken, the switch_required
+ *       flag will be set
+ * @param core: Pointer to the synchronization core
+ * @param switch_required:
+ *      Pointer to a boolean flag indicating if a context switch is required
  * @return None
  */
 OCTOS_INLINE static inline void sync_notify_all(SyncCore_t *core,
@@ -117,9 +121,11 @@ OCTOS_INLINE static inline void sync_notify_all(SyncCore_t *core,
 
 /** 
  * @brief Notify a single task waiting on a synchronization core from an ISR
- * @note If the core is unlocked, a task will be notified. If locked, the lock count is incremented
- * @param core Pointer to the synchronization core
- * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @note If the core is unlocked, a task will be notified. If locked, the
+ *       lock count is incremented
+ * @param core: Pointer to the synchronization core
+ * @param switch_required: 
+ *      Pointer to a boolean flag indicating if a context switch is required
  * @return None
  */
 OCTOS_INLINE static inline void
@@ -140,8 +146,9 @@ sync_notify_from_isr(SyncCore_t *core, bool *const switch_required) {
 /** 
  * @brief Notify all tasks waiting on a synchronization core from an ISR
  * @note If the core is unlocked, all tasks will be notified. If locked, the lock count is incremented for each task
- * @param core Pointer to the synchronization core
- * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @param core: Pointer to the synchronization core
+ * @param switch_required:
+ *      Pointer to a boolean flag indicating if a context switch is required
  * @return None
  */
 OCTOS_INLINE static inline void
@@ -169,8 +176,8 @@ sync_notify_all_from_isr(SyncCore_t *core, bool *const switch_required) {
 
 /**
  * @brief Initialize a semaphore with specified initial count
- * @param sema Pointer to semaphore structure
- * @param initial_count Initial value for semaphore counter
+ * @param sema: Pointer to semaphore structure
+ * @param initial_count: Initial value for semaphore counter
  * @retval None
  */
 void sema_init(Sema_t *sema, int32_t initial_count) {
@@ -180,9 +187,10 @@ void sema_init(Sema_t *sema, int32_t initial_count) {
 
 /**
  * @brief Acquires a semaphore
- * @param sema Pointer to the semaphore to be acquired
- * @param timeout_ticks Maximum time to wait for the semaphore
- * @return True if the semaphore is acquired, false otherwise
+ * @param sema: Pointer to the semaphore to be acquired
+ * @param timeout_ticks: Maximum time to wait for the semaphore
+ * @retval true If the semaphore is acquired
+ * @retval false Otherwise
  */
 bool sema_acquire(Sema_t *sema, uint32_t timeout_ticks) {
     Timeout_t timeout;
@@ -235,7 +243,7 @@ bool sema_acquire(Sema_t *sema, uint32_t timeout_ticks) {
 
 /**
  * @brief Releases a semaphore
- * @param sema Pointer to the semaphore to be released
+ * @param sema: Pointer to the semaphore to be released
  * @return None
  */
 void sema_release(Sema_t *sema) {
@@ -257,8 +265,9 @@ void sema_release(Sema_t *sema) {
 
 /**
  * @brief Acquires a semaphore from an ISR
- * @param sema Pointer to the semaphore to be acquired
- * @return True if the semaphore is acquired, false otherwise
+ * @param sema: Pointer to the semaphore to be acquired
+ * @retval true If the semaphore is acquired
+ * @retval false Otherwise
  */
 bool sema_acquire_from_isr(Sema_t *sema) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
@@ -279,8 +288,9 @@ bool sema_acquire_from_isr(Sema_t *sema) {
 
 /**
  * @brief Releases a semaphore from an ISR
- * @param sema Pointer to the semaphore to be released
- * @param switch_required Pointer to a boolean indicating if a context switch is required
+ * @param sema: Pointer to the semaphore to be released
+ * @param switch_required:
+ *      Pointer to a boolean indicating if a context switch is required
  * @return None
  */
 void sema_release_from_isr(Sema_t *sema, bool *const switch_required) {
@@ -317,10 +327,11 @@ void mutex_init(Mutex_t *mutex) {
  * @note This function blocks the current task if the mutex is already 
  *       owned by another task
  * @note Will perform priority inheritance if needed
- * @param mutex Pointer to the mutex to be acquired
- * @param timeout_ticks Timeout value in ticks, 0 for no wait, UINT32_MAX
- *        for indefinite wait
- * @return True if the mutex was acquired, false otherwise
+ * @param mutex: Pointer to the mutex to be acquired
+ * @param timeout_ticks: 
+ *      Timeout value in ticks, 0 for no wait, UINT32_MAX for indefinite wait
+ * @retval true If the mutex was acquired
+ * @retval false Otherwise
  */
 bool mutex_acquire(Mutex_t *mutex, uint32_t timeout_ticks) {
     Timeout_t timeout;
@@ -397,8 +408,9 @@ bool mutex_acquire(Mutex_t *mutex, uint32_t timeout_ticks) {
 /**
  * @brief Release a mutex
  * @note This function should be called when a task is done with the mutex
- * @param mutex Pointer to the mutex to be released
- * @return True if a context switch is required, false otherwise
+ * @param mutex: Pointer to the mutex to be released
+ * @retval true If a context switch is required
+ * @retval false Otherwise
  */
 bool mutex_release(Mutex_t *mutex) {
     bool switch_required = false;
@@ -433,8 +445,8 @@ void cond_init(Cond_t *cond) { sync_core_init(&(cond->Core)); }
 /**
  * @brief Wait on a condition variable
  * @note If the timeout expires, the function returns false
- * @param cond Pointer to the condition variable
- * @param timeout_ticks Timeout in ticks (UINT32_MAX for indefinite wait)
+ * @param cond: Pointer to the condition variable
+ * @param timeout_ticks: Timeout in ticks (UINT32_MAX for indefinite wait)
  * @retval true Condition was signaled
  * @retval false Timeout expired
  */
@@ -480,7 +492,7 @@ bool cond_wait(Cond_t *cond, uint32_t timeout_ticks) {
 
 /**
  * @brief Notify one task waiting on the condition variable
- * @param cond Pointer to the condition variable
+ * @param cond: Pointer to the condition variable
  * @return None
  */
 void cond_notify(Cond_t *cond) {
@@ -497,7 +509,7 @@ void cond_notify(Cond_t *cond) {
 
 /**
  * @brief Notify all tasks waiting on the condition variable
- * @param cond Pointer to the condition variable
+ * @param cond: Pointer to the condition variable
  * @return None
  */
 void cond_notify_all(Cond_t *cond) {
@@ -514,8 +526,9 @@ void cond_notify_all(Cond_t *cond) {
 
 /**
  * @brief Notify one task waiting on the condition variable from an ISR
- * @param cond Pointer to the condition variable
- * @param switch_required Pointer to a boolean indicating if a context switch is required
+ * @param cond: Pointer to the condition variable
+ * @param switch_required:
+ *      Pointer to a boolean indicating if a context switch is required
  * @return None
  */
 void cond_notify_from_isr(Cond_t *cond, bool *const switch_required) {
@@ -537,8 +550,8 @@ void cond_notify_from_isr(Cond_t *cond, bool *const switch_required) {
 
 /**
  * @brief Notify all tasks waiting on the condition variable from an ISR
- * @param cond Pointer to the condition variable
- * @param switch_required 
+ * @param cond: Pointer to the condition variable
+ * @param switch_required:
  *      Pointer to a boolean indicating if a context switch is required
  * @return None
  */
@@ -564,8 +577,8 @@ void cond_notify_all_from_isr(Cond_t *cond, bool *const switch_required) {
 
 /**
  * @brief Initialize a barrier
- * @param barrier Pointer to the barrier to initialize
- * @param parties Number of parties required to release the barrier
+ * @param barrier: Pointer to the barrier to initialize
+ * @param parties: Number of parties required to release the barrier
  * @return None
  */
 void barrier_init(Barrier_t *barrier, uint32_t parties) {
@@ -577,8 +590,8 @@ void barrier_init(Barrier_t *barrier, uint32_t parties) {
 /**
  * @brief Wait at the barrier
  * @note If the timeout expires, the function returns false
- * @param barrier Pointer to the barrier
- * @param timeout_ticks Timeout in ticks (UINT32_MAX for indefinite wait)
+ * @param barrier: Pointer to the barrier
+ * @param timeout_ticks: Timeout in ticks (UINT32_MAX for indefinite wait)
  * @retval true Barrier was released
  * @retval false Timeout expired
  */
@@ -648,7 +661,7 @@ bool barrier_wait(Barrier_t *barrier, uint32_t timeout_ticks) {
 
 /**
  * @brief Reset the barrier
- * @param barrier Pointer to the barrier
+ * @param barrier: Pointer to the barrier
  * @return None
  */
 void barrier_reset(Barrier_t *barrier) {
@@ -671,8 +684,8 @@ void barrier_reset(Barrier_t *barrier) {
  *       If the barrier is unlocked, tasks are moved to the ready list.
  *       If the barrier is locked, the lock count is incremented for
  *       each blocked task.
- * @param barrier Pointer to the barrier to be reset
- * @param switch_required 
+ * @param barrier: Pointer to the barrier to be reset
+ * @param switch_required:
  *      Pointer to a boolean that indicates if a context switch is required
  * @return None
  */
@@ -691,7 +704,7 @@ void barrier_reset_from_isr(Barrier_t *barrier, bool *const switch_required) {
 
 /**
  * @brief Initialize an event
- * @param event Pointer to the Event_t structure to be initialized
+ * @param event: Pointer to the Event_t structure to be initialized
  * @return None
  */
 void event_init(Event_t *event) {
@@ -701,8 +714,9 @@ void event_init(Event_t *event) {
 
 /**
  * @brief Check if an event is set
- * @param event Pointer to the Event_t structure to check
- * @return True if the event is set, false otherwise
+ * @param event: Pointer to the Event_t structure to check
+ * @retval true If the event is set
+ * @retval false Otherwise
  */
 bool event_is_set(Event_t *event) {
     bool result;
@@ -716,8 +730,9 @@ bool event_is_set(Event_t *event) {
 
 /**
  * @brief Set an event
- * @note If the event is set and tasks are blocked on it, they will be unblocked
- * @param event Pointer to the Event_t structure to set
+ * @note If the event is set and tasks are blocked on it, they
+ *       will be unblocked
+ * @param event: Pointer to the Event_t structure to set
  * @return None
  */
 void event_set(Event_t *event) {
@@ -741,7 +756,7 @@ void event_set(Event_t *event) {
 
 /**
  * @brief Clear an event
- * @param event Pointer to the Event_t structure to clear
+ * @param event: Pointer to the Event_t structure to clear
  * @return None
  */
 void event_clear(Event_t *event) {
@@ -756,10 +771,10 @@ void event_clear(Event_t *event) {
  * @brief Wait for an event to be set
  * @note If the event is not set, the calling task will be blocked until
  *       the event is set or the timeout expires
- * @param event Pointer to the Event_t structure to wait on
- * @param timeout_ticks Timeout in ticks (UINT32_MAX for indefinite wait)
- * @retval True if the event was set
- * @retval False if the timeout expired
+ * @param event: Pointer to the Event_t structure to wait on
+ * @param timeout_ticks: Timeout in ticks (UINT32_MAX for indefinite wait)
+ * @retval true If the event was set
+ * @retval false If the timeout expired
  */
 bool event_wait(Event_t *event, uint32_t timeout_ticks) {
     Timeout_t timeout;
@@ -808,8 +823,9 @@ bool event_wait(Event_t *event, uint32_t timeout_ticks) {
 
 /**
  * @brief Check if an event is set from an ISR
- * @param event Pointer to the Event_t structure to check
- * @return True if the event is set, false otherwise
+ * @param event: Pointer to the Event_t structure to check
+ * @retval true If the event is set
+ * @retval false Otherwise
  */
 bool event_is_set_from_isr(Event_t *event) {
     OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
@@ -827,8 +843,8 @@ bool event_is_set_from_isr(Event_t *event) {
  * @brief Set an event from an ISR
  * @note If the event is set and tasks are blocked on it, they will
  *       be unblocked
- * @param event Pointer to the Event_t structure to set
- * @param switch_required 
+ * @param event: Pointer to the Event_t structure to set
+ * @param switch_required:
  *      Pointer to a boolean indicating if a context switch is required
  * @return None
  */
@@ -851,7 +867,7 @@ void event_set_from_isr(Event_t *event, bool *const switch_required) {
 
 /**
  * @brief Clear an event from an ISR
- * @param event Pointer to the Event_t structure to clear
+ * @param event: Pointer to the Event_t structure to clear
  * @return None
  */
 void event_clear_from_isr(Event_t *event) {

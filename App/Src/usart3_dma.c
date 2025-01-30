@@ -16,7 +16,7 @@ static void (*usart3_dma_recv_func)(const void *data, size_t len) = NULL;
  * @brief Initialize USART3 with DMA for receiving data
  * @note This function also sets up the necessary interrupts and assigns a
  *       callback function for data reception
- * @param recv_func 
+ * @param recv_func: 
  *      Pointer to the callback function that will be called when
  *      data is received
  * @return None
@@ -150,7 +150,7 @@ void usart3_dma_rx_check(void) {
 
 /** 
  * @brief Send a string via USART3
- * @param str Pointer to the string to be sent
+ * @param str: Pointer to the string to be sent
  * @return None
  */
 void usart3_send_string(const char *str) {

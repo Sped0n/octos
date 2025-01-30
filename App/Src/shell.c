@@ -1,16 +1,51 @@
-/**
- * @file shell.c
- * @brief Implementation of shell interface
- */
-
-#include "shell.h"
 #include <stdbool.h>
 #include <string.h>
 
-/* Private function prototypes */
-static void shell_parse_command(char *cmdline, int *argc, char *argv[]);
-static void shell_backspace(Shell_t *shell);
-static void shell_process_command(Shell_t *shell);
+#include "shell.h"
+
+/**
+ * @brief Parse command line into arguments
+ * @param cmdline: Command line string to parse
+ * @param argc: Pointer to store argument count
+ * @param argv: Array to store argument strings
+ * @return None
+ */
+static void shell_parse_command(char *cmdline, int *argc, char *argv[]) {
+    char *token;
+    *argc = 0;
+
+    /* Get first token */
+    token = strtok(cmdline, " ");
+
+    /* Walk through other tokens */
+    while (token != NULL && *argc < SHELL_MAX_ARGS) {
+        argv[(*argc)++] = token;
+        token = strtok(NULL, " ");
+    }
+}
+
+/**
+ * @brief Handle backspace character
+ * @param shell: Pointer to shell structure
+ * @return None
+ */
+static void shell_backspace(Shell_t *shell) {
+    if (shell->input_pos > 0) {
+        shell->print("\b \b"); /* Erase character on terminal */
+        shell->input_pos--;
+        shell->input_buffer[shell->input_pos] = '\0';
+    }
+}
+
+/**
+ * @brief Process command in input buffer
+ * @param shell: Pointer to shell structure
+ * @return None
+ */
+static void shell_process_command(Shell_t *shell) {
+    shell->input_buffer[shell->input_pos] = '\0';
+    shell_execute(shell, shell->input_buffer);
+}
 
 /**
  * @brief Initialize shell interface
@@ -104,48 +139,4 @@ void shell_prompt(Shell_t *shell) {
     shell->print("> ");
     shell->input_pos = 0;
     memset(shell->input_buffer, 0, SHELL_MAX_INPUT_LEN);
-}
-
-/**
- * @brief Parse command line into arguments
- * @param cmdline: Command line string to parse
- * @param argc: Pointer to store argument count
- * @param argv: Array to store argument strings
- * @return None
- */
-static void shell_parse_command(char *cmdline, int *argc, char *argv[]) {
-    char *token;
-    *argc = 0;
-
-    /* Get first token */
-    token = strtok(cmdline, " ");
-
-    /* Walk through other tokens */
-    while (token != NULL && *argc < SHELL_MAX_ARGS) {
-        argv[(*argc)++] = token;
-        token = strtok(NULL, " ");
-    }
-}
-
-/**
- * @brief Handle backspace character
- * @param shell: Pointer to shell structure
- * @return None
- */
-static void shell_backspace(Shell_t *shell) {
-    if (shell->input_pos > 0) {
-        shell->print("\b \b"); /* Erase character on terminal */
-        shell->input_pos--;
-        shell->input_buffer[shell->input_pos] = '\0';
-    }
-}
-
-/**
- * @brief Process command in input buffer
- * @param shell: Pointer to shell structure
- * @return None
- */
-static void shell_process_command(Shell_t *shell) {
-    shell->input_buffer[shell->input_pos] = '\0';
-    shell_execute(shell, shell->input_buffer);
 }

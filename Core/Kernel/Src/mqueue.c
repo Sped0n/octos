@@ -13,8 +13,8 @@
  * @brief Increment the receive lock counter of a message queue
  * @note The lock counter is capped at the current number of tasks to
  *       ensure it does not exceed the number of tasks in the system
- * @param mqueue Pointer to the message queue
- * @param rxlock The current receive lock value
+ * @param mqueue: Pointer to the message queue
+ * @param rxlock: The current receive lock value
  * @return None
  */
 OCTOS_INLINE static inline void mqueue_rxlock_increment(MsgQueue_t *mqueue,
@@ -38,8 +38,8 @@ OCTOS_INLINE static inline void mqueue_rxlock_increment(MsgQueue_t *mqueue,
  * @brief Increment the transmit lock counter of a message queue
  * @note The lock counter is capped at the current number of tasks to
  *       ensure it does not exceed the number of tasks in the system
- * @param mqueue Pointer to the message queue
- * @param txlock The current transmit lock value
+ * @param mqueue: Pointer to the message queue
+ * @param txlock: The current transmit lock value
  * @return None
  */
 OCTOS_INLINE static inline void mqueue_txlock_increment(MsgQueue_t *mqueue,
@@ -62,7 +62,7 @@ OCTOS_INLINE static inline void mqueue_txlock_increment(MsgQueue_t *mqueue,
 /**
  * @brief Lock a message queue by incrementing both receive and
  *        transmit lock counters
- * @param mqueue Pointer to the message queue
+ * @param mqueue: Pointer to the message queue
  * @return None
  */
 OCTOS_INLINE static inline void mqueue_lock(MsgQueue_t *mqueue) {
@@ -79,7 +79,7 @@ OCTOS_INLINE static inline void mqueue_lock(MsgQueue_t *mqueue) {
 /**
  * @brief Unlock a message queue by decrementing the receive and transmit
  *        lock counters and unblocking tasks if necessary
- * @param mqueue Pointer to the message queue
+ * @param mqueue: Pointer to the message queue
  * @return None
  */
 static void mqueue_unlock(MsgQueue_t *mqueue) {
@@ -122,10 +122,10 @@ static void mqueue_unlock(MsgQueue_t *mqueue) {
 
 /**
  * @brief Initializes a message queue
- * @param mqueue Pointer to message queue to initialize
- * @param buffer Pointer to buffer that will hold queue data
- * @param item_size_in_bytes Size of each item in the queue
- * @param max_size Maximum number of items in the queue
+ * @param mqueue: Pointer to message queue to initialize
+ * @param buffer: Pointer to buffer that will hold queue data
+ * @param item_size_in_bytes: Size of each item in the queue
+ * @param max_size: Maximum number of items in the queue
  * @return None
  */
 void mqueue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size_in_bytes,
@@ -139,11 +139,12 @@ void mqueue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size_in_bytes,
 
 /**
  * @brief Send an item to a message queue
- * @param mqueue Pointer to the message queue
- * @param item Pointer to the item to be sent
- * @param timeout_ticks The number of ticks to wait before returning if the
- *        queue is full
- * @return True if the item was sent successfully, false otherwise
+ * @param mqueue: Pointer to the message queue
+ * @param item: Pointer to the item to be sent
+ * @param timeout_ticks: 
+ *      The number of ticks to wait before returning if the queue is full
+ * @retval true If the item was sent successfully
+ * @retval false Otherwise
  */
 bool mqueue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks) {
     Timeout_t timeout;
@@ -201,11 +202,12 @@ bool mqueue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks) {
 
 /**
  * @brief Receive an item from a message queue
- * @param mqueue Pointer to the message queue
- * @param buffer Pointer to the buffer where the received item will be stored
- * @param timeout_ticks The number of ticks to wait before returning if the
- *        queue is empty
- * @return True if an item was received successfully, false otherwise
+ * @param mqueue: Pointer to the message queue
+ * @param buffer: Pointer to the buffer where the received item will be stored
+ * @param timeout_ticks: 
+ *      The number of ticks to wait before returning if the queue is empty
+ * @retval true If an item was received successfully
+ * @retval false otherwise
  */
 bool mqueue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
     Timeout_t timeout;
@@ -263,11 +265,13 @@ bool mqueue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks) {
 
 /**
  * @brief Send an item to a message queue from an ISR
- * @param mqueue Pointer to the message queue
- * @param item Pointer to the item to be sent
- * @param switch_required Pointer to a variable where the function
- *        will indicate if a context switch is required
- * @return True if the item was sent successfully, false otherwise
+ * @param mqueue: Pointer to the message queue
+ * @param item: Pointer to the item to be sent
+ * @param switch_required: 
+ *      Pointer to a variable where the function will indicate if a context
+ *      switch is required
+ * @retval true If the item was sent successfully
+ * @retval false Otherwise
  */
 bool mqueue_send_from_isr(MsgQueue_t *mqueue, const void *item,
                           bool *const switch_required) {
@@ -297,10 +301,13 @@ bool mqueue_send_from_isr(MsgQueue_t *mqueue, const void *item,
 /**
  * @brief Receive a message from a message queue from an ISR
  * @note This function should only be called from an ISR
- * @param mqueue Pointer to the message queue
- * @param buffer Pointer to the buffer where the received message will be stored
- * @param switch_required Pointer to a boolean to indicate if a context switch is required
- * @return True if a message was successfully received, false otherwise
+ * @param mqueue: Pointer to the message queue
+ * @param buffer: 
+ *      Pointer to the buffer where the received message will be stored
+ * @param switch_required: 
+ *      Pointer to a boolean to indicate if a context switch is required
+ * @retval true If a message was successfully received
+ * @retval false Otherwise
  */
 bool mqueue_recv_from_isr(MsgQueue_t *mqueue, void *buffer,
                           bool *const switch_required) {

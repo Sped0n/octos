@@ -23,8 +23,7 @@ static volatile uint32_t
         top_ready_priority_data[(OCTOS_MAX_PRIORITIES + 31) / 32];
 static volatile Bitmap_t top_ready_priority;
 static volatile uint8_t current_number_of_tasks = 0;
-/* zero is reserved for idle task */
-static uint32_t tcb_id = 1;
+static uint32_t tcb_id = 1; /* zero is reserved for idle task */
 
 static List_t ready_list[OCTOS_MAX_PRIORITIES];
 static List_t pending_ready_list;
@@ -40,11 +39,11 @@ static List_t terminated_list;
 /**
  * @brief Build a Task Control Block (TCB) for a task
  * @note This function initializes the TCB and sets up the task's stack
- * @param page Pointer to the memory page allocated for the task
- * @param func Pointer to the task function
- * @param args Pointer to the arguments passed to the task function
- * @param name Name of the task (can be NULL)
- * @param priority Priority of the task
+ * @param page: Pointer to the memory page allocated for the task
+ * @param func: Pointer to the task function
+ * @param args: Pointer to the arguments passed to the task function
+ * @param name: Name of the task (can be NULL)
+ * @param priority: Priority of the task
  * @return Pointer to the initialized TCB
  */
 static TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args,
@@ -90,7 +89,7 @@ static TCB_t *tcb_build(Page_t *page, TaskFunc_t func, void *args,
 
 /** 
  * @brief Perform post-processing after task creation
- * @param tcb Pointer to the TCB of the newly created task
+ * @param tcb: Pointer to the TCB of the newly created task
  * @return None
  */
 static void task_create_postprocess(TCB_t *tcb) {
@@ -109,7 +108,7 @@ static void task_create_postprocess(TCB_t *tcb) {
 
 /** 
  * @brief Set the ready priority for a task
- * @param priority The priority to set
+ * @param priority: The priority to set
  * @return None
  */
 static void task_set_ready_priority(uint8_t priority) {
@@ -120,7 +119,7 @@ static void task_set_ready_priority(uint8_t priority) {
 
 /** 
  * @brief Reset the ready priority for a task
- * @param priority The priority to reset
+ * @param priority: The priority to reset
  * @return None
  */
 static void task_reset_ready_priority(uint8_t priority) {
@@ -132,6 +131,7 @@ static void task_reset_ready_priority(uint8_t priority) {
 
 /** 
  * @brief Select the highest priority task to execute
+ * @param None
  * @return None
  */
 static void task_select_highest_priority(void) {
@@ -147,6 +147,7 @@ static void task_select_highest_priority(void) {
  * @brief Update the next task unblock tick
  * @note This function updates the next_task_unblock_tick variable
  *       based on the first element in the delayed list
+ * @param None
  * @return None
  */
 static void task_reset_next_unblock_tick(void) {
@@ -160,7 +161,7 @@ static void task_reset_next_unblock_tick(void) {
 
 /**
  * @brief Get the current state of a thread
- * @param handle Pointer to the Thread Control Block
+ * @param handle: Pointer to the Thread Control Block
  * @return Current state of the thread
  */
 TaskState_t task_status(TaskHandle_t handle) {
@@ -182,7 +183,7 @@ TaskState_t task_status(TaskHandle_t handle) {
 
 /** 
  * @brief Set a timeout for a task
- * @param timeout Pointer to the timeout structure
+ * @param timeout: Pointer to the timeout structure
  * @return None
  */
 void task_set_timeout(Timeout_t *timeout) {
@@ -196,8 +197,8 @@ void task_set_timeout(Timeout_t *timeout) {
 
 /** 
  * @brief Check if a timeout has occurred
- * @param timeout Pointer to the timeout structure
- * @param ticks_to_delay The number of ticks to delay
+ * @param timeout: Pointer to the timeout structure
+ * @param ticks_to_delay: The number of ticks to delay
  * @retval true Timeout has expired
  * @retval false Timeout has not expired
  */
@@ -222,6 +223,7 @@ bool task_check_timeout(Timeout_t *timeout, uint32_t ticks_to_delay) {
 /**
  * @brief Get the number of tasks currently running
  * @note This function is not protected by critical section
+ * @param None
  * @return The number of tasks
  */
 uint8_t task_get_number_of_tasks(void) { return current_number_of_tasks; }
@@ -229,8 +231,8 @@ uint8_t task_get_number_of_tasks(void) { return current_number_of_tasks; }
 /**
  * @brief Get information about a task
  * @note This function would enter would enter critical section
- * @param handle Pointer to the task's TCB
- * @param info Pointer to TaskInfo_t struct to store the information
+ * @param handle: Pointer to the task's TCB
+ * @param info: Pointer to TaskInfo_t struct to store the information
  * @retval true Information was retrieved successfully
  * @retval false Task status is INVALID
  */
@@ -257,7 +259,7 @@ bool task_get_info(TaskHandle_t handle, TaskInfo_t *info) {
 /**
  * @brief Write task list information to a buffer
  * @note This function would enter would enter critical section
- * @param buffer Pointer to the buffer to write the information
+ * @param buffer: Pointer to the buffer to write the information
  * @note Format: "Name\t\tState\tPrio\n"
  *               "IDLE\t\tR\t0\n"
  *               "Task1\t\tC\t1\n"
@@ -349,7 +351,7 @@ void task_add_to_ready_list(TaskHandle_t handle) {
 /**
  * @brief Remove the current task from its current state and add it to the
  *        delayed list
- * @param ticks_to_delay 
+ * @param ticks_to_delay: 
  *      The number of ticks to delay before the task is ready to run again
  * @note If ticks_to_delay is UINT32_MAX, the task would be suspended
  * @return None
@@ -378,7 +380,7 @@ void task_remove_and_add_current_to_delayed_list(uint32_t ticks_to_delay) {
 
 /**
  * @brief Remove a task from the delayed list
- * @param tcb Pointer to the TCB of the task to be removed
+ * @param tcb: Pointer to the TCB of the task to be removed
  * @retval true Removed task has a higher priority than the current task
  * @retval false Otherwise
  */
@@ -400,8 +402,8 @@ bool task_remove_from_delayed_list(TaskHandle_t handle) {
 /**
  * @brief Add the current task to an event list and delay it for a
  *        specified number of ticks
- * @param list The event list to add the task to
- * @param ticks_to_wait 
+ * @param list: The event list to add the task to
+ * @param ticks_to_wait: 
  *      The number of ticks to wait before the task is ready to run again
  * @return None
  */
@@ -416,7 +418,7 @@ void task_add_current_to_event_list(List_t *list, uint32_t ticks_to_wait) {
 
 /**
  * @brief Remove the highest priority task from an event list
- * @param list The event list to remove the task from
+ * @param list: The event list to remove the task from
  * @retval true Removed task has a higher priority than the current task
  * @retval false Otherwise
  */
@@ -448,12 +450,12 @@ bool task_remove_highest_priority_from_event_list(List_t *list) {
 
 /**
  * @brief Create a new task with dynamic memory allocation
- * @param func Pointer to the task function
- * @param args Pointer to the arguments passed to the task function
- * @param name Name of the task (for debugging purposes)
- * @param priority Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
- * @param page_size_in_words Size of the task stack in words
- * @param handle Pointer to store the task handle (can be NULL if not needed)
+ * @param func: Pointer to the task function
+ * @param args: Pointer to the arguments passed to the task function
+ * @param name: Name of the task (for debugging purposes)
+ * @param priority: Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
+ * @param page_size_in_words: Size of the task stack in words
+ * @param handle: Pointer to store the task handle (can be NULL if not needed)
  * @retval true Task was created successfully
  * @retval false Task creation failed
  */
@@ -483,13 +485,13 @@ bool task_create(TaskFunc_t func, void *const args, const char *name,
 
 /**
  * @brief Create a new task with static memory allocation
- * @param func Pointer to the task function
- * @param args Pointer to the arguments passed to the task function
- * @param name Name of the task (for debugging purposes)
- * @param priority Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
- * @param buffer Pointer to the pre-allocated stack buffer
- * @param page_size_in_words Size of the task stack in words
- * @param handle Pointer to store the task handle (can be NULL if not needed)
+ * @param func: Pointer to the task function
+ * @param args: Pointer to the arguments passed to the task function
+ * @param name: Name of the task (for debugging purposes)
+ * @param priority: Priority of the task (must be less than OCTOS_MAX_PRIORITIES)
+ * @param buffer: Pointer to the pre-allocated stack buffer
+ * @param page_size_in_words: Size of the task stack in words
+ * @param handle: Pointer to store the task handle (can be NULL if not needed)
  * @retval true Task was created successfully
  * @retval false Task creation failed
  */
@@ -519,7 +521,7 @@ bool task_create_static(TaskFunc_t func, void *args, const char *name,
 
 /**
  * @brief Deletes task and moves it to terminated state
- * @param handle Pointer to task control block to delete
+ * @param handle: Pointer to task control block to delete
  * @return None
  */
 void task_delete(TaskHandle_t handle) {
@@ -553,7 +555,7 @@ void task_delete(TaskHandle_t handle) {
  * @brief Release a task and free its resources if necessary
  * @note The task is removed from the terminated list and its dynamic memory
  *       is freed if applicable
- * @param handle Pointer to the TCB of the task to be released
+ * @param handle: Pointer to the TCB of the task to be released
  * @return None
  */
 void task_release(TaskHandle_t handle) {
@@ -567,6 +569,7 @@ void task_release(TaskHandle_t handle) {
 
 /** 
  * @brief Increment the task tick and handle delayed tasks
+ * @param None
  * @retval true Context switch is required
  * @retval false Context switch is not required
  */
@@ -624,6 +627,7 @@ bool task_tick_increment(void) {
 
 /** 
  * @brief Perform a context switch to the highest priority task
+ * @param None
  * @return None
  */
 void task_context_switch(void) {
@@ -638,6 +642,7 @@ void task_context_switch(void) {
 /**
  * @brief Safely retrieves the current system tick value
  * @note Uses critical section to prevent race conditions
+ * @param None
  * @return Current system tick value
  */
 uint32_t task_get_tick(void) {
@@ -651,6 +656,7 @@ uint32_t task_get_tick(void) {
  * @brief Safely retrieves the current system tick value from an
  *        Interrupt Service Routine (ISR)
  * @note Uses ISR-specific critical section handling
+ * @param None
  * @return Current system tick value
  */
 uint32_t task_get_tick_from_isr(void) {
@@ -675,7 +681,7 @@ TaskHandle_t task_mutex_held_increment(void) {
 /**
  * @brief Decrement the mutex held count for the specified task
  * @note This function should be called when a task releases a mutex
- * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @param mutex_owner: Pointer to the TCB of the task that owns the mutex
  * @retval true The operation was successful
  * @retval false Current task is not the mutex owner
  */
@@ -688,7 +694,7 @@ bool task_mutex_held_decrement(TaskHandle_t mutex_owner) {
 /**
  * @brief Inherit the priority of the current task to the mutex owner
  * @note This function is used to prevent priority inversion
- * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @param mutex_owner: Pointer to the TCB of the task that owns the mutex
  * @retval true Priority inheritance occurred
  * @retval false Priority inheritance has not occurred
  */
@@ -729,7 +735,7 @@ bool task_inherit_priority(TaskHandle_t mutex_owner) {
 /**
  * @brief De-inherit the priority of the current task from the mutex owner
  * @note This function is used to restore the original priority of the task
- * @param mutex_owner Pointer to the TCB of the task that owns the mutex
+ * @param mutex_owner: Pointer to the TCB of the task that owns the mutex
  * @retval true Context switch is required
  * @retval false Context switch is not required
  */
@@ -763,8 +769,8 @@ bool task_deinherit_priority(TaskHandle_t mutex_owner) {
  *        after a timeout
  * @note This function is used to restore the original priority of the
  *       task after a timeout
- * @param mutex_owner Pointer to the TCB of the task that owns the mutex
- * @param highest_priority_of_waiting_tasks 
+ * @param mutex_owner: Pointer to the TCB of the task that owns the mutex
+ * @param highest_priority_of_waiting_tasks:
  *      The highest priority of tasks waiting for the mutex
  * @return None
  */
@@ -799,6 +805,7 @@ void task_deinherit_priority_after_timeout(
  * @brief Yield the current task to allow other tasks to run
  * @note If the scheduler is suspended, the yield will be pending until
  *       the scheduler is resumed
+ * @param None
  * @return None
  */
 void task_yield(void) {
@@ -815,7 +822,7 @@ void task_yield(void) {
  * @brief Yield the current task from an ISR context
  * @note If the scheduler is suspended, the yield will be pending until
  *       the scheduler is resumed
- * @param flag Indicates whether a yield is required
+ * @param flag: Indicates whether a yield is required
  * @return None
  */
 void task_yield_from_isr(bool flag) {
@@ -831,6 +838,7 @@ void task_yield_from_isr(bool flag) {
 /** 
  * @brief Suspend the scheduler to prevent task switching
  * @note This function increments the scheduler suspension counter
+ * @param None
  * @return None
  */
 void task_suspend_all(void) {
@@ -843,6 +851,7 @@ void task_suspend_all(void) {
  * @brief Resume the scheduler and process any pending ticks
  * @note This function decrements the scheduler suspension counter and
  *       processes any pending ticks
+ * @param None
  * @return None
  */
 bool task_resume_all(void) {
@@ -888,7 +897,7 @@ bool task_resume_all(void) {
 
 /**
  * @brief Delay the current task for a specified number of ticks
- * @param ticks_to_delay Number of ticks to delay the task
+ * @param ticks_to_delay: Number of ticks to delay the task
  * @return None
  */
 void task_delay(uint32_t ticks_to_delay) {
@@ -911,7 +920,7 @@ void task_delay(uint32_t ticks_to_delay) {
 
 /**
  * @brief Abort the delay of a task
- * @param handle Pointer to the TCB of the task to abort the delay
+ * @param handle: Pointer to the TCB of the task to abort the delay
  * @return None
  */
 void task_abort_delay(TaskHandle_t handle) {
@@ -939,7 +948,7 @@ void task_abort_delay(TaskHandle_t handle) {
 /** 
  * @brief Suspend a task
  * @note If the task to suspend is the current task, a yield will occur
- * @param handle 
+ * @param handle: 
  *      Pointer to the TCB of the task to be suspended. If NULL, the current
  *      task will be suspended
  * @return None
@@ -995,7 +1004,7 @@ void task_suspend(TaskHandle_t handle) {
  * @brief Resume a suspended task
  * @note If the resumed task has a higher priority than the current task, a
  *       yield will occur
- * @param handle Pointer to the TCB of the task to be resumed
+ * @param handle: Pointer to the TCB of the task to be resumed
  * @return None
  */
 void task_resume(TaskHandle_t handle) {
@@ -1029,7 +1038,7 @@ void task_resume(TaskHandle_t handle) {
  * @brief Resume a suspended task from an ISR context
  * @note If the resumed task has a higher priority than the current task, a
  *       yield will occur
- * @param handle Pointer to the TCB of the task to be resumed
+ * @param handle: Pointer to the TCB of the task to be resumed
  * @return None
  */
 void task_resume_from_isr(TaskHandle_t handle) {
@@ -1063,9 +1072,9 @@ void task_resume_from_isr(TaskHandle_t handle) {
 /**
  * @brief Notify a task with a value and a specific action
  * @note If the task is pending, it will be moved to the ready list
- * @param handle Pointer to the TCB of the task to notify
- * @param value The value to notify the task with
- * @param action The action to perform on the notification value
+ * @param handle: Pointer to the TCB of the task to notify
+ * @param value: The value to notify the task with
+ * @param action: The action to perform on the notification value
  * @retval true Notification was successful
  * @retval false Notification failed (e.g., TrySet on a received state)
  */
@@ -1120,10 +1129,10 @@ bool task_notify(TaskHandle_t handle, uint32_t value,
 /**
  * @brief Notify a task with a value and a specific action from an ISR
  * @note If the task is pending, it will be moved to the ready list
- * @param handle Pointer to the TCB of the task to notify
- * @param value The value to notify the task with
- * @param action The action to perform on the notification value
- * @param switch_required 
+ * @param handle: Pointer to the TCB of the task to notify
+ * @param value: The value to notify the task with
+ * @param action: The action to perform on the notification value
+ * @param switch_required: 
  *      Pointer to a boolean indicating if a context switch is required
  * @retval true Notification was successful
  * @retval false Notification failed (e.g., TrySet on a received state)
@@ -1178,12 +1187,12 @@ bool task_notify_from_isr(TaskHandle_t handle, uint32_t value,
 /**
  * @brief Wait for a task notification with optional timeout
  * @note Clears specified bits on entry and exit
- * @param bits_to_clear_on_entry 
+ * @param bits_to_clear_on_entry: 
  *      Bits to clear in the notification value on entry
- * @param bits_to_clear_on_exit 
+ * @param bits_to_clear_on_exit: 
  *      Bits to clear in the notification value on exit
- * @param buffer Pointer to store the notification value (can be NULL)
- * @param timeout_ticks Timeout in ticks (0 for no timeout)
+ * @param buffer: Pointer to store the notification value (can be NULL)
+ * @param timeout_ticks: Timeout in ticks (0 for no timeout)
  * @retval true Notification was received successfully
  * @retval false Notification was not received (e.g., timeout)
  */

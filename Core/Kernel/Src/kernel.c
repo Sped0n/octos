@@ -11,7 +11,7 @@ Quanta_t *kernel_quanta = &kernel_quanta_internal;
 
 /**
  * @brief Initialize and launch the kernel
- * @param quanta Pointer to kernel time quanta configuration structure
+ * @param quanta: Pointer to kernel time quanta configuration structure
  * @return None
  */
 void kernel_launch(Quanta_t *quanta) {

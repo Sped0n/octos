@@ -19,8 +19,9 @@ void bitmap_init(Bitmap_t *bm, uint32_t *data, size_t size);
 
 /** 
  * @brief Check if a bitmap is valid
- * @param bm Pointer to the bitmap structure to be checked
- * @return true if the bitmap is valid (data is not NULL), false otherwise
+ * @param bm: Pointer to the bitmap structure to be checked
+ * @retval true If the bitmap is valid (data is not NULL)
+ * @retval false Otherwise
  */
 OCTOS_INLINE static inline bool bitmap_valid(Bitmap_t *bm) {
     return bm->data != NULL;
@@ -28,8 +29,8 @@ OCTOS_INLINE static inline bool bitmap_valid(Bitmap_t *bm) {
 
 /**
  * @brief Sets a bit at the specified position in the bitmap
- * @param bm Pointer to the bitmap structure
- * @param pos Position of the bit to set (0-based index)
+ * @param bm: Pointer to the bitmap structure
+ * @param pos: Position of the bit to set (0-based index)
  * @return None
  */
 OCTOS_INLINE static inline void bitmap_set(Bitmap_t *bm, uint32_t pos) {
@@ -40,8 +41,8 @@ OCTOS_INLINE static inline void bitmap_set(Bitmap_t *bm, uint32_t pos) {
 
 /**
  * @brief Clears a bit at the specified position in the bitmap
- * @param bm Pointer to the bitmap structure 
- * @param pos Position of the bit to clear (0-based index)
+ * @param bm: Pointer to the bitmap structure 
+ * @param pos: Position of the bit to clear (0-based index)
  * @return None
  */
 OCTOS_INLINE static inline void bitmap_reset(Bitmap_t *bm, uint32_t pos) {
@@ -52,7 +53,7 @@ OCTOS_INLINE static inline void bitmap_reset(Bitmap_t *bm, uint32_t pos) {
 
 /**
  * @brief Finds the position of first zero bit in the bitmap
- * @param bm Pointer to the bitmap structure
+ * @param bm: Pointer to the bitmap structure
  * @return Position of first zero bit if found, -1 if no zero bit exists
  * @note Uses compiler builtin function __builtin_clz for leading zero count
  */
@@ -65,7 +66,7 @@ OCTOS_INLINE static inline int32_t bitmap_first_zero(Bitmap_t *bm) {
 
 /**
   * @brief Finds the position of first set bit (1) in the bitmap
-  * @param bm Pointer to the bitmap structure
+  * @param bm: Pointer to the bitmap structure
   * @return Position of first set bit if found, -1 if no set bit exists
   * @note Uses compiler builtin function __builtin_clz for leading zero count
   */

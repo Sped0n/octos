@@ -579,3 +579,204 @@ void barrier_reset(Barrier_t *barrier) {
 
     OCTOS_EXIT_CRITICAL();
 }
+
+/* Event ---------------------------------------------------------------------*/
+
+/**
+ * @brief Initialize an event
+ * @param event Pointer to the Event_t structure to be initialized
+ * @return None
+ */
+void event_init(Event_t *event) {
+    event->Flag = false;
+    sync_core_init(&(event->Core));
+}
+
+/**
+ * @brief Check if an event is set
+ * @param event Pointer to the Event_t structure to check
+ * @return True if the event is set, false otherwise
+ */
+bool event_is_set(Event_t *event) {
+    bool result;
+
+    OCTOS_ENTER_CRITICAL();
+    result = event->Flag;
+    OCTOS_EXIT_CRITICAL();
+
+    return result;
+}
+
+/**
+ * @brief Set an event
+ * @note If the event is set and tasks are blocked on it, they will be unblocked
+ * @param event Pointer to the Event_t structure to set
+ * @return None
+ */
+void event_set(Event_t *event) {
+    bool switch_required = false;
+
+    OCTOS_ENTER_CRITICAL();
+
+    /* Micro optimization */
+    if (event->Flag == true) {
+        OCTOS_EXIT_CRITICAL();
+        return;
+    }
+
+    event->Flag = true;
+    List_t *const blocked_list = &(event->Core.BlockedList);
+    while (blocked_list->Length > 0) {
+        switch_required |=
+                task_remove_highest_priority_from_event_list(blocked_list);
+    }
+
+    OCTOS_EXIT_CRITICAL();
+
+    if (switch_required) OCTOS_YIELD();
+}
+
+/**
+ * @brief Clear an event
+ * @param event Pointer to the Event_t structure to clear
+ * @return None
+ */
+void event_clear(Event_t *event) {
+    OCTOS_ENTER_CRITICAL();
+
+    event->Flag = false;
+
+    OCTOS_EXIT_CRITICAL();
+}
+
+/**
+ * @brief Wait for an event to be set
+ * @note If the event is not set, the calling task will be blocked until
+ *       the event is set or the timeout expires
+ * @param event Pointer to the Event_t structure to wait on
+ * @param timeout_ticks Timeout in ticks (UINT32_MAX for indefinite wait)
+ * @retval True if the event was set
+ * @retval False if the timeout expired
+ */
+bool event_wait(Event_t *event, uint32_t timeout_ticks) {
+    Timeout_t timeout;
+    bool timeout_set = false;
+
+    while (true) {
+        OCTOS_ENTER_CRITICAL();
+
+        if (event->Flag == true) {
+            OCTOS_EXIT_CRITICAL();
+            return true;
+        } else if (timeout_ticks == 0) {
+            OCTOS_EXIT_CRITICAL();
+            return false;
+        } else if (!timeout_set) {
+            /* timeout_ticks == UINT32_MAX means to wait indefinitely */
+            if (timeout_ticks != UINT32_MAX) task_set_timeout(&timeout);
+            timeout_set = true;
+        }
+
+        OCTOS_EXIT_CRITICAL();
+
+        task_suspend_all();
+        SyncCore_t *const core = &(event->Core);
+        /* Lock the queue so ISR cannot modify EventListItem */
+        sync_lock(core);
+        /* Timeout has expired */
+        if (timeout_ticks != UINT32_MAX &&
+            task_check_timeout(&timeout, timeout_ticks)) {
+            sync_unlock(core);
+            task_resume_all();
+            return false;
+        }
+
+        /* Timeout has not expired */
+        if (event->Flag != true) {
+            task_add_current_to_event_list(&(core->BlockedList), timeout_ticks);
+            sync_unlock(core);
+            if (!task_resume_all()) OCTOS_YIELD();
+        } else {
+            sync_unlock(core);
+            task_resume_all();
+        }
+    }
+}
+
+/**
+ * @brief Check if an event is set from an ISR
+ * @param event Pointer to the Event_t structure to check
+ * @return True if the event is set, false otherwise
+ */
+bool event_is_set_from_isr(Event_t *event) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    bool result;
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+    result = event->Flag;
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+
+    return result;
+}
+
+/**
+ * @brief Set an event from an ISR
+ * @note If the event is set and tasks are blocked on it, they will
+ *       be unblocked
+ * @param event Pointer to the Event_t structure to set
+ * @param switch_required 
+ *      Pointer to a boolean indicating if a context switch is required
+ * @return None
+ */
+void event_set_from_isr(Event_t *event, bool *const switch_required) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    if (event->Flag == true) {
+        if (switch_required != NULL) *switch_required = false;
+        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+        return;
+    }
+
+    event->Flag = true;
+
+    SyncCore_t *const core = &(event->Core);
+    const int8_t lock = core->Lock;
+    List_t *const blocked_list = &(core->BlockedList);
+
+    if (core->Lock == syncUNLOCKED) {
+        bool higher_priority_woken = false;
+
+        for (size_t i = blocked_list->Length; i > 0; i--) {
+            higher_priority_woken |=
+                    task_remove_highest_priority_from_event_list(blocked_list);
+        }
+
+        if (switch_required != NULL) *switch_required = higher_priority_woken;
+    } else {
+        for (size_t i = blocked_list->Length; i > 0; i--) {
+            sync_lock_increment(core, lock);
+        }
+
+        if (switch_required != NULL) *switch_required = false;
+    }
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+}
+
+/**
+ * @brief Clear an event from an ISR
+ * @param event Pointer to the Event_t structure to clear
+ * @return None
+ */
+void event_clear_from_isr(Event_t *event) {
+    OCTOS_ASSERT_IF_INTERRUPT_PRIORITY_INVALID();
+
+    uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
+
+    event->Flag = false;
+
+    OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
+}

@@ -50,6 +50,14 @@ typedef struct Barrier {
     Cond_t Cond;      /*!< Condition variable used for synchronization */
 } Barrier_t;
 
+/**
+ * @brief Event structure definition
+ */
+typedef struct Event {
+    bool Flag;       /*!< Flag indicating whether the event is set or not */
+    SyncCore_t Core; /*!< Synchronization core for managing blocked tasks */
+} Event_t;
+
 /* Semaphore -----------------------------------------------------------------*/
 void sema_init(Sema_t *sema, int32_t initial_count);
 bool sema_acquire(Sema_t *sema, uint32_t timeout_ticks);
@@ -71,5 +79,14 @@ void cond_notify_all_from_isr(Cond_t *cond, bool *const switch_required);
 void barrier_init(Barrier_t *barrier, uint32_t parties);
 bool barrier_wait(Barrier_t *barrier, uint32_t timeout_ticks);
 void barrier_reset(Barrier_t *barrier);
+/* Event ---------------------------------------------------------------------*/
+void event_init(Event_t *event);
+bool event_is_set(Event_t *event);
+void event_set(Event_t *event);
+void event_clear(Event_t *event);
+bool event_wait(Event_t *event, uint32_t timeout_ticks);
+bool event_is_set_from_isr(Event_t *event);
+void event_set_from_isr(Event_t *event, bool *const switch_required);
+void event_clear_from_isr(Event_t *event);
 
 #endif

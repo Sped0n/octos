@@ -1,6 +1,6 @@
 # OCTOS
 
-## About The Project
+## About
 
 OCTOS is a compact real-time operating system (RTOS) featuring a preemptive kernel and an O(1) scheduler. 
 
@@ -8,18 +8,21 @@ OCTOS is a compact real-time operating system (RTOS) featuring a preemptive kern
 
 ## Features
 
-*   **FreeRTOS-like preemptive scheduling policy**
+*   **FreeRTOS-like preemptive scheduler**
     *   Round-Robin within priority level
-    *   “Cooperative” between priority level
-
+    *   "Cooperative" between priority level
+    *   Support scheduler suspension
 *   **Basic Task Management**
     *   `task_create`, `task_create_static`, `task_delete`
     *   `task_delay`, `task_abort_delay`
     *   `task_suspend`, `task_resume`, `task_resume_from_isr`
     *   `task_yield`, `task_yield_from_isr`
 *   **Python-like Sync Primitives**
-    *   `Sema_t` (ISR-compatible)
-    *   `Mutex_t` (Support Priority Inheritance)
+    *   `Sema_t`: *Semaphore* (ISR-compatible)
+    *   `Mutex_t`: *Mutex* (Support Priority Inheritance)
+    *   `Cond_t`: *Condition* (ISR-compatible)
+    *   `Barrier_t`: *Barrier*
+    *   `Event_t`: *Event* (ISR-compatible)
 *   **Fexlible Inter-task Communication**
     *   *Lightweight Task Notification* (ISR-compatible)
     *   *Message Queue* (ISR-compatible)

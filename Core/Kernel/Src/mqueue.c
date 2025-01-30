@@ -124,13 +124,13 @@ static void mqueue_unlock(MsgQueue_t *mqueue) {
  * @brief Initializes a message queue
  * @param mqueue Pointer to message queue to initialize
  * @param buffer Pointer to buffer that will hold queue data
- * @param item_size Size of each item in the queue
+ * @param item_size_in_bytes Size of each item in the queue
  * @param max_size Maximum number of items in the queue
  * @return None
  */
-void mqueue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size,
+void mqueue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size_in_bytes,
                  size_t max_size) {
-    queue_init(&mqueue->Queue, buffer, item_size, max_size);
+    queue_init(&mqueue->Queue, buffer, item_size_in_bytes, max_size);
     list_init(&mqueue->SenderList);
     list_init(&mqueue->ReceiverList);
     mqueue->RxLock = queueUNLOCKED;

@@ -22,7 +22,7 @@ typedef struct MsgQueue {
     int8_t TxLock;       /*!< Lock for sending messages */
 } MsgQueue_t;
 
-void mqueue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size,
+void mqueue_init(MsgQueue_t *mqueue, void *buffer, size_t item_size_in_bytes,
                  size_t max_size);
 bool mqueue_send(MsgQueue_t *mqueue, const void *item, uint32_t timeout_ticks);
 bool mqueue_recv(MsgQueue_t *mqueue, void *buffer, uint32_t timeout_ticks);

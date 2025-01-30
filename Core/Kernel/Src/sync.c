@@ -76,6 +76,95 @@ OCTOS_INLINE static inline void sync_unlock(SyncCore_t *core) {
     OCTOS_EXIT_CRITICAL();
 }
 
+/** 
+ * @brief Notify a single task waiting on a synchronization core
+ * @note If a higher priority task is woken, the switch_required flag will be set
+ * @param core Pointer to the synchronization core
+ * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @return None
+ */
+OCTOS_INLINE static inline void sync_notify(SyncCore_t *core,
+                                            bool *const switch_required) {
+    List_t *const blocked_list = &(core->BlockedList);
+
+    if (blocked_list->Length > 0) {
+        const bool higher_priority_woken =
+                task_remove_highest_priority_from_event_list(blocked_list);
+
+        if (switch_required != NULL) *switch_required |= higher_priority_woken;
+    }
+}
+
+/** 
+ * @brief Notify all tasks waiting on a synchronization core
+ * @note If a higher priority task is woken, the switch_required flag will be set
+ * @param core Pointer to the synchronization core
+ * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @return None
+ */
+OCTOS_INLINE static inline void sync_notify_all(SyncCore_t *core,
+                                                bool *const switch_required) {
+    bool higher_priority_woken = false;
+    List_t *const blocked_list = &(core->BlockedList);
+
+    while (blocked_list->Length > 0) {
+        higher_priority_woken |=
+                task_remove_highest_priority_from_event_list(blocked_list);
+    }
+
+    if (switch_required != NULL) *switch_required |= higher_priority_woken;
+}
+
+/** 
+ * @brief Notify a single task waiting on a synchronization core from an ISR
+ * @note If the core is unlocked, a task will be notified. If locked, the lock count is incremented
+ * @param core Pointer to the synchronization core
+ * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @return None
+ */
+OCTOS_INLINE static inline void
+sync_notify_from_isr(SyncCore_t *core, bool *const switch_required) {
+    const int8_t lock = core->Lock;
+
+    if (core->Lock == syncUNLOCKED) {
+        const bool higher_priority_woken =
+                task_remove_highest_priority_from_event_list(
+                        &(core->BlockedList));
+
+        if (switch_required != NULL) *switch_required |= higher_priority_woken;
+    } else {
+        sync_lock_increment(core, lock);
+    }
+}
+
+/** 
+ * @brief Notify all tasks waiting on a synchronization core from an ISR
+ * @note If the core is unlocked, all tasks will be notified. If locked, the lock count is incremented for each task
+ * @param core Pointer to the synchronization core
+ * @param switch_required Pointer to a boolean flag indicating if a context switch is required
+ * @return None
+ */
+OCTOS_INLINE static inline void
+sync_notify_all_from_isr(SyncCore_t *core, bool *const switch_required) {
+    const int8_t lock = core->Lock;
+    List_t *const blocked_list = &(core->BlockedList);
+
+    if (core->Lock == syncUNLOCKED) {
+        bool higher_priority_woken = false;
+
+        while (blocked_list->Length > 0) {
+            higher_priority_woken |=
+                    task_remove_highest_priority_from_event_list(blocked_list);
+        }
+
+        if (switch_required != NULL) *switch_required = higher_priority_woken;
+    } else {
+        for (size_t i = blocked_list->Length; i > 0; i--) {
+            sync_lock_increment(core, lock);
+        }
+    }
+}
+
 /* Semaphore -----------------------------------------------------------------*/
 
 /**
@@ -155,17 +244,11 @@ void sema_release(Sema_t *sema) {
     OCTOS_ENTER_CRITICAL();
 
     sema->Count++;
-
     if (sema->Count > 0) {
         OCTOS_EXIT_CRITICAL();
         return;
     }
-
-    List_t *const blocked_list = &(sema->Core.BlockedList);
-    if (blocked_list->Length > 0) {
-        switch_required =
-                task_remove_highest_priority_from_event_list(blocked_list);
-    }
+    sync_notify(&(sema->Core), &switch_required);
 
     OCTOS_EXIT_CRITICAL();
 
@@ -212,16 +295,7 @@ void sema_release_from_isr(Sema_t *sema, bool *const switch_required) {
         return;
     }
 
-    SyncCore_t *const core = &(sema->Core);
-    const int8_t lock = core->Lock;
-    if (core->Lock == syncUNLOCKED) {
-        const bool higher_priority_woken =
-                task_remove_highest_priority_from_event_list(
-                        &(core->BlockedList));
-        if (switch_required != NULL) *switch_required = higher_priority_woken;
-    } else {
-        sync_lock_increment(core, lock);
-    }
+    sync_notify_from_isr(&(sema->Core), switch_required);
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 }
@@ -338,12 +412,7 @@ bool mutex_release(Mutex_t *mutex) {
 
     switch_required |= task_deinherit_priority(mutex->Owner);
     mutex->Owner = NULL;
-
-    List_t *const blocked_list = &(mutex->Core.BlockedList);
-    if (blocked_list->Length > 0) {
-        switch_required |=
-                task_remove_highest_priority_from_event_list(blocked_list);
-    }
+    sync_notify(&(mutex->Core), &switch_required);
 
     OCTOS_EXIT_CRITICAL();
 
@@ -419,11 +488,7 @@ void cond_notify(Cond_t *cond) {
 
     OCTOS_ENTER_CRITICAL();
 
-    List_t *const blocked_list = &(cond->Core.BlockedList);
-    if (blocked_list->Length > 0) {
-        switch_required |=
-                task_remove_highest_priority_from_event_list(blocked_list);
-    }
+    sync_notify(&(cond->Core), &switch_required);
 
     OCTOS_EXIT_CRITICAL();
 
@@ -440,11 +505,7 @@ void cond_notify_all(Cond_t *cond) {
 
     OCTOS_ENTER_CRITICAL();
 
-    List_t *const blocked_list = &(cond->Core.BlockedList);
-    while (blocked_list->Length > 0) {
-        switch_required |=
-                task_remove_highest_priority_from_event_list(blocked_list);
-    }
+    sync_notify_all(&(cond->Core), &switch_required);
 
     OCTOS_EXIT_CRITICAL();
 
@@ -469,14 +530,7 @@ void cond_notify_from_isr(Cond_t *cond, bool *const switch_required) {
         return;
     }
 
-    const int8_t lock = core->Lock;
-    if (core->Lock == syncUNLOCKED) {
-        const bool higher_priority_woken =
-                task_remove_highest_priority_from_event_list(blocked_list);
-        if (switch_required != NULL) *switch_required = higher_priority_woken;
-    } else {
-        sync_lock_increment(core, lock);
-    }
+    sync_notify_from_isr(&(cond->Core), switch_required);
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 }
@@ -500,19 +554,7 @@ void cond_notify_all_from_isr(Cond_t *cond, bool *const switch_required) {
         return;
     }
 
-    const int8_t lock = core->Lock;
-    if (core->Lock == syncUNLOCKED) {
-        bool higher_priority_woken = false;
-        for (size_t i = blocked_list->Length; i > 0; i--) {
-            higher_priority_woken |=
-                    task_remove_highest_priority_from_event_list(blocked_list);
-        }
-        if (switch_required != NULL) *switch_required = higher_priority_woken;
-    } else {
-        for (size_t i = blocked_list->Length; i > 0; i--) {
-            sync_lock_increment(core, lock);
-        }
-    }
+    sync_notify_all_from_isr(&(cond->Core), switch_required);
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 }
@@ -614,11 +656,7 @@ void barrier_reset(Barrier_t *barrier) {
 
     OCTOS_ENTER_CRITICAL();
 
-    List_t *const blocked_list = &(barrier->Core.BlockedList);
-    while (blocked_list->Length > 0) {
-        switch_required |=
-                task_remove_highest_priority_from_event_list(blocked_list);
-    }
+    sync_notify_all(&(barrier->Core), &switch_required);
     barrier->Count = 0;
 
     OCTOS_EXIT_CRITICAL();
@@ -643,27 +681,7 @@ void barrier_reset_from_isr(Barrier_t *barrier, bool *const switch_required) {
 
     uint32_t saved_intr_status = OCTOS_ENTER_CRITICAL_FROM_ISR();
 
-    SyncCore_t *const core = &(barrier->Core);
-    List_t *const blocked_list = &(core->BlockedList);
-    if (blocked_list->Length == 0) {
-        OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
-        return;
-    }
-
-    const int8_t lock = core->Lock;
-    if (core->Lock == syncUNLOCKED) {
-        bool higher_priority_woken = false;
-        while (blocked_list->Length > 0) {
-            higher_priority_woken |=
-                    task_remove_highest_priority_from_event_list(blocked_list);
-        }
-        if (switch_required != NULL) *switch_required = higher_priority_woken;
-    } else {
-        for (size_t i = blocked_list->Length; i > 0; i--) {
-            sync_lock_increment(core, lock);
-        }
-    }
-
+    sync_notify_all_from_isr(&(barrier->Core), switch_required);
     barrier->Count = 0;
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
@@ -714,11 +732,7 @@ void event_set(Event_t *event) {
     }
 
     event->Flag = true;
-    List_t *const blocked_list = &(event->Core.BlockedList);
-    while (blocked_list->Length > 0) {
-        switch_required |=
-                task_remove_highest_priority_from_event_list(blocked_list);
-    }
+    sync_notify_all(&(event->Core), &switch_required);
 
     OCTOS_EXIT_CRITICAL();
 
@@ -830,27 +844,7 @@ void event_set_from_isr(Event_t *event, bool *const switch_required) {
     }
 
     event->Flag = true;
-
-    SyncCore_t *const core = &(event->Core);
-    const int8_t lock = core->Lock;
-    List_t *const blocked_list = &(core->BlockedList);
-
-    if (core->Lock == syncUNLOCKED) {
-        bool higher_priority_woken = false;
-
-        for (size_t i = blocked_list->Length; i > 0; i--) {
-            higher_priority_woken |=
-                    task_remove_highest_priority_from_event_list(blocked_list);
-        }
-
-        if (switch_required != NULL) *switch_required = higher_priority_woken;
-    } else {
-        for (size_t i = blocked_list->Length; i > 0; i--) {
-            sync_lock_increment(core, lock);
-        }
-
-        if (switch_required != NULL) *switch_required = false;
-    }
+    sync_notify_all_from_isr(&(event->Core), switch_required);
 
     OCTOS_EXIT_CRITICAL_FROM_ISR(saved_intr_status);
 }

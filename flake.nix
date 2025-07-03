@@ -1,8 +1,5 @@
 {
   description = "octos";
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-  };
   outputs = {
     self,
     nixpkgs,
@@ -16,15 +13,12 @@
       };
     in
       pkgs.mkShellNoCC {
+        name = "octos";
         packages = with pkgs; [
           gcc-arm-embedded
           cmake
           openocd
-          zsh
         ];
-        shellHook = ''
-          exec zsh
-        '';
       };
   };
 }

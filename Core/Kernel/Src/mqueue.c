@@ -102,7 +102,7 @@ static void mqueue_unlock(MsgQueue_t *mqueue) {
 
     OCTOS_ENTER_CRITICAL();
 
-    int8_t txlock = mqueue->RxLock;
+    int8_t txlock = mqueue->TxLock;
     List_t *const reciever_list = &(mqueue->ReceiverList);
     while (txlock > queueLOCKED_UNMODIFIED) {
         if (reciever_list->Length > 0) {
